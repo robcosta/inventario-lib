@@ -21,12 +21,30 @@ function admin_planilhaTemContexto_() {
 }
 
 /**
- * Retorna o contexto ativo da planilha (ou null)
+ * ============================================================
+ * ABRIR PLANILHA NO NAVEGADOR (NOVA ABA)
+ * ============================================================
  */
-function obterContextoAtivo_() {
-  const raw = PropertiesService
-    .getDocumentProperties()
-    .getProperty('ADMIN_CONTEXTO_ATIVO');
 
-  return raw ? JSON.parse(raw) : null;
+function abrirPlanilhaNoNavegador_(spreadsheetId) {
+
+  const url =
+    'https://docs.google.com/spreadsheets/d/' + spreadsheetId;
+
+  const html = `
+    <script>
+      window.open('${url}', '_blank');
+      google.script.host.close();
+    </script>
+  `;
+
+  const dialog = HtmlService
+    .createHtmlOutput(html)
+    .setWidth(10)
+    .setHeight(10);
+
+  SpreadsheetApp
+    .getUi()
+    .showModalDialog(dialog, 'Abrindo planilha...');
 }
+
