@@ -6,12 +6,16 @@
 
 function abrirDialogImportacaoCSV_(tipo) {
 
-  const html = HtmlService
-    .createHtmlOutputFromFile('shared/csv/csv_upload')
+  const template = HtmlService.createTemplateFromFile(
+    'shared/csv/csv_upload'
+  );
+
+  template.tipoDestino = tipo;
+
+  const html = template
+    .evaluate()
     .setWidth(500)
     .setHeight(300);
-
-  html.tipoDestino = tipo;
 
   SpreadsheetApp
     .getUi()

@@ -8,15 +8,18 @@
  *
  * ❌ Não contém lógica de negócio
  * ❌ Não contém regras
+ * ❌ Não contém acesso a Drive/Sheets
  * ============================================================
  */
 
 /**
- * Disparado ao abrir a planilha ADMIN
+ * ============================================================
+ * onOpen — ENTRADA DO ADMIN
+ * ============================================================
  */
 function onOpen() {
   try {
-    inventario.adminRenderMenu(); // função pública da biblioteca
+    inventario.adminRenderMenu(); // API pública da biblioteca
   } catch (e) {
     Logger.log('[ADMIN][ONOPEN][ERRO]');
     Logger.log(e);
@@ -27,41 +30,68 @@ function onOpen() {
 }
 
 /* ============================================================
- * PROXIES DE MENU — ADMIN
- * (obrigatórios para o Google Sheets)
+ * PROXIES DE MENU — CONTEXTO
  * ============================================================
  */
 
 function criarContextoTrabalho() {
-  inventario.criarContextoTrabalho(); // biblioteca
+  inventario.criarContextoTrabalho();
 }
 
 function selecionarContextoTrabalho() {
   inventario.selecionarContextoTrabalho();
 }
 
+/* ============================================================
+ * PROXIES DE MENU — ACESSOS
+ * ============================================================
+ */
+
 function gerenciarAcessosContexto() {
   inventario.gerenciarAcessosContexto();
 }
 
-function configurarPlanilhaBase() {
-  inventario.configurarPlanilhaBase();
+/* ============================================================
+ * PROXIES DE MENU — PLANILHA GERAL
+ * ============================================================
+ */
+
+function abrirPlanilhaGeral() {
+  inventario.abrirPlanilhaGeral();
 }
+
+function importarCSVGeral() {
+  inventario.importarCSVGeral();
+}
+
+function criarOuRecriarPlanilhaGeral() {
+  inventario.criarOuRecriarPlanilhaGeral();
+}
+
+/* ============================================================
+ * PROXIES DE MENU — PLANILHA CONTEXTO
+ * ============================================================
+ */
+
+function formatarPlanilhaContexto() {
+  inventario.formatarPlanilhaContexto();
+}
+
+function importarCSVContexto() {
+  inventario.importarCSVContexto();
+}
+
+function popularPlanilhaContexto() {
+  inventario.popularPlanilhaContexto();
+}
+
+/* ============================================================
+ * PROXIES DE MENU — CLIENTE / SUPORTE
+ * ============================================================
+ */
 
 function formatarPlanilhaCliente() {
   inventario.formatarPlanilhaCliente();
-}
-
-function enviarCSV() {
-  inventario.enviarCSV();
-}
-
-function popularPlanilhaOperacional() {
-  inventario.popularPlanilhaOperacional();
-}
-
-function formatarPlanilhaOperacional() {
-  inventario.formatarPlanilhaOperacional();
 }
 
 function abrirPastasTrabalho() {
@@ -70,4 +100,16 @@ function abrirPastasTrabalho() {
 
 function executarDiagnostico() {
   inventario.executarDiagnostico();
+}
+
+
+/**
+ * ============================================================
+ * CSV — ENTRYPOINT (TEMPLATE)
+ * Chamado pelo HTML
+ * ============================================================
+ */
+function receberCSV(tipo, nomeArquivo, dataUrl) {
+  // Repassa a chamada vinda do HTML para a função pública da biblioteca
+  return inventario.receberCSV(tipo, nomeArquivo, dataUrl);
 }

@@ -8,7 +8,7 @@ function obterPastaGeral_() {
   const raiz = obterPastaInventario_();
   if (!raiz) return null;
 
-  const planilha = obterOuCriarSubpasta_(raiz, 'PLANILHA');
+  const planilha = obterOuCriarSubpasta_(raiz, 'PLANILHAS');
   return obterOuCriarSubpasta_(planilha, 'GERAL');
 }
 

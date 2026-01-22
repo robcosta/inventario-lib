@@ -34,7 +34,7 @@
               .withFailureHandler(err => {
                 msg.innerHTML += `<div style="color:red">❌ ${err.message}</div>`;
               })
-              .receberCSV_(
+              .receberCSV(
                 tipo,
                 file.name,
                 e.target.result
