@@ -23,28 +23,41 @@ function gerenciarAcessosContexto() {
   gerenciarAcessosContexto_();
 }
 
-/** CONFIGURAÇÃO */
-function configurarPlanilhaBase() {
-  configurarPlanilhaBase_();
+/** ===========================
+ * PLANILHA GERAL
+ * =========================== */
+
+function abrirPlanilhaGeral() {
+  abrirPlanilhaGeral_();
+}
+
+function importarCSVGeral() {
+  importarCSVGeral_();
+}
+
+function criarOuRecriarPlanilhaGeral() {
+  criarOuRecriarPlanilhaGeral_();
+}
+
+/** ===========================
+ * PLANILHA CONTEXTO
+ * =========================== */
+
+function formatarPlanilhaContexto() {
+  formatarPlanilhaContexto_();
+}
+
+function importarCSVContexto() {
+  importarCSVContexto_();
+}
+
+function popularPlanilhaContexto() {
+  popularPlanilhaContexto_();
 }
 
 /** CLIENTE */
 function formatarPlanilhaCliente() {
   formatarPlanilhaCliente_();
-}
-
-/** CSV */
-function enviarCSV() {
-  enviarCSV_();
-}
-
-/** OPERACIONAL */
-function popularPlanilhaOperacional() {
-  popularPlanilhaOperacional_();
-}
-
-function formatarPlanilhaOperacional() {
-  ormatarPlanilhaOperacional_();
 }
 
 /** PASTAS */

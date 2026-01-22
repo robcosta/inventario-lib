@@ -67,7 +67,7 @@ function criarContextoTrabalho_() {
     const pastaPlanilhas = obterOuCriarSubpasta_(raiz, 'PLANILHAS');
     const pastaContextos = obterOuCriarSubpasta_(pastaPlanilhas, 'CONTEXTOS');
     const pastaContexto = obterOuCriarSubpasta_(pastaContextos, nomeContexto);
-    const pastaCSV = obterOuCriarSubpasta_(pastaContexto, 'CSV_ORIGEM');
+    const pastaCSV = obterOuCriarSubpasta_(pastaContexto, 'CSV_CONTEXTO');
 
     const pastaUnidades = obterOuCriarSubpasta_(raiz, 'UNIDADES');
     const pastaUnidade = obterOuCriarSubpasta_(pastaUnidades, nomeContexto);

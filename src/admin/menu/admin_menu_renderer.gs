@@ -4,27 +4,59 @@
  * ============================================================
  */
 
-function adminRenderMenu_(){
+function adminRenderMenu_() {
+
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('🏛️ Inventário – Administração');
 
-  if (planilhaTemContexto_()) {
+  if (!planilhaTemContexto_()) {
     menu
-      .addItem('🔁 Selecionar Contexto', 'selecionarContextoTrabalho')
-      .addItem('🔐 Gerenciar Acessos', 'gerenciarAcessosContexto')
-      .addSeparator()
-      .addItem('⚙️ Configurar Planilha Base', 'configurarPlanilhaBase')
-      .addItem('🎨 Formatar Planilha Cliente', 'formatarPlanilhaCliente')
-      .addSeparator()
-      .addItem('📤 Enviar CSV', 'enviarCSV')
-      .addItem('📊 Popular Operacional', 'popularPlanilhaOperacional')
-      .addItem('🎨 Formatar Operacional', 'formatarPlanilhaOperacional')
-      .addSeparator()
-      .addItem('🗂️ Pastas de Trabalho', 'abrirPastasTrabalho')
-      .addItem('🧪 Diagnóstico', 'executarDiagnostico');
-  } else {
-    menu.addItem('➕ Criar Contexto de Trabalho', 'criarContextoTrabalho');
+      .addItem('➕ Criar Contexto de Trabalho', 'criarContextoTrabalho')
+      .addToUi();
+    return;
   }
+
+  // ==========================================================
+  // CONTEXTO
+  // ==========================================================
+  menu
+    .addItem('🔁 Selecionar Contexto', 'selecionarContextoTrabalho')
+    .addItem('🔐 Gerenciar Acessos', 'gerenciarAcessosContexto')
+    .addSeparator();
+
+  // ==========================================================
+  // PLANILHA GERAL
+  // ==========================================================
+  menu
+    .addSubMenu(
+      ui.createMenu('📘 Planilha Geral')
+        .addItem('📂 Abrir Planilha', 'abrirPlanilhaGeral')
+        .addItem('📤 Importar CSV', 'importarCSVGeral')
+        .addItem('🧱 Criar / Recriar', 'criarOuRecriarPlanilhaGeral')
+    )
+    .addSeparator();
+
+  // ==========================================================
+  // PLANILHA CONTEXTO
+  // ==========================================================
+  menu
+    .addSubMenu(
+      ui.createMenu('📗 Planilha Contexto')
+        .addItem('🎨 Formatar', 'formatarPlanilhaContexto')
+        .addItem('📤 Importar CSV', 'importarCSVContexto')
+        .addItem('📊 Popular', 'popularPlanilhaContexto')
+    )
+    .addSeparator();
+
+  // ==========================================================
+  // CLIENTE / SUPORTE
+  // ==========================================================
+  menu
+    .addItem('🎨 Formatar Planilha Cliente', 'formatarPlanilhaCliente')
+    .addSeparator()
+    .addItem('🗂️ Pastas de Trabalho', 'abrirPastasTrabalho')
+    .addItem('🧪 Diagnóstico', 'executarDiagnostico');
 
   menu.addToUi();
 }
+
