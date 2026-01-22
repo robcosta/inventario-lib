@@ -31,9 +31,26 @@ function abrirPlanilhaGeral() {
   abrirPlanilhaGeral_();
 }
 
-function importarCSVGeral() {
-  importarCSVGeral_();
+/**
+ * ============================================================
+ * CSV — IMPORTAR (GERAL)
+ * ============================================================
+ */
+
+function importarCSVGeral_() {
+  abrirDialogImportacaoCSV_('GERAL');
 }
+
+/**
+ * ============================================================
+ * CSV — IMPORTAR (CONTEXTO)
+ * ============================================================
+ */
+
+function importarCSVContexto_() {
+  abrirDialogImportacaoCSV_('CONTEXTO');
+}
+
 
 function criarOuRecriarPlanilhaGeral() {
   criarOuRecriarPlanilhaGeral_();
