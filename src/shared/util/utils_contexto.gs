@@ -18,7 +18,7 @@ function _admin_gravarContextoAdmin(nome) {
 }
 
 function listarContextos_() {
-  Logger.log('[CONTEXTO][ADMIN] listarContextoTrabalho - INÍCIO');
+
   const raiz = obterPastaInventario_();
   if (!raiz) return [];
 
@@ -32,15 +32,24 @@ function listarContextos_() {
   const lista = [];
 
   while (it.hasNext()) {
-    const pasta = it.next();
+    const pastaContexto = it.next();
+
+    // 🔎 procura a planilha operacional dentro da pasta
+    const files = pastaContexto.getFilesByType(MimeType.GOOGLE_SHEETS);
+    if (!files.hasNext()) continue;
+
+    const planilha = files.next();
+
     lista.push({
-      nome: pasta.getName(),
-      pastaId: pasta.getId()
+      nome: pastaContexto.getName(),
+      pastaId: pastaContexto.getId(),
+      planilhaOperacionalId: planilha.getId()
     });
   }
 
   return lista;
 }
+
 
 function contextoComNomeExiste_(nomeContexto) {
   const raiz = obterPastaInventario_();
@@ -53,4 +62,15 @@ function contextoComNomeExiste_(nomeContexto) {
   if (!contextos.hasNext()) return false;
 
   return contextos.next().getFoldersByName(nomeContexto).hasNext();
+}
+
+/**
+ * Retorna o contexto ativo da planilha (ou null)
+ */
+function obterContextoAtivo_() {
+  const raw = PropertiesService
+    .getDocumentProperties()
+    .getProperty('ADMIN_CONTEXTO_ATIVO');
+
+  return raw ? JSON.parse(raw) : null;
 }
