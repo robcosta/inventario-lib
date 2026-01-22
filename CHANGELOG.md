@@ -1,7 +1,8 @@
-## [1.0.0] - 2026-01-20
+## v0.2.0 – 2026-01-xx
 ### Added
-- Estrutura inicial da biblioteca
-- API pública Inventario.init()
+- Funcionalidade Selecionar Contexto
+- Abertura da planilha do contexto em nova aba via HTML dialog
 
 ### Fixed
-- —
+- Exclusão do contexto atual da lista de seleção
+- Correções de fluxo sem quebrar Criar Contexto

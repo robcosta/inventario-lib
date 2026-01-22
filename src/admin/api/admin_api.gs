@@ -20,39 +20,39 @@ function selecionarContextoTrabalho() {
 
 /** ACESSOS */
 function gerenciarAcessosContexto() {
-  _admin_acessosGerenciar();
+  gerenciarAcessosContexto_();
 }
 
 /** CONFIGURAÇÃO */
 function configurarPlanilhaBase() {
-  _admin_planilhaBaseConfigurar();
+  configurarPlanilhaBase_();
 }
 
 /** CLIENTE */
 function formatarPlanilhaCliente() {
-  _admin_planilhaClienteFormatar();
+  formatarPlanilhaCliente_();
 }
 
 /** CSV */
 function enviarCSV() {
-  _admin_csvAbrirUpload();
+  enviarCSV_();
 }
 
 /** OPERACIONAL */
 function popularPlanilhaOperacional() {
-  _admin_planilhaOperacionalPopular();
+  popularPlanilhaOperacional_();
 }
 
 function formatarPlanilhaOperacional() {
-  _admin_planilhaOperacionalFormatar();
+  ormatarPlanilhaOperacional_();
 }
 
 /** PASTAS */
 function abrirPastasTrabalho() {
-  _admin_pastasAbrir();
+  abrirPastasTrabalho_();
 }
 
 /** DIAGNÓSTICO */
 function executarDiagnostico() {
-  _admin_diagnosticoExecutar();
+  executarDiagnostico_();
 }
