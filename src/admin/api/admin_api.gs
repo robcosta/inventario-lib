@@ -51,7 +51,7 @@ function popularPlanilhaContexto() {
 }
 
 function formatarPlanilhaContexto() {
-  formatarPlanilhaContexto_();
+ formatarPlanilhaContexto_();
 }
 
 /** CLIENTE */
