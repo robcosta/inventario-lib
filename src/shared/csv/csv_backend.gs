@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * CSV — BACKEND
+ * CSV — BACKEND (CORE)
  * ============================================================
  */
 
@@ -17,7 +17,7 @@ function receberCSV_(tipo, nomeArquivo, dataUrl) {
   }
 
   if (!pastaDestino) {
-    throw new Error('Pasta de destino não encontrada.');
+    throw new Error('Pasta de destino não encontrada para tipo: ' + tipo);
   }
 
   salvarCSV_(nomeArquivo, dataUrl, pastaDestino);

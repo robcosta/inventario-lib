@@ -31,26 +31,9 @@ function abrirPlanilhaGeral() {
   abrirPlanilhaGeral_();
 }
 
-/**
- * ============================================================
- * CSV — IMPORTAR (GERAL)
- * ============================================================
- */
-
-function importarCSVGeral_() {
+function importarCSVGeral() {
   abrirDialogImportacaoCSV_('GERAL');
 }
-
-/**
- * ============================================================
- * CSV — IMPORTAR (CONTEXTO)
- * ============================================================
- */
-
-function importarCSVContexto_() {
-  abrirDialogImportacaoCSV_('CONTEXTO');
-}
-
 
 function criarOuRecriarPlanilhaGeral() {
   criarOuRecriarPlanilhaGeral_();
@@ -59,17 +42,16 @@ function criarOuRecriarPlanilhaGeral() {
 /** ===========================
  * PLANILHA CONTEXTO
  * =========================== */
-
-function formatarPlanilhaContexto() {
-  formatarPlanilhaContexto_();
-}
-
 function importarCSVContexto() {
-  importarCSVContexto_();
+  abrirDialogImportacaoCSV_('CONTEXTO');
 }
 
 function popularPlanilhaContexto() {
   popularPlanilhaContexto_();
+}
+
+function formatarPlanilhaContexto() {
+  formatarPlanilhaContexto_();
 }
 
 /** CLIENTE */
@@ -85,4 +67,11 @@ function abrirPastasTrabalho() {
 /** DIAGNÓSTICO */
 function executarDiagnostico() {
   executarDiagnostico_();
+}
+
+/**
+ * Chamado pelo HTML (google.script.run)
+ */
+function receberCSV(tipo, nomeArquivo, dataUrl) {
+  receberCSV_(tipo, nomeArquivo, dataUrl);
 }

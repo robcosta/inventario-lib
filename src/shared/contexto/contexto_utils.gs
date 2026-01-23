@@ -10,7 +10,7 @@ function planilhaTemContexto_() {
     .getProperty('ADMIN_CONTEXTO_ATIVO');
 }
 
-function _admin_gravarContextoAdmin(nome) {
+function gravarContextoAdmin_(nome) {
   PropertiesService.getDocumentProperties().setProperty(
     'ADMIN_CONTEXTO_ATIVO',
     JSON.stringify({ nome, criadoEm: new Date().toISOString() })
@@ -64,9 +64,6 @@ function contextoComNomeExiste_(nomeContexto) {
   return contextos.next().getFoldersByName(nomeContexto).hasNext();
 }
 
-/**
- * Retorna o contexto ativo da planilha (ou null)
- */
 function obterContextoAtivo_() {
   const raw = PropertiesService
     .getDocumentProperties()
@@ -74,3 +71,5 @@ function obterContextoAtivo_() {
 
   return raw ? JSON.parse(raw) : null;
 }
+
+

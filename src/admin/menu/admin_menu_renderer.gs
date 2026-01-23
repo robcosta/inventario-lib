@@ -41,10 +41,10 @@ function adminRenderMenu_() {
   // ==========================================================
   menu
     .addSubMenu(
-      ui.createMenu('📗 Planilha Contexto')
-        .addItem('🎨 Formatar', 'formatarPlanilhaContexto')
+      ui.createMenu('📗 Planilha Contexto')        
         .addItem('📤 Importar CSV', 'importarCSVContexto')
         .addItem('📊 Popular', 'popularPlanilhaContexto')
+        .addItem('🎨 Formatar', 'formatarPlanilhaContexto')
     )
     .addSeparator();
 

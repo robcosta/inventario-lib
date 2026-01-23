@@ -10,5 +10,5 @@ Thumbs.db
 # Logs
 *.log
 
-#txt
-*.txt
+# txt / ziop
+*.txt*.zip
