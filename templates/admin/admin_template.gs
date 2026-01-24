@@ -64,6 +64,10 @@ function importarCSVGeral() {
   inventario.importarCSVGeral();
 }
 
+function formatarPlanilhaGeral() {
+  inventario.formatarPlanilhaGeral();
+}
+
 function criarOuRecriarPlanilhaGeral() {
   inventario.criarOuRecriarPlanilhaGeral();
 }

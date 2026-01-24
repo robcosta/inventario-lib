@@ -53,6 +53,33 @@ function confirmarFormatacaoDaAba_(sheet) {
       ui.ButtonSet.YES_NO
     );
 
+    if (resp === ui.Button.YES) {
+      toast_(`Reformatando aba "${nome}"...`, 'Formatação');
+      return true;
+    }
+
+    toast_(`Formatação da aba "${nome}" cancelada.`, 'Formatação');
+    return false;
+  }
+
+  // 2️⃣ Pergunta padrão
+  const resp = ui.alert(
+    'Formatar aba',
+    `Deseja formatar a aba "${nome}"?`,
+    ui.ButtonSet.YES_NO
+  );
+
+  if (resp === ui.Button.YES) {
+    toast_(`Formatando aba "${nome}"...`, 'Formatação');
+    return true;
+  }
+
+  toast_(`Aba "${nome}" ignorada.`, 'Formatação');
+  return false;
+}
+
+/**
+ * =======
     return resp === ui.Button.YES;
   }
 
@@ -63,12 +90,7 @@ function confirmarFormatacaoDaAba_(sheet) {
     ui.ButtonSet.YES_NO
   );
 
-  return resp === ui.Button.YES;
-}
-
-
-/**
- * ============================================================
+  =====================================================
  * DETECTA LOCALIDADE A PARTIR DA PLANILHA
  * ============================================================
  *

@@ -3,11 +3,10 @@
  * CSV — DIALOG
  * ============================================================
  */
-
 function abrirDialogImportacaoCSV_(tipo) {
 
   const template = HtmlService.createTemplateFromFile(
-    'shared/csv/csv_upload'
+    'admin/compartilhado/csv/csv_upload'
   );
 
   template.tipoDestino = tipo;

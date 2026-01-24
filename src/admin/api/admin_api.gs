@@ -32,7 +32,11 @@ function abrirPlanilhaGeral() {
 }
 
 function importarCSVGeral() {
-  abrirDialogImportacaoCSV_('GERAL');
+  importarCSVGeral_();
+}
+
+function formatarPlanilhaGeral() {
+  formatarPlanilhaGeral_();  
 }
 
 function criarOuRecriarPlanilhaGeral() {
@@ -43,7 +47,7 @@ function criarOuRecriarPlanilhaGeral() {
  * PLANILHA CONTEXTO
  * =========================== */
 function importarCSVContexto() {
-  abrirDialogImportacaoCSV_('CONTEXTO');
+  importarCSVContexto_();
 }
 
 function popularPlanilhaContexto() {

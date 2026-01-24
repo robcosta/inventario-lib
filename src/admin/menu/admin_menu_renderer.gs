@@ -32,6 +32,7 @@ function adminRenderMenu_() {
       ui.createMenu('📘 Planilha Geral')
         .addItem('📂 Abrir Planilha', 'abrirPlanilhaGeral')
         .addItem('📤 Importar CSV', 'importarCSVGeral')
+        .addItem('🎨 Formatar Planilha Geral', 'formatarPlanilhaGeral')
         .addItem('🧱 Criar / Recriar', 'criarOuRecriarPlanilhaGeral')
     )
     .addSeparator();
