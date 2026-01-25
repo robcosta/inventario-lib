@@ -52,6 +52,15 @@ function gerenciarAcessosContexto() {
 }
 
 /* ============================================================
+ * PROXY — PROCESSAR IMAGENS (VISION)
+ * ============================================================
+ */
+
+function processarImagem() {
+  inventario.processarImagem();
+}
+
+/* ============================================================
  * PROXIES DE MENU — PLANILHA GERAL
  * ============================================================
  */

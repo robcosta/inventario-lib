@@ -24,6 +24,14 @@ function adminRenderMenu_() {
     .addItem('🔐 Gerenciar Acessos', 'gerenciarAcessosContexto')
     .addSeparator();
 
+
+  // ==========================================================
+  // PROCESSAR IMAGEM - API VISION
+  // ==========================================================
+  menu
+    .addSeparator()
+    .addItem('🖼️ Processar Imagem (Teste)', 'processarImagem')
+    .addSeparator();
   // ==========================================================
   // PLANILHA GERAL
   // ==========================================================
@@ -42,7 +50,7 @@ function adminRenderMenu_() {
   // ==========================================================
   menu
     .addSubMenu(
-      ui.createMenu('📗 Planilha Contexto')        
+      ui.createMenu('📗 Planilha Contexto')
         .addItem('📤 Importar CSV', 'importarCSVContexto')
         .addItem('📊 Popular', 'popularPlanilhaContexto')
         .addItem('🎨 Formatar', 'formatarPlanilhaContexto')
