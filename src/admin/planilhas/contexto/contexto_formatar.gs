@@ -6,7 +6,7 @@ function formatarPlanilhaContexto_(spreadsheetId) {
 
   toast_('Iniciando formatação da Planilha de Contexto...', 'Formatação');
 
-  formatarPlanilha_(id);
+  formatarPlanilha_(id);  
 
   toast_('Formatação da Planilha de Contexto concluída.', 'Concluído', 6);
 }

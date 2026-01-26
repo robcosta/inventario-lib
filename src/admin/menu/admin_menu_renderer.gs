@@ -26,16 +26,28 @@ function adminRenderMenu_() {
 
 
   // ==========================================================
+// PASTAS DE TRABALHO
+// ==========================================================
+menu
+  .addSeparator()
+  .addSubMenu(
+    ui.createMenu('🗂️ Pastas de Trabalho')
+      .addItem('➕ Criar pasta', 'criarPastaTrabalho')
+      .addItem('🔁 Escolher pasta', 'escolherPastaTrabalho')
+  )
+  .addSeparator();
+ 
+  // ==========================================================
   // PROCESSAR IMAGEM - API VISION
   // ==========================================================
   menu
-    .addSeparator()
-    .addItem('🖼️ Processar Imagem (Teste)', 'processarImagem')
+    .addItem('🖼️ Processar Imagem', 'processarImagem')
     .addSeparator();
   // ==========================================================
   // PLANILHA GERAL
   // ==========================================================
   menu
+    .addSeparator()
     .addSubMenu(
       ui.createMenu('📘 Planilha Geral')
         .addItem('📂 Abrir Planilha', 'abrirPlanilhaGeral')
@@ -63,9 +75,7 @@ function adminRenderMenu_() {
   menu
     .addItem('🎨 Formatar Planilha Cliente', 'formatarPlanilhaCliente')
     .addSeparator()
-    .addItem('🗂️ Pastas de Trabalho', 'abrirPastasTrabalho')
     .addItem('🧪 Diagnóstico', 'executarDiagnostico');
-
   menu.addToUi();
 }
 

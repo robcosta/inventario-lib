@@ -1,75 +1,104 @@
 /**
  * ============================================================
- * CONTEXTO — UTILITÁRIOS
+ * CONTEXTO — UTILITÁRIOS (VERSÃO UNIFICADA E ROBUSTA)
  * ============================================================
+ * * Centraliza a inteligência de memória do sistema.
+ * Usa ScriptProperties para garantir que o Vision (Biblioteca)
+ * e a Planilha (Admin) acessem os mesmos dados.
  */
 
-function planilhaTemContexto_() {
-  return !!PropertiesService
-    .getDocumentProperties()
-    .getProperty('ADMIN_CONTEXTO_ATIVO');
+/**
+ * Retorna o objeto de contexto completo ou um objeto vazio se não existir.
+ */
+function obterContextoAtivo_() {
+  const props = PropertiesService.getScriptProperties();
+  const raw = props.getProperty('CONTEXTO_ATIVO');
+  
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.error("Erro ao ler JSON do contexto: " + e.message);
+    return {};
+  }
 }
 
-function gravarContextoAdmin_(nome) {
-  PropertiesService.getDocumentProperties().setProperty(
-    'ADMIN_CONTEXTO_ATIVO',
-    JSON.stringify({ nome, criadoEm: new Date().toISOString() })
+/**
+ * Salva o objeto de contexto de forma centralizada.
+ */
+function salvarContextoAtivo_(contexto) {
+  if (!contexto) return;
+  
+  PropertiesService.getScriptProperties().setProperty(
+    'CONTEXTO_ATIVO', 
+    JSON.stringify(contexto)
   );
 }
 
-function listarContextos_() {
+/**
+ * Atualiza campos específicos do contexto sem apagar o que já existe.
+ * Ex: salvarContextoAtivo_({ pastaTrabalhoId: '...' })
+ */
+function atualizarContexto_(novosDados) {
+  const contextoAtual = obterContextoAtivo_();
+  
+  // Mescla os dados atuais com as novas informações (Spread Operator)
+  const contextoMesclado = { ...contextoAtual, ...novosDados };
+  
+  salvarContextoAtivo_(contextoMesclado);
+}
 
+/**
+ * Verifica se a planilha atual já possui um contexto configurado.
+ */
+function planilhaTemContexto_() {
+  const contexto = obterContextoAtivo_();
+  return !!(contexto && contexto.planilhaOperacionalId);
+}
+
+/**
+ * Lista as pastas de contexto disponíveis no Drive para seleção.
+ */
+function listarContextos_() {
   const raiz = obterPastaInventario_();
   if (!raiz) return [];
 
-  const planilhas = raiz.getFoldersByName('PLANILHAS');
-  if (!planilhas.hasNext()) return [];
+  const pastasPlanilhas = raiz.getFoldersByName('PLANILHAS');
+  if (!pastasPlanilhas.hasNext()) return [];
 
-  const contextos = planilhas.next().getFoldersByName('CONTEXTOS');
-  if (!contextos.hasNext()) return [];
+  const contextosFolder = pastasPlanilhas.next().getFoldersByName('CONTEXTOS');
+  if (!contextosFolder.hasNext()) return [];
 
-  const it = contextos.next().getFolders();
+  const it = contextosFolder.next().getFolders();
   const lista = [];
 
   while (it.hasNext()) {
     const pastaContexto = it.next();
-
-    // 🔎 procura a planilha operacional dentro da pasta
     const files = pastaContexto.getFilesByType(MimeType.GOOGLE_SHEETS);
+    
     if (!files.hasNext()) continue;
 
     const planilha = files.next();
-
     lista.push({
       nome: pastaContexto.getName(),
       pastaId: pastaContexto.getId(),
       planilhaOperacionalId: planilha.getId()
     });
   }
-
   return lista;
 }
 
-
+/**
+ * Verifica se um contexto com determinado nome já existe no Drive.
+ */
 function contextoComNomeExiste_(nomeContexto) {
   const raiz = obterPastaInventario_();
   if (!raiz) return false;
 
-  const planilhas = raiz.getFoldersByName('PLANILHAS');
-  if (!planilhas.hasNext()) return false;
+  const pastasPlanilhas = raiz.getFoldersByName('PLANILHAS');
+  if (!pastasPlanilhas.hasNext()) return false;
 
-  const contextos = planilhas.next().getFoldersByName('CONTEXTOS');
-  if (!contextos.hasNext()) return false;
+  const contextosFolder = pastasPlanilhas.next().getFoldersByName('CONTEXTOS');
+  if (!contextosFolder.hasNext()) return false;
 
-  return contextos.next().getFoldersByName(nomeContexto).hasNext();
+  return contextosFolder.next().getFoldersByName(nomeContexto).hasNext();
 }
-
-function obterContextoAtivo_() {
-  const raw = PropertiesService
-    .getDocumentProperties()
-    .getProperty('ADMIN_CONTEXTO_ATIVO');
-
-  return raw ? JSON.parse(raw) : null;
-}
-
-

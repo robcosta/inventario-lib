@@ -4,19 +4,17 @@
  * ============================================================
  * Responsabilidades:
  * - Inicializar menu ADMIN
- * - Repassar comandos para a biblioteca
+ * - Encaminhar comandos para a biblioteca inventario
  *
  * ❌ Não contém lógica de negócio
  * ❌ Não contém regras
- * ❌ Não contém acesso a Drive/Sheets
+ * ❌ Não acessa Drive / Sheets diretamente
  * ============================================================
  */
 
-/**
- * ============================================================
+/* ============================================================
  * onOpen — ENTRADA DO ADMIN
- * ============================================================
- */
+ * ============================================================ */
 function onOpen() {
   try {
     inventario.adminRenderMenu(); // API pública da biblioteca
@@ -30,10 +28,8 @@ function onOpen() {
 }
 
 /* ============================================================
- * PROXIES DE MENU — CONTEXTO
- * ============================================================
- */
-
+ * PROXIES — CONTEXTO
+ * ============================================================ */
 function criarContextoTrabalho() {
   inventario.criarContextoTrabalho();
 }
@@ -43,28 +39,41 @@ function selecionarContextoTrabalho() {
 }
 
 /* ============================================================
- * PROXIES DE MENU — ACESSOS
- * ============================================================
- */
-
+ * PROXIES — ACESSOS
+ * ============================================================ */
 function gerenciarAcessosContexto() {
   inventario.gerenciarAcessosContexto();
 }
 
 /* ============================================================
- * PROXY — PROCESSAR IMAGENS (VISION)
- * ============================================================
- */
+ * PROXIES — PASTAS DE TRABALHO (IMAGENS)
+ * ============================================================ */
+function criarPastaTrabalho() {
+  inventario.criarPastaTrabalho();
+}
 
-function processarImagem() {
-  inventario.processarImagem();
+function escolherPastaTrabalho() {
+  inventario.escolherPastaTrabalho();
+}
+
+function abrirPastasTrabalho() {
+  inventario.abrirPastasTrabalho();
 }
 
 /* ============================================================
- * PROXIES DE MENU — PLANILHA GERAL
- * ============================================================
- */
+ * PROXIES — PROCESSAMENTO DE IMAGENS (VISION)
+ * ============================================================ */
+function processarImagem() {
+  inventario.processarImagem(); // teste/manual
+}
 
+function processarImagensDaPasta() {
+  inventario.processarImagensDaPasta(); // lote (quando ativar)
+}
+
+/* ============================================================
+ * PROXIES — PLANILHA GERAL
+ * ============================================================ */
 function abrirPlanilhaGeral() {
   inventario.abrirPlanilhaGeral();
 }
@@ -82,14 +91,8 @@ function criarOuRecriarPlanilhaGeral() {
 }
 
 /* ============================================================
- * PROXIES DE MENU — PLANILHA CONTEXTO
- * ============================================================
- */
-
-function formatarPlanilhaContexto() {
-  inventario.formatarPlanilhaContexto();
-}
-
+ * PROXIES — PLANILHA CONTEXTO
+ * ============================================================ */
 function importarCSVContexto() {
   inventario.importarCSVContexto();
 }
@@ -98,31 +101,24 @@ function popularPlanilhaContexto() {
   inventario.popularPlanilhaContexto();
 }
 
-/* ============================================================
- * PROXIES DE MENU — CLIENTE / SUPORTE
- * ============================================================
- */
-
-function formatarPlanilhaCliente() {
-  inventario.formatarPlanilhaCliente();
+function formatarPlanilhaContexto() {
+  inventario.formatarPlanilhaContexto();
 }
 
-function abrirPastasTrabalho() {
-  inventario.abrirPastasTrabalho();
+/* ============================================================
+ * PROXIES — CLIENTE / SUPORTE
+ * ============================================================ */
+function formatarPlanilhaCliente() {
+  inventario.formatarPlanilhaCliente();
 }
 
 function executarDiagnostico() {
   inventario.executarDiagnostico();
 }
 
-
-/**
- * ============================================================
- * CSV — ENTRYPOINT (TEMPLATE)
- * Chamado pelo HTML
- * ============================================================
- */
+/* ============================================================
+ * CSV — ENTRYPOINT (HTML)
+ * ============================================================ */
 function receberCSV(tipo, nomeArquivo, dataUrl) {
-  // Repassa a chamada vinda do HTML para a função pública da biblioteca
   return inventario.receberCSV(tipo, nomeArquivo, dataUrl);
 }
