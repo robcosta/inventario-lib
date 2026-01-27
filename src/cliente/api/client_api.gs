@@ -19,7 +19,3 @@ function clientAbrirPastaTrabalho() {
   _client_abrirPastaTrabalho();
 }
 
-/** IMAGENS */
-function clientProcessarImagens() {
-  _client_processarImagens();
-}
