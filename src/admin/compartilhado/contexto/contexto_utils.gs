@@ -38,7 +38,7 @@ function salvarContextoAtivo_(contexto) {
  * Atualiza campos específicos do contexto sem apagar o que já existe.
  * Ex: salvarContextoAtivo_({ pastaTrabalhoId: '...' })
  */
-function atualizarContexto_(novosDados) {
+function atualizarContexto__(novosDados) {
   const contextoAtual = obterContextoAtivo_();
   
   // Mescla os dados atuais com as novas informações (Spread Operator)

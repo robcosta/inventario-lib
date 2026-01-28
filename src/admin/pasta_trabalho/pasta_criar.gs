@@ -52,6 +52,20 @@ function criarPastaTrabalho_() {
     return;
   }
 
+  // 2️⃣B Verificar limite máximo de pastas por contexto (8 cores disponíveis)
+  // O limite é por contexto, não global
+  const totalPastasContexto = existentes.length;
+  if (totalPastasContexto >= CORES_DESTAQUE_LISTA.length) {
+    ui.alert(
+      '⚠️ Limite de Pastas Atingido',
+      'Máximo de ' + CORES_DESTAQUE_LISTA.length + ' pastas de trabalho por contexto.\n\n' +
+      'Contexto atual "' + contexto.nome + '" já possui: ' + totalPastasContexto + '\n\n' +
+      'Remova uma pasta existente antes de criar uma nova.',
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
   // 3️⃣ Cria pasta física no Drive
   const novaPasta = pastaRaiz.createFolder(nomeFinal);
   const idPasta = novaPasta.getId();

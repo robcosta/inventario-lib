@@ -3,7 +3,7 @@
  * MONTA INFORMAÇÕES DINÂMICAS DA PLANILHA CLIENTE
  * ============================================================
  */
-function cliente_montarInformacoes_(contexto) {
+function cliente_montarInformacoes__(contexto) {
   if (!contexto) return;
 
   const ss = SpreadsheetApp.getActive();

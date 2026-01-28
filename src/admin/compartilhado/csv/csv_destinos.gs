@@ -4,7 +4,7 @@
  * ============================================================
  */
 
-function obterPastaCSVGeral_() {
+function obterPastaCSVGeral__() {
   const geral = obterPastaGeral_();
   if (!geral) return null;
 
