@@ -37,18 +37,54 @@ function processarImagem() {
   }
 
   // ===== PASSO 1B: COMPLETAR CONTEXTO COM DADOS DO ADMIN =====
-  // Se não houver planilhaGeralId, tentar recuperar do contexto do ADMIN
+  // Obter planilhaGeralId APENAS das ScriptProperties (seguro)
   if (!contextoAtivo.planilhaGeralId) {
     try {
-      const adminCtx = docProps.getProperty('ADMIN_CONTEXTO_ATIVO');
-      if (adminCtx) {
-        const adminContexto = JSON.parse(adminCtx);
-        // Use a planilha operacional como a "geral" se não houver outra definida
-        contextoAtivo.planilhaGeralId = adminContexto.planilhaOperacionalId;
-        contextoAtivo.planilhaOperacionalId = adminContexto.planilhaOperacionalId;
+      const planilhaGeralId = obterPlanilhaGeralId_();
+      
+      if (planilhaGeralId) {
+        // Validar se a planilha existe e está acessível
+        try {
+          SpreadsheetApp.openById(planilhaGeralId);
+          contextoAtivo.planilhaGeralId = planilhaGeralId;
+        } catch (e) {
+          ui.alert(
+            '⚠️ Planilha Geral Inacessível',
+            'A Planilha Geral registrada não está acessível.\n\n' +
+            'Recrie a planilha pelo menu:\n' +
+            '📘 Planilha Geral > 🧱 Criar / Recriar',
+            ui.ButtonSet.OK
+          );
+          return;
+        }
+      } else {
+        ui.alert(
+          '⚠️ Planilha Geral Não Configurada',
+          'O sistema requer uma Planilha Geral para processar imagens.\n\n' +
+          '📋 Passos para configurar:\n' +
+          '1. Coloque os CSVs em: Inventario Patrimonial/PLANILHAS/GERAL/CSV_GERAL\n' +
+          '2. Menu: 📘 Planilha Geral > 🧱 Criar / Recriar',
+          ui.ButtonSet.OK
+        );
+        return;
+      }
+      
+      // Garantir que planilhaOperacionalId está definido
+      if (!contextoAtivo.planilhaOperacionalId) {
+        const adminCtx = docProps.getProperty('ADMIN_CONTEXTO_ATIVO');
+        if (adminCtx) {
+          const adminContexto = JSON.parse(adminCtx);
+          contextoAtivo.planilhaOperacionalId = adminContexto.planilhaOperacionalId;
+        }
       }
     } catch (e) {
-      console.warn('⚠️ Não foi possível recuperar planilhaGeralId do contexto admin:', e.message);
+      console.error('❌ Erro crítico ao obter planilhaGeralId:', e.message);
+      ui.alert(
+        '❌ Erro',
+        'Erro ao validar configuração do sistema.\n\n' + e.message,
+        ui.ButtonSet.OK
+      );
+      return;
     }
   }
 
