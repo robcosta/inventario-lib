@@ -78,22 +78,7 @@ function processarImagem() {
     contextoAtivo.corDestaque = identidade?.cor || '#1557B0';
   }
 
-  // ===== PASSO 4: MODAL DE PROGRESSO =====
-  const html = HtmlService.createHtmlOutput(`
-    <p style="font-family: sans-serif; font-size: 14px;">
-      <strong>⏳ Processando...</strong><br/>
-      Pasta: <strong>${nomePasta}</strong><br/>
-      <br/>
-      Esta janela será fechada automaticamente quando concluir.
-    </p>
-  `);
-  html.setWidth(400).setHeight(150);
-  ui.showModalDialog(html, 'Processamento em Andamento');
-
-  // Flag para rastrear se o modal foi aberto
-  let modalAberto = true;
-
-  // ===== PASSO 5: CHAMAR VISION COM WRAPPER =====
+  // ===== PASSO 4: CHAMAR VISION COM WRAPPER =====
   let resultado = null;
   try {
     resultado = processarPastaComVision_(contextoAtivo, {
@@ -108,14 +93,6 @@ function processarImagem() {
     });
   } catch (e) {
     console.error('❌ Exceção durante processamento:', e.message);
-    modalAberto = false;
-    
-    // Fechar o modal se ainda estiver aberto
-    try {
-      ui.closeModalDialog();
-    } catch (ex) {
-      // Modal pode não estar disponível
-    }
     
     ui.alert(
       '❌ Erro no Processamento',
@@ -125,7 +102,7 @@ function processarImagem() {
     return;
   }
 
-  // ===== PASSO 6: OBTER FEEDBACK COMPLETO =====
+  // ===== PASSO 5: OBTER FEEDBACK COMPLETO =====
   let feedback = null;
 
   if (resultado.sucesso) {
@@ -140,17 +117,7 @@ function processarImagem() {
     };
   }
 
-  // ===== PASSO 7: EXIBIR RESULTADO =====
-  // Fechar modal apenas se foi aberto com sucesso
-  if (modalAberto) {
-    try {
-      ui.closeModalDialog();
-    } catch (e) {
-      console.warn('⚠️ Erro ao fechar modal:', e.message);
-    }
-  }
-
-  // Construir mensagem detalhada
+  // ===== PASSO 6: EXIBIR RESULTADO =====
   let mensagemFinal = feedback.titulo + '\n\n';
 
   if (feedback.resumo) {
