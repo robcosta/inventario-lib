@@ -1,0 +1,17 @@
+{
+  "timeZone": "America/Sao_Paulo",
+  "runtimeVersion": "V8",
+  "exceptionLogging": "STACKDRIVER",
+  
+  "dependencies": {
+    "libraries": [
+      {
+        "userSymbol": "vision",
+        "libraryId": "1NFjE6RJzmeA1Fe2gvOgIacg1dBQJp3evKvPK9K3nztWKBMCUiZ6PH0QZ",
+        "version": "2",
+        "developmentMode": true
+      }
+    ]
+  }
+}
+

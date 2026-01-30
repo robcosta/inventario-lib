@@ -1,0 +1,19 @@
+# Apps Script
+.clasp.json
+.clasp/
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# txt 
+*.txt
+
+# zip
+*.zip
+
+versionamento.md
