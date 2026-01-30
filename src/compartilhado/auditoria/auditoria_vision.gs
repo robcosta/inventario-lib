@@ -15,10 +15,17 @@
 function obterLogsProcessamento_(planilhaId, abaControle = '__CONTROLE_PROCESSAMENTO__') {
   try {
     const ss = SpreadsheetApp.openById(planilhaId);
-    const aba = ss.getSheetByName(abaControle);
+    const abasPreferidas = [abaControle, '__CONTROLE_PROCESSAMENTO__', 'CONTROLE', 'Log'];
+    let aba = null;
+
+    for (const nome of abasPreferidas) {
+      if (!nome) continue;
+      aba = ss.getSheetByName(nome);
+      if (aba) break;
+    }
 
     if (!aba) {
-      console.warn(`⚠️ Aba "${abaControle}" não encontrada`);
+      console.warn(`⚠️ Aba de controle não encontrada (${abasPreferidas.filter(Boolean).join(', ')})`);
       return [];
     }
 
@@ -67,9 +74,9 @@ function resumirLogsProcessamento_(logs) {
   const resumo = logs.reduce(
     (acc, log) => {
       acc.total++;
-      if (log.status === 'OK' || log.status === 'SUCESSO') acc.sucesso++;
-      else if (log.status === 'ERRO') acc.erro++;
-      else acc.pendente++;
+      if (log.status === 'ERRO') acc.erro++;
+      else if (!log.status || log.status === 'PENDENTE') acc.pendente++;
+      else acc.sucesso++;
       return acc;
     },
     { total: 0, sucesso: 0, erro: 0, pendente: 0 }

@@ -100,7 +100,7 @@ function processarImagem() {
   );
 
   if (confirmacao !== ui.Button.YES) {
-    ui.alert('❌ Cancelado', 'Processamento cancelado pelo usuário.');
+    ui.alert('❌ Cancelado', 'Processamento cancelado pelo usuário.', ui.ButtonSet.OK);
     return;
   }
 
