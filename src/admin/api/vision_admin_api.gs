@@ -117,13 +117,18 @@ function processarImagem() {
 
   // ===== PASSO 3: BUSCAR COR DO DESTAQUE =====
   // Prioridade:
-  // 1. Cor armazenada no contexto (escolhida pelo usuário na planilha)
-  // 2. Cor da identidade da pasta (paleta automática)
+  // 1. Cor da identidade da pasta (paleta automática)
+  // 2. Cor armazenada no contexto (caso ainda exista)
   // 3. Cor padrão azul
-  if (!contextoAtivo.corDestaque) {
-    const identidade = gerenciarIdentidadePasta_(contextoAtivo.pastaTrabalhoId);
-    contextoAtivo.corDestaque = identidade?.cor || '#1557B0';
+  let corDestaque = null;
+  try {
+    const identidade = gerenciarIdentidadePasta_(contextoAtivo.pastaTrabalhoId, null, contextoAtivo);
+    corDestaque = identidade?.cor || null;
+  } catch (e) {
+    console.warn('processarImagem: falha ao obter cor da pasta:', e.message);
   }
+
+  contextoAtivo.corDestaque = corDestaque || contextoAtivo.corDestaque || '#1557B0';
 
   // ===== PASSO 4: CHAMAR VISION COM WRAPPER =====
   let resultado = null;

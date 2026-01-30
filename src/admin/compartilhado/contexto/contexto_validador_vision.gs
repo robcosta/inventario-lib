@@ -44,6 +44,20 @@ function validarContextoVision_(contexto) {
     return { valido: false, erros, avisos, contexto_normalizado: null };
   }
 
+  // ✅ BUSCAR COR DA PASTA (sempre prioriza a identidade da pasta)
+  let corDestaque = contexto.corDestaque || null;
+  if (contexto.pastaTrabalhoId) {
+    try {
+      const identidade = gerenciarIdentidadePasta_(contexto.pastaTrabalhoId, null, contexto);
+      if (identidade && identidade.cor) {
+        corDestaque = identidade.cor;
+      }
+    } catch (e) {
+      console.warn('Erro ao buscar cor da pasta:', e.message);
+    }
+  }
+  corDestaque = corDestaque || '#1557B0';
+
   // Obter nomes das planilhas
   let nomeContexto = 'Contexto';
   let nomeGeral = 'Geral';
@@ -65,7 +79,7 @@ function validarContextoVision_(contexto) {
     planilhaGeralId: contexto.planilhaGeralId,            // Planilha mãe (fallback de buscas)
     nomeContexto: nomeContexto,                           // Nome real da planilha de contexto
     nomeGeral: nomeGeral,                                 // Nome real da planilha geral
-    corDestaque: contexto.corDestaque || '#1557B0',
+    corDestaque: corDestaque, // ✅ Cor da pasta buscada acima
     ABA_CONTROLE: contexto.ABA_CONTROLE || '__CONTROLE_PROCESSAMENTO__'
   };
 
