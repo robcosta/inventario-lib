@@ -44,11 +44,27 @@ function validarContextoVision_(contexto) {
     return { valido: false, erros, avisos, contexto_normalizado: null };
   }
 
+  // Obter nomes das planilhas
+  let nomeContexto = 'Contexto';
+  let nomeGeral = 'Geral';
+  try {
+    nomeContexto = SpreadsheetApp.openById(contexto.planilhaOperacionalId).getName();
+  } catch (e) {
+    console.warn('Não foi possível obter nome da planilha de contexto');
+  }
+  try {
+    nomeGeral = SpreadsheetApp.openById(contexto.planilhaGeralId).getName();
+  } catch (e) {
+    console.warn('Não foi possível obter nome da planilha geral');
+  }
+
   // Normalizar contexto para vision-core
   // Obs: planilhaContextoId é usada TANTO para buscas QUANTO para registrar controle em uma aba específica
   const contextoPadronizado = {
     planilhaContextoId: contexto.planilhaOperacionalId,  // Planilha alvo (buscas + controle)
     planilhaGeralId: contexto.planilhaGeralId,            // Planilha mãe (fallback de buscas)
+    nomeContexto: nomeContexto,                           // Nome real da planilha de contexto
+    nomeGeral: nomeGeral,                                 // Nome real da planilha geral
     corDestaque: contexto.corDestaque || '#1557B0',
     ABA_CONTROLE: contexto.ABA_CONTROLE || '__CONTROLE_PROCESSAMENTO__'
   };
