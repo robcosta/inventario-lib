@@ -57,6 +57,7 @@ function escolherPastaTrabalho() {
 }
 
 function abrirPastasTrabalho() {
+  // Abre somente a pasta de trabalho atual, sem alterar a pasta padrão
   inventario.abrirPastasTrabalho();
 }
 

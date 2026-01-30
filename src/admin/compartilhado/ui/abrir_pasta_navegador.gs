@@ -8,7 +8,6 @@
  * @param {string} pastaId
  */
 function abrirPastaNoNavegador_(pastaId) {
-
   const url = `https://drive.google.com/drive/folders/${pastaId}`;
 
   const html = HtmlService.createHtmlOutput(

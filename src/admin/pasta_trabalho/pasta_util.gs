@@ -100,3 +100,30 @@ function definirPastaTrabalho_(pastaId, pastaNome) {
     SpreadsheetApp.getActive().toast(`📂 Pasta ativa: ${pastaNome}`, 'Inventário', 4);
   } catch (e) {}
 }
+
+/**
+ * Abre a pasta de trabalho ATUAL no navegador sem alterar o contexto.
+ */
+function abrirPastaTrabalhoAtual_() {
+  const ui = SpreadsheetApp.getUi();
+  const contexto = obterContextoAtivo_();
+
+  if (!contexto) {
+    ui.alert('Nenhum contexto ativo.');
+    return;
+  }
+
+  if (!contexto.pastaTrabalhoId) {
+    ui.alert('Nenhuma pasta de trabalho ativa.');
+    return;
+  }
+
+  abrirPastaNoNavegador_(contexto.pastaTrabalhoId);
+}
+
+/**
+ * Abre somente a pasta de trabalho atual, sem alterar a pasta padrão.
+ */
+function abrirPastasTrabalho_() {
+  abrirPastaTrabalhoAtual_();
+}

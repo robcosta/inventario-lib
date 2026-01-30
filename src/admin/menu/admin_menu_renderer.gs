@@ -32,8 +32,9 @@ menu
   .addSeparator()
   .addSubMenu(
     ui.createMenu('🗂️ Pastas de Trabalho')
-      .addItem('➕ Criar pasta', 'criarPastaTrabalho')
+      .addItem('📂 Abrir pasta de trabalho', 'abrirPastasTrabalho')
       .addItem('🔁 Escolher pasta', 'escolherPastaTrabalho')
+      .addItem('➕ Criar pasta', 'criarPastaTrabalho')
   )
   .addSeparator();
  

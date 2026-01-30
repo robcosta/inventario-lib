@@ -18,6 +18,9 @@ function escolherPastaTrabalho_() {
   }
 
   const pastaRaiz = DriveApp.getFolderById(contexto.pastaUnidadeId);
+  const pastaAtualId = contexto.pastaTrabalhoId; // ID da pasta atualmente ativa
+  const pastaAtualNome = contexto.pastaTrabalhoNome; // Nome da pasta atualmente ativa
+  
   const pastasTexto = [];
   const mapa = {};
   let index = 1;
@@ -25,23 +28,36 @@ function escolherPastaTrabalho_() {
 
   while (it.hasNext()) {
     const p = it.next();
+    // Pular a pasta atual da listagem
+    if (p.getId() === pastaAtualId) {
+      continue;
+    }
     pastasTexto.push(`${index} - ${p.getName()}`);
     mapa[index] = p;
     index++;
   }
 
   if (pastasTexto.length === 0) {
-    ui.alert('Nenhuma pasta disponível.');
+    ui.alert('Nenhuma outra pasta disponível.');
     return;
   }
 
+  // Montar mensagem com pasta atual no topo
+  let mensagem = 'Pasta atual: ' + (pastaAtualNome || 'NENHUMA') + '\n\n';
+  mensagem += 'Digite o NÚMERO da pasta:\n\n';
+  mensagem += pastasTexto.join('\n');
+
   const resp = ui.prompt(
     'Escolher pasta de trabalho',
-    'Digite o NÚMERO da pasta:\n\n' + pastasTexto.join('\n'),
+    mensagem,
     ui.ButtonSet.OK_CANCEL
   );
 
-  if (resp.getSelectedButton() !== ui.Button.OK) return;
+  // Se cancelar ou deixar em branco, manter pasta atual
+  if (resp.getSelectedButton() !== ui.Button.OK) {
+    ui.alert(`Pasta atual mantida: ${pastaAtualNome || 'NENHUMA'}`);
+    return;
+  }
 
   const numero = parseInt(resp.getResponseText(), 10);
   const pasta = mapa[numero];
@@ -58,8 +74,14 @@ function escolherPastaTrabalho_() {
   const contextoNovo = obterContextoAtivo_();
   atualizarLegendasPlanilhaContexto_(contextoNovo);
 
-  // ✅ 3. ABRIR NO NAVEGADOR
-  abrirPastaNoNavegador_(pasta.getId());
+  // ✅ 3. ABRIR NO NAVEGADOR (opcional)
+  const abrir = ui.alert(
+    'Abrir pasta no navegador?',
+    `Pasta ativa definida e legenda atualizada:\n\n${pasta.getName()}`,
+    ui.ButtonSet.YES_NO
+  );
 
-  ui.alert('Pasta ativa definida e legenda atualizada:\n\n' + pasta.getName());
+  if (abrir === ui.Button.YES) {
+    abrirPastaNoNavegador_(pasta.getId());
+  }
 }
