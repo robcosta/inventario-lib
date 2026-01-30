@@ -3,18 +3,18 @@
  * CORES OFICIAIS DE DESTAQUE — INVENTÁRIO
  * ============================================================
  *
- * Paleta MUITO clara, suave e contrastante.
+ * Paleta viva e saturada, com bom contraste para texto preto.
  * Máximo de 8 cores por contexto.
  */
 const CORES_DESTAQUE = {
-  AZUL:     '#EBF3FB',   // Azul muito claro
-  VERDE:    '#EEF5ED',   // Verde muito claro
-  AMARELO:  '#FFFDF0',   // Amarelo muito claro
-  LARANJA:  '#FFF6F0',   // Laranja muito claro
-  ROSA:     '#FDEEF2',   // Rosa muito claro
-  ROXO:     '#F3ECFC',   // Roxo muito claro
-  CINZA:    '#F8F8F8',   // Cinza muito claro
-  TURQUESA: '#ECFAF9'    // Turquesa muito claro
+  AZUL:     '#0066FF',   // Azul vivo
+  VERDE:    '#10B981',   // Verde vivo
+  AMARELO:  '#FBBF24',   // Amarelo vivo
+  LARANJA:  '#F97316',   // Laranja vivo
+  ROSA:     '#EC4899',   // Rosa vivo
+  ROXO:     '#A855F7',   // Roxo vivo
+  VERMELHO: '#DC2626',   // Vermelho vivo
+  TURQUESA: '#14B8A6'    // Turquesa vivo
 };
 
 /**

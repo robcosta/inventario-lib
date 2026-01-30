@@ -42,17 +42,17 @@ function selecionarContextoTrabalho_() {
   Logger.log('Nome Atual:', nomeAtual);
 
   let mensagem =
-    'Pasta atual: ' + nomeAtual +
+    'Contexto atual: ' + nomeAtual +
     '\n\nSelecione o contexto que deseja abrir:\n\n';
 
-  // Listar TODAS as pastas, marcando a atual com ✓
+  // Listar TODOS os contextos, marcando o atual com ✓
   contextos.forEach((ctx, i) => {
     const marcador = (ctx.planilhaOperacionalId === idAtual || ctx.planilhaContextoId === idAtual) ? '✓ ' : '';
     mensagem += `${i + 1} - ${marcador}${ctx.nome}\n`;
   });
 
   const resp = ui.prompt(
-    'Escolher pasta de trabalho',
+    'Selecionar Contexto de Trabalho',
     mensagem,
     ui.ButtonSet.OK_CANCEL
   );
@@ -68,9 +68,9 @@ function selecionarContextoTrabalho_() {
 
   const escolhido = contextos[indice - 1];
 
-  // Se escolheu a atual, apenas avisa
+  // Se escolheu o atual, apenas avisa
   if (escolhido.planilhaOperacionalId === idAtual || escolhido.planilhaContextoId === idAtual) {
-    ui.alert(`Você já está na pasta "${escolhido.nome}".`);
+    ui.alert(`Você já está no contexto "${escolhido.nome}".`);
     return;
   }
 

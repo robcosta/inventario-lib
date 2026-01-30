@@ -71,7 +71,7 @@ function criarPastaTrabalho_() {
   const idPasta = novaPasta.getId();
 
   // 4️⃣ SALVA IDENTIDADE (ID + NOME + COR CLARA)
-  gerenciarIdentidadePasta_(idPasta, nomeFinal);
+  gerenciarIdentidadePasta_(idPasta, nomeFinal, contexto);
 
   // 5️⃣ Define como pasta ATIVA
   definirPastaTrabalho_(idPasta, nomeFinal);

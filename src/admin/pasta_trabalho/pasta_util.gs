@@ -9,17 +9,17 @@
  * Usa CORES_DESTAQUE_LISTA (8 cores predefinidas).
  * Impede que duas pastas tenham a mesma cor.
  */
-function gerenciarIdentidadePasta_(id, nome = null) {
+function gerenciarIdentidadePasta_(id, nome = null, contexto = null) {
   const props = PropertiesService.getScriptProperties();
   const CHAVE = "ID_PASTA_" + id;
 
   if (nome) {
-    const todasProps = props.getProperties();
-    
-    // 1. Descobrir quais cores já estão sendo usadas por outras pastas
-    const coresEmUso = Object.keys(todasProps)
-      .filter(k => k.startsWith("ID_PASTA_") && k !== CHAVE)
-      .map(k => todasProps[k].split("|")[1]);
+    const contextoAtual = contexto || obterContextoAtivo_();
+
+    // 1. Descobrir quais cores já estão sendo usadas no contexto atual
+    const coresEmUso = contextoAtual
+      ? obterPastasVivas_(contextoAtual).map(p => p.cor).filter(Boolean)
+      : [];
 
     // 2. Encontrar a primeira cor de CORES_DESTAQUE_LISTA que NÃO está em uso
     let corEscolhida = CORES_DESTAQUE_LISTA.find(cor => !coresEmUso.includes(cor));
