@@ -29,7 +29,10 @@ function obterLogsProcessamento_(planilhaId, abaControle = '__CONTROLE_PROCESSAM
       return [];
     }
 
-    // Esperado: [timestamp, arquivo, status, erro, detalhes]
+    // Schema esperado (SCHEMA_CONTROLE_COLUNAS):
+    // [Data/Hora, File ID, Nome original, Nome final, Status, Planilha, Linha, 
+    //  Tipo Identificador, Valor Identificador, Origem Identificador, 
+    //  Tipo de Alteração, Tempo Processamento (ms), Operador, Observação]
     const dados = aba.getDataRange().getValues();
 
     if (dados.length < 2) {
@@ -40,10 +43,19 @@ function obterLogsProcessamento_(planilhaId, abaControle = '__CONTROLE_PROCESSAM
     const logs = dados.slice(1).map((row, idx) => ({
       linha: idx + 2,
       timestamp: row[0],
-      arquivo: row[1] || '',
-      status: row[2] || 'PENDENTE',
-      erro: row[3] || '',
-      detalhes: row[4] || ''
+      fileId: row[1] || '',
+      nomeOriginal: row[2] || '',
+      nomeFinal: row[3] || '',
+      status: row[4] || 'PENDENTE',
+      planilha: row[5] || '',
+      linhaPlanilha: row[6] || '',
+      tipoIdentificador: row[7] || '',
+      valorIdentificador: row[8] || '',
+      origemIdentificador: row[9] || '',
+      tipoAlteracao: row[10] || '',
+      tempoProcessamentoMs: row[11] || 0,
+      operador: row[12] || '',
+      observacao: row[13] || ''
     }));
 
     return logs;
@@ -90,8 +102,8 @@ function resumirLogsProcessamento_(logs) {
     tempo_inicio: logs.length > 0 ? logs[0].timestamp : null,
     tempo_fim: logs.length > 0 ? logs[logs.length - 1].timestamp : null,
     erros_lista: logs
-      .filter(l => l.status === 'ERRO' && l.erro)
-      .map(l => `• ${l.arquivo}: ${l.erro}`)
+      .filter(l => l.status === 'ERRO' && l.observacao)
+      .map(l => `• ${l.nomeOriginal}: ${l.observacao}`)
       .slice(0, 5) // Primeiros 5 erros
   };
 }
