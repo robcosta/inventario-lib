@@ -124,11 +124,9 @@ function criarContextoTrabalho_() {
     adminRenderMenu_();
 
     ui.alert(
-      'Contexto criado com sucesso.\n\n' +
-      'A planilha será reaberta para garantir consistência.'
+      'Contexto criado com sucesso!\n\n' +
+      'Feche e reabra a planilha para ver o menu atualizado.'
     );
-
-    SpreadsheetApp.openById(planilhaOperacional.getId());
 
     Logger.log('[BOOTSTRAP][ADMIN] criarContextoTrabalho - FIM');
   }

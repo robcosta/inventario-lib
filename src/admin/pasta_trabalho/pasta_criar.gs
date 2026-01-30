@@ -77,7 +77,25 @@ function criarPastaTrabalho_() {
   definirPastaTrabalho_(idPasta, nomeFinal);
 
   // 6️⃣ Atualiza legendas (Lógica de busca total e fundo branco)
-  atualizarLegendasPlanilhaContexto_(contexto);
+  // Com tratamento de erro em caso de falha ao acessar a planilha
+  try {
+    const contextoNovo = obterContextoAtivo_();
+    if (contextoNovo && contextoNovo.planilhaOperacionalId) {
+      atualizarLegendasPlanilhaContexto_(contextoNovo);
+    } else {
+      console.warn('criarPastaTrabalho_: Contexto ou planilhaOperacionalId não disponível para atualizar legendas');
+    }
+  } catch (e) {
+    console.error('criarPastaTrabalho_: Erro ao atualizar legendas:', e.message);
+    ui.alert(
+      '⚠️ Pasta criada com sucesso!\n\n' +
+      'Mas houve um erro ao atualizar a legenda da planilha:\n\n' +
+      e.message + '\n\n' +
+      'A pasta está ativa e pronta para usar. ' +
+      'Você pode atualizar a legenda manualmente através do menu Planilha Contexto > Formatar'
+    );
+    return;
+  }
 
-  ui.alert('Pasta criada e definida como ativa:\n\n' + nomeFinal);
+  ui.alert('✅ Pasta criada e definida como ativa:\n\n' + nomeFinal);
 }

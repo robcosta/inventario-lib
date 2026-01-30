@@ -11,11 +11,39 @@
  * Retorna o objeto de contexto completo ou um objeto vazio se não existir.
  */
 function obterContextoAtivo_() {
-  const props = PropertiesService.getScriptProperties();
-  const raw = props.getProperty('CONTEXTO_ATIVO');
-  
+  const docProps = PropertiesService.getDocumentProperties();
+  const rawDoc = docProps.getProperty('ADMIN_CONTEXTO_ATIVO');
+
   try {
-    return raw ? JSON.parse(raw) : {};
+    if (rawDoc) {
+      const contextoDoc = JSON.parse(rawDoc);
+      const planilhaAtivaId = SpreadsheetApp.getActiveSpreadsheet().getId();
+
+      if (contextoDoc && contextoDoc.planilhaOperacionalId === planilhaAtivaId) {
+        return contextoDoc;
+      }
+
+      // Contexto não pertence a esta planilha (ex.: template/copias)
+      docProps.deleteProperty('ADMIN_CONTEXTO_ATIVO');
+      return {};
+    }
+
+    // Compatibilidade: migra contexto antigo salvo em ScriptProperties
+    const scriptProps = PropertiesService.getScriptProperties();
+    const rawScript = scriptProps.getProperty('CONTEXTO_ATIVO');
+    if (!rawScript) return {};
+
+    const contextoScript = JSON.parse(rawScript);
+    const planilhaAtivaId = SpreadsheetApp.getActiveSpreadsheet().getId();
+
+    // Migra somente se o contexto for desta planilha
+    if (contextoScript && contextoScript.planilhaOperacionalId === planilhaAtivaId) {
+      docProps.setProperty('ADMIN_CONTEXTO_ATIVO', JSON.stringify(contextoScript));
+      scriptProps.deleteProperty('CONTEXTO_ATIVO');
+      return contextoScript;
+    }
+
+    return {};
   } catch (e) {
     console.error("Erro ao ler JSON do contexto: " + e.message);
     return {};
@@ -27,11 +55,14 @@ function obterContextoAtivo_() {
  */
 function salvarContextoAtivo_(contexto) {
   if (!contexto) return;
-  
-  PropertiesService.getScriptProperties().setProperty(
-    'CONTEXTO_ATIVO', 
+
+  PropertiesService.getDocumentProperties().setProperty(
+    'ADMIN_CONTEXTO_ATIVO', 
     JSON.stringify(contexto)
   );
+
+  // Garante que não fique contexto legado no ScriptProperties
+  PropertiesService.getScriptProperties().deleteProperty('CONTEXTO_ATIVO');
 }
 
 /**

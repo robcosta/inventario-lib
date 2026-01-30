@@ -36,6 +36,17 @@ function processarImagem() {
     return;
   }
 
+  // ✅ VALIDAÇÃO: Verificar se a pasta ativa ainda existe
+  if (!verificarSePastaExiste_(contextoAtivo.pastaTrabalhoId)) {
+    ui.alert(
+      '⚠️ Pasta de Trabalho Deletada',
+      'A pasta de trabalho ativa foi deletada ou está na lixeira.\n\n' +
+      'Escolha outra pasta ou crie uma nova no menu:\n' +
+      '🗂️ Pastas de Trabalho'
+    );
+    return;
+  }
+
   // ===== PASSO 1B: COMPLETAR CONTEXTO COM DADOS DO ADMIN =====
   // Obter planilhaGeralId APENAS das ScriptProperties (seguro)
   if (!contextoAtivo.planilhaGeralId) {
