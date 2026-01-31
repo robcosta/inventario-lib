@@ -4,7 +4,7 @@
  * ============================================================
  */
 function formatarPlanilha_(spreadsheetId) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SpreadsheetApp.openById(spreadsheetId);
 
   const sheets = ss.getSheets();
   const contexto = obterContextoAtivo_(); // Obtém contexto para a legenda
