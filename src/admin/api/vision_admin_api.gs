@@ -47,25 +47,57 @@ function processarImagem() {
     return;
   }
 
-  // ===== VALIDAÇÃO: PLANILHAS DEVEM ESTAR FORMATADAS =====
-  // Antes de processar, garante que Contexto e Geral estão formatadas
-  try {
-    ui.showModelessDialog(
-      HtmlService.createHtmlOutput('<p>⏳ Verificando formatação das planilhas...</p>'),
-      'Processamento'
+  // ===== VALIDAÇÃO: VERIFICAR FORMATAÇÃO DAS PLANILHAS =====
+  const contextoFormatado = validarPlanilhaContextoFormatada_();
+  const geralFormatado = validarPlanilhaGeralFormatada_();
+  
+  // Se alguma planilha não estiver formatada
+  if (!contextoFormatado || !geralFormatado) {
+    let planilhasNaoFormatadas = [];
+    if (!contextoFormatado) planilhasNaoFormatadas.push('📋 Contexto');
+    if (!geralFormatado) planilhasNaoFormatadas.push('📋 Geral');
+    
+    const planilhaNaoFormatada = planilhasNaoFormatadas.join('\n');
+    
+    const resposta = ui.alert(
+      '⚠️ Planilhas Não Formatadas',
+      `Processamento de imagens requer que todas as planilhas estejam formatadas.\n\n` +
+      `Planilha(s) que precisa(m) de formatação:\n${planilhaNaoFormatada}\n\n` +
+      `Deseja formatar agora?`,
+      ui.ButtonSet.YES_NO
     );
     
-    // Formatar Planilha Contexto (ativa)
-    formatarPlanilhaContexto_();
+    // Se usuário clicou NÃO
+    if (resposta !== ui.Button.YES) {
+      ui.alert('❌ Cancelado', 'Processamento cancelado. Formate as planilhas e tente novamente.', ui.ButtonSet.OK);
+      return;
+    }
     
-    // Formatar Planilha Geral
-    formatarPlanilhaGeral_();
-    
-    ui.close();
-  } catch (e) {
-    console.warn('⚠️ Erro ao formatar planilhas automaticamente:', e.message);
-    ui.close();
-    // Continua mesmo se a formatação falhar - não é bloqueante
+    // Formatar apenas as planilhas que precisam
+    try {
+      if (!contextoFormatado) {
+        formatarPlanilhaContexto_();
+      }
+      if (!geralFormatado) {
+        formatarPlanilhaGeral_();
+      }
+      
+      ui.alert(
+        '✅ Formatação Concluída',
+        'Planilhas formatadas com sucesso!\n\n' +
+        'É necessário reiniciar o processamento das imagens.\n\n' +
+        'Acione "Processar Imagens" novamente.',
+        ui.ButtonSet.OK
+      );
+    } catch (e) {
+      console.error('Erro ao formatar planilhas:', e.message);
+      ui.alert(
+        '❌ Erro na Formatação',
+        'Ocorreu um erro ao formatar as planilhas:\n\n' + e.message,
+        ui.ButtonSet.OK
+      );
+    }
+    return;
   }
 
   // ===== PASSO 1B: COMPLETAR CONTEXTO COM DADOS DO ADMIN =====
