@@ -28,34 +28,34 @@ function validarPlanilhaFormatada_(spreadsheetId) {
       // Pula abas de controle
       if (nomAba === '__CONTROLE_PROCESSAMENTO__') continue;
       
-      // Verifica se tem dados na primeira linha (cabeçalho)
-      const firstCell = sheet.getRange(1, 1);
-      const cellValue = firstCell.getValue();
-      
-      // Se primeira célula está vazia, provavelmente não está formatada
-      if (!cellValue || String(cellValue).trim() === '') {
-        continue;
+      const lastRow = sheet.getLastRow();
+      const lastCol = sheet.getLastColumn();
+      if (lastRow < 1 || lastCol < 1) continue;
+
+      // Buscar a linha de cabeçalho (Tombamento) na coluna A
+      const maxScan = Math.min(lastRow, 200);
+      const colA = sheet.getRange(1, 1, maxScan, 1).getValues().flat();
+      let linhaHeader = -1;
+      for (let r = 0; r < colA.length; r++) {
+        const val = String(colA[r] || '').trim().toUpperCase();
+        if (val.startsWith('TOMBAMENTO')) {
+          linhaHeader = r + 1;
+          break;
+        }
       }
-      
-      // Verifica se cabeçalho tem background color (formatação aplicada)
-      const backgroundColor = firstCell.getBackground();
-      
-      // Se tem cor diferente de branco, indica formatação
-      if (backgroundColor && backgroundColor !== '#ffffff' && backgroundColor !== '') {
-        return true;
-      }
-      
-      // Se tem font weight bold, também indica formatação
-      const fontWeight = firstCell.getFontWeight();
-      if (fontWeight === 'bold') {
-        return true;
-      }
-      
-      // Se chegou aqui, verifica a segunda célula também
-      const secondCell = sheet.getRange(1, 2);
-      const secondBG = secondCell.getBackground();
-      if (secondBG && secondBG !== '#ffffff' && secondBG !== '') {
-        return true;
+
+      // Se não encontrar a linha de cabeçalho, tenta a linha 1 como fallback
+      const linhaAlvo = (linhaHeader !== -1) ? linhaHeader : 1;
+      const colunasParaVerificar = Math.min(lastCol, 3);
+      const rangeHeader = sheet.getRange(linhaAlvo, 1, 1, colunasParaVerificar);
+      const backgrounds = rangeHeader.getBackgrounds()[0];
+      const fontWeights = rangeHeader.getFontWeights()[0];
+
+      for (let c = 0; c < colunasParaVerificar; c++) {
+        const bg = backgrounds[c];
+        const fw = fontWeights[c];
+        if (bg && bg !== '#ffffff' && bg !== '') return true;
+        if (fw && fw.toLowerCase() === 'bold') return true;
       }
     }
     

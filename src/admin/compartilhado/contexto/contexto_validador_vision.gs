@@ -80,6 +80,8 @@ function validarContextoVision_(contexto) {
     nomeContexto: nomeContexto,                           // Nome real da planilha de contexto
     nomeGeral: nomeGeral,                                 // Nome real da planilha geral
     corDestaque: corDestaque, // ✅ Cor da pasta buscada acima
+    pastaTrabalhoId: contexto.pastaTrabalhoId,            // ✅ ID da pasta (necessário para buscar nome)
+    pastaTrabalhoNome: contexto.pastaTrabalhoNome,        // ✅ Nome da pasta (para preencher localidade)
     ABA_CONTROLE: contexto.ABA_CONTROLE || '__CONTROLE_PROCESSAMENTO__'
   };
 
