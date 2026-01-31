@@ -47,6 +47,27 @@ function processarImagem() {
     return;
   }
 
+  // ===== VALIDAÇÃO: PLANILHAS DEVEM ESTAR FORMATADAS =====
+  // Antes de processar, garante que Contexto e Geral estão formatadas
+  try {
+    ui.showModelessDialog(
+      HtmlService.createHtmlOutput('<p>⏳ Verificando formatação das planilhas...</p>'),
+      'Processamento'
+    );
+    
+    // Formatar Planilha Contexto (ativa)
+    formatarPlanilhaContexto_();
+    
+    // Formatar Planilha Geral
+    formatarPlanilhaGeral_();
+    
+    ui.close();
+  } catch (e) {
+    console.warn('⚠️ Erro ao formatar planilhas automaticamente:', e.message);
+    ui.close();
+    // Continua mesmo se a formatação falhar - não é bloqueante
+  }
+
   // ===== PASSO 1B: COMPLETAR CONTEXTO COM DADOS DO ADMIN =====
   // Obter planilhaGeralId APENAS das ScriptProperties (seguro)
   if (!contextoAtivo.planilhaGeralId) {
