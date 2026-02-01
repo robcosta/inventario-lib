@@ -1,4 +1,4 @@
-## v3.1.0 – 2026-01-28
+## v0.13.0 – 2026-01-28
 
 ### ✨ Novo - Sistema de Cores de Destaque Refatorado
 

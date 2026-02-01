@@ -1,9 +1,9 @@
-# 📌 VERSIONAMENTO v3.1.0 (28/01/2026)
+# 📌 VERSIONAMENTO v0.13.0 (28/01/2026)
 
 ## Resumo das Mudanças
 
 ### Tipo de Release
-- **Versão**: 3.1.0 (MINOR version bump)
+- **Versão**: 0.13.0 (MINOR version bump)
 - **Classificação**: Feature + Bug Fixes
 - **Escopo**: Sistema de cores, validação de limite de pastas, tratamento de erros
 
