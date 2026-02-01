@@ -31,13 +31,29 @@ function onOpen(e) {
  */
 
 function clientAtualizarInformacoes() {
-  clientAtualizarInformacoes();
+  inventario.clientAtualizarInformacoes();
 }
 
 function clientAbrirPastaTrabalho() {
-  clientAbrirPastaTrabalho();
+  inventario.clientAbrirPastaTrabalho();
 }
 
 function clientProcessarImagens() {
-  clientProcessarImagens();
+  inventario.clientProcessarImagens();
+}
+
+function clientEscolherPastaTrabalho() {
+  inventario.clientEscolherPastaTrabalho();
+}
+
+function clientCriarPastaTrabalho() {
+  inventario.clientCriarPastaTrabalho();
+}
+
+function clientAbrirPlanilhaGeral() {
+  inventario.clientAbrirPlanilhaGeral();
+}
+
+function clientAbrirPlanilhaContexto() {
+  inventario.clientAbrirPlanilhaContexto();
 }

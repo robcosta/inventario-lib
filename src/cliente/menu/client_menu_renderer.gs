@@ -18,7 +18,16 @@ function renderMenuClient() {
   menu
     .addItem('🔄 Atualizar Informações', 'clientAtualizarInformacoes')
     .addSeparator()
-    .addItem('📂 Abrir Pasta de Trabalho', 'clientAbrirPastaTrabalho')
-    .addItem('▶️ Processar Imagens', 'clientProcessarImagens')
+    .addSubMenu(
+      ui.createMenu('🗂️ Pastas de Trabalho')
+        .addItem('📂 Abrir pasta de trabalho', 'clientAbrirPastaTrabalho')
+        .addItem('🔁 Escolher pasta', 'clientEscolherPastaTrabalho')
+        .addItem('➕ Criar pasta', 'clientCriarPastaTrabalho')
+    )
+    .addSeparator()
+    .addItem('🖼️ Processar Imagens', 'clientProcessarImagens')
+    .addSeparator()
+    .addItem('📘 Abrir Planilha Geral', 'clientAbrirPlanilhaGeral')
+    .addItem('📗 Abrir Planilha Contexto', 'clientAbrirPlanilhaContexto')
     .addToUi();
 }

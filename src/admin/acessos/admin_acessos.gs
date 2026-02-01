@@ -63,13 +63,24 @@ function gerenciarAcessosContexto_() {
         .addEditor(email);
     }
 
+    // ========================================================
+    // 📄 PLANILHA GERAL — LEITOR
+    // ========================================================
+    const planilhaGeral = obterPlanilhaGeral_();
+    if (planilhaGeral) {
+      DriveApp
+        .getFileById(planilhaGeral.getId())
+        .addViewer(email);
+    }
+
     const mensagemCliente =
       '✅ Acesso liberado ao Inventário Patrimonial\n\n' +
       'Contexto: ' + contexto.nome + '\n\n' +
       'Você recebeu:\n' +
       '• Editor na pasta de trabalho\n' +
       '• Editor na planilha do cliente\n' +
-      '• Leitura na planilha administrativa\n\n' +
+      '• Leitura na planilha administrativa\n' +
+      '• Leitura na planilha geral\n\n' +
       '📁 Pasta de trabalho:\n' +
       pasta.getUrl() + '\n\n' +
       'Utilize o menu da planilha para operar o inventário.';

@@ -16,6 +16,28 @@ function clientAtualizarInformacoes() {
 
 /** PASTA */
 function clientAbrirPastaTrabalho() {
-  _client_abrirPastaTrabalho();
+  abrirPastasTrabalho();
+}
+
+function clientEscolherPastaTrabalho() {
+  escolherPastaTrabalho();
+}
+
+function clientCriarPastaTrabalho() {
+  criarPastaTrabalho();
+}
+
+/** PROCESSAMENTO */
+function clientProcessarImagens() {
+  processarImagem();
+}
+
+/** PLANILHAS */
+function clientAbrirPlanilhaGeral() {
+  abrirPlanilhaGeral();
+}
+
+function clientAbrirPlanilhaContexto() {
+  abrirPlanilhaContexto_();
 }
 
