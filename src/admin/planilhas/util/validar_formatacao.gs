@@ -46,7 +46,7 @@ function validarPlanilhaFormatada_(spreadsheetId) {
 
       // Se não encontrar a linha de cabeçalho, tenta a linha 1 como fallback
       const linhaAlvo = (linhaHeader !== -1) ? linhaHeader : 1;
-      const colunasParaVerificar = Math.min(lastCol, 3);
+      const colunasParaVerificar = Math.min(lastCol, 4); // Aumenta para 4 para incluir Localização
       const rangeHeader = sheet.getRange(linhaAlvo, 1, 1, colunasParaVerificar);
       const backgrounds = rangeHeader.getBackgrounds()[0];
       const fontWeights = rangeHeader.getFontWeights()[0];

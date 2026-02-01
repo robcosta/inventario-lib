@@ -59,10 +59,6 @@ function formatarPlanilha_(spreadsheetId) {
       }
 
       if (valA.startsWith('Tombamento')) {
-        if (data[i][7] !== '') {
-          data[i][8] = data[i][7];
-          data[i][7] = '';
-        }
         blocos.tombamentoHeader.push(linha);
         continue;
       }
