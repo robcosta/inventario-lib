@@ -75,9 +75,12 @@ function criarOuRecriarPlanilhaGeral_() {
 
   while (files.hasNext()) {
     const file = files.next();
-    const dados = lerCSV_(file);
+    let dados = lerCSV_(file);
 
     if (!dados || !dados.length) continue;
+
+    // Adiciona coluna "Localização" para a Planilha Geral
+    dados = adicionarLocalizacaoNoCSV_(dados);
 
     const nomeAba = nomeAbaPorCSV_(file.getName());
     const sheet = ss.insertSheet(nomeAba);
