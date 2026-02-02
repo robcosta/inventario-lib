@@ -4,20 +4,53 @@
  * ============================================================
  */
 
+/**
+ * Obtém a pasta raiz do inventário
+ * Prioridade: ScriptProperties -> Busca no Drive
+ * @return {GoogleAppsScript.Drive.Folder|null}
+ */
 function obterPastaInventario_() {
+  // 1️⃣ Tentar via configuração global
+  const sistemaGlobal = obterSistemaGlobal_();
+  
+  if (sistemaGlobal.pastaRaizId) {
+    try {
+      return DriveApp.getFolderById(sistemaGlobal.pastaRaizId);
+    } catch (e) {
+      Logger.log('[UTILS] ID salvo inválido, buscando no Drive...');
+    }
+  }
+  
+  // 2️⃣ Fallback: busca no Drive
   const it = DriveApp.getFoldersByName('Inventario Patrimonial');
-  return it.hasNext() ? it.next() : null;
+  
+  if (!it.hasNext()) return null;
+  
+  const pasta = it.next();
+  
+  // 3️⃣ Sincroniza o ID para uso futuro
+  atualizarSistemaGlobal_({ pastaRaizId: pasta.getId() });
+  
+  return pasta;
 }
 
+/**
+ * Obtém ou cria uma subpasta
+ * @param {GoogleAppsScript.Drive.Folder} pai
+ * @param {string} nome
+ * @return {GoogleAppsScript.Drive.Folder}
+ */
 function obterOuCriarSubpasta_(pai, nome) {
   const it = pai.getFoldersByName(nome);
   return it.hasNext() ? it.next() : pai.createFolder(nome);
 }
 
+/**
+ * Verifica se a planilha tem contexto admin
+ * @return {boolean}
+ */
 function admin_planilhaTemContexto_() {
-  return !!PropertiesService
-    .getDocumentProperties()
-    .getProperty('ADMIN_CONTEXTO_ATIVO');
+  return planilhaTemContextoAdmin_();
 }
 
 /**

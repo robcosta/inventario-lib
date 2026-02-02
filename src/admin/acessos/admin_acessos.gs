@@ -39,28 +39,43 @@ function gerenciarAcessosContexto_() {
   }
 
   try {
+    // Função helper para compartilhar sem enviar email
+    const compartilharSemEmail = (fileId, role) => {
+      try {
+        Drive.Permissions.insert(
+          {
+            role: role,
+            type: 'user',
+            value: email
+          },
+          fileId,
+          {
+            sendNotificationEmails: false
+          }
+        );
+      } catch (e) {
+        Logger.log('[ACESSOS][ERRO] Falha ao compartilhar ' + fileId + ': ' + e.message);
+        throw e;
+      }
+    };
+
     // ========================================================
     // 📁 PASTA — EDITOR
     // ========================================================
-    const pasta = DriveApp.getFolderById(contexto.pastaUnidadeId);
-    pasta.addEditor(email);
+    compartilharSemEmail(contexto.pastaUnidadeId, 'writer');
 
     // ========================================================
     // 📄 PLANILHA OPERACIONAL (ADMIN) — LEITOR
     // ========================================================
     if (contexto.planilhaOperacionalId) {
-      DriveApp
-        .getFileById(contexto.planilhaOperacionalId)
-        .addViewer(email);
+      compartilharSemEmail(contexto.planilhaOperacionalId, 'reader');
     }
 
     // ========================================================
     // 📄 PLANILHA CLIENTE — EDITOR
     // ========================================================
     if (contexto.planilhaClienteId) {
-      DriveApp
-        .getFileById(contexto.planilhaClienteId)
-        .addEditor(email);
+      compartilharSemEmail(contexto.planilhaClienteId, 'writer');
     }
 
     // ========================================================
@@ -68,9 +83,54 @@ function gerenciarAcessosContexto_() {
     // ========================================================
     const planilhaGeral = obterPlanilhaGeral_();
     if (planilhaGeral) {
-      DriveApp
-        .getFileById(planilhaGeral.getId())
-        .addViewer(email);
+      compartilharSemEmail(planilhaGeral.getId(), 'reader');
+    }
+
+    // ========================================================
+    // 📚 BIBLIOTECAS — LEITOR
+    // ========================================================
+    const INVENTARIO_LIB_ID = '1YN4VjP1qoU9868tbfxU50IMejfkvyb5PWM8GphMFr5Wj6GqV3oOU4Vef';
+    const VISION_CORE_ID = '1NFjE6RJzmeA1Fe2gvOgIacg1dBQJp3evKvPK9K3nztWKBMCUiZ6PH0QZ';
+    
+    try {
+      compartilharSemEmail(INVENTARIO_LIB_ID, 'reader');
+      compartilharSemEmail(VISION_CORE_ID, 'reader');
+    } catch (e) {
+      Logger.log('[ACESSOS][AVISO] Não foi possível compartilhar bibliotecas: ' + e.message);
+    }
+
+    // ========================================================
+    // 📧 ENVIAR EMAIL ÚNICO
+    // ========================================================
+    const pasta = DriveApp.getFolderById(contexto.pastaUnidadeId);
+    const planilhaCliente = DriveApp.getFileById(contexto.planilhaClienteId);
+
+    const assunto = '✅ Acesso liberado ao Inventário Patrimonial - ' + contexto.nome;
+    
+    const corpo = 
+      'Olá!\n\n' +
+      'Você recebeu acesso ao sistema de Inventário Patrimonial.\n\n' +
+      '📋 CONTEXTO: ' + contexto.nome + '\n\n' +
+      '🔐 SEUS ACESSOS:\n' +
+      '• Editor na pasta de trabalho\n' +
+      '• Editor na planilha do cliente\n' +
+      '• Leitura na planilha administrativa\n' +
+      '• Leitura na planilha geral\n' +
+      '• Leitura nas bibliotecas do sistema\n\n' +
+      '📁 ACESSE A PASTA DE TRABALHO:\n' +
+      pasta.getUrl() + '\n\n' +
+      '📊 ACESSE A PLANILHA DO CLIENTE:\n' +
+      planilhaCliente.getUrl() + '\n\n' +
+      '💡 COMO USAR:\n' +
+      'Abra a planilha do cliente e utilize o menu "📦 Inventário Patrimonial" para operar o sistema.\n\n' +
+      'Atenciosamente,\n' +
+      Session.getActiveUser().getEmail();
+
+    try {
+      GmailApp.sendEmail(email, assunto, corpo);
+      Logger.log('[ACESSOS] Email enviado para: ' + email);
+    } catch (e) {
+      Logger.log('[ACESSOS][AVISO] Não foi possível enviar email: ' + e.message);
     }
 
     const mensagemCliente =
@@ -80,15 +140,15 @@ function gerenciarAcessosContexto_() {
       '• Editor na pasta de trabalho\n' +
       '• Editor na planilha do cliente\n' +
       '• Leitura na planilha administrativa\n' +
-      '• Leitura na planilha geral\n\n' +
+      '• Leitura na planilha geral\n' +
+      '• Leitura nas bibliotecas do sistema\n\n' +
       '📁 Pasta de trabalho:\n' +
       pasta.getUrl() + '\n\n' +
-      'Utilize o menu da planilha para operar o inventário.';
+      '📧 Email de boas-vindas enviado para: ' + email;
 
     ui.alert(
       'Acesso concedido com sucesso.\n\n' +
       'Usuário: ' + email + '\n\n' +
-      'Mensagem para o cliente (copie e envie):\n\n' +
       mensagemCliente
     );
 

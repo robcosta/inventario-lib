@@ -15,10 +15,13 @@
  */
 function onOpen(e) {
   try {
-    clientRenderMenu(); // biblioteca
+    const raw = PropertiesService.getDocumentProperties().getProperty('CONTEXTO_TRABALHO');
+    const contexto = raw ? JSON.parse(raw) : null;
+
+    inventario.clientRenderMenuComContexto(contexto);
 
     // Atualiza informações automaticamente se houver contexto
-    clientAtualizarInformacoes();
+    inventario.clientAtualizarInformacoesComContexto(contexto);
   } catch (err) {
     Logger.log('[CLIENT][ONOPEN][ERRO]');
     Logger.log(err);
@@ -29,6 +32,10 @@ function onOpen(e) {
  * PROXIES DE MENU — CLIENT
  * ============================================================
  */
+
+function clientRenderMenu() {
+  inventario.clientRenderMenu();
+}
 
 function clientAtualizarInformacoes() {
   inventario.clientAtualizarInformacoes();

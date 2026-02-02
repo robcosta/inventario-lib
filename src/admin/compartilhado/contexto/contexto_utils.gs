@@ -28,7 +28,7 @@ function obterContextoAtivo_() {
       }
 
       // Contexto não pertence a esta planilha (ex.: template/copias)
-      docProps.deleteProperty('ADMIN_CONTEXTO_ATIVO');
+      docProps.deleteProperty('CONTEXTO_ATIVO');
       return {};
     }
 
@@ -56,7 +56,7 @@ function obterContextoAtivo_() {
         planilhaOperacionalId: alvo.planilhaOperacionalId,
         pastaContextoId: alvo.pastaId,
         planilhaClienteId: clientContexto.planilhaClienteId,
-        emailAdmin: clientContexto.emailAdmin
+        emailOperador: clientContexto.emailOperador
       };
 
       salvarContextoAtivo_(contextoDerivado);

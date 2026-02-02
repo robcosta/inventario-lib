@@ -38,7 +38,7 @@ function cliente_montarInformacoes__(contexto) {
   // ============================================================
   const admins = Array.isArray(contexto.admins)
     ? contexto.admins
-    : (contexto.emailAdmin ? [contexto.emailAdmin] : []);
+    : (contexto.emailOperador ? [contexto.emailOperador] : []);
 
   admins.forEach(email => {
     sheet.getRange(`E${linhaAtual}`)
