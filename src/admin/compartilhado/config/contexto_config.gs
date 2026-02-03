@@ -138,13 +138,12 @@ const CONTEXTO_CONFIG = {
   // Gravado na planilha ADMIN
   // Usado para gerenciamento administrativo
   CONTEXTO_ADMIN_SCHEMA: {
-    nome: 'string',                      // Nome do contexto
-    pastaContextoId: 'string',           // ID da pasta admin do contexto
-    pastaCSVId: 'string',                // ID da pasta CSV dentro do contexto
-    pastaUnidadeId: 'string',            // ID da pasta onde as planilhas estão
-    planilhaOperacionalId: 'string',     // ID da planilha admin/operacional
-    planilhaClienteId: 'string',         // ID da planilha cliente
-    criadoEm: 'string'                   // ISO timestamp (new Date().toISOString())
+    // ⚠️ DEPRECATED: Use contexto_admin_manager.gs e criarContextoAdmin_()
+    // Este schema é mantido apenas para referência histórica
+    nome: 'string',
+    pastaLocalidadesId: 'string',        // ID da pasta onde as localidades estão
+    planilhaClienteId: 'string',
+    criadoEm: 'string'
   }
 };
 

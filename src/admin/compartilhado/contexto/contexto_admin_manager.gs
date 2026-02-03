@@ -7,12 +7,18 @@
 
 /**
  * Obtém o contexto admin completo
+ * Usa APENAS ScriptProperties com chave por planilha ID.
  * @return {Object|null} Contexto ou null se não existir
  */
 function obterContextoAdmin_() {
-  const docProps = PropertiesService.getDocumentProperties();
-  const raw = docProps.getProperty(PROPRIEDADES_ADMIN.CONTEXTO_ADMIN);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) return null;
   
+  const planilhaId = ss.getId();
+  const scriptProps = PropertiesService.getScriptProperties();
+  const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
+
+  const raw = scriptProps.getProperty(chave);
   if (!raw) return null;
   
   try {
@@ -25,16 +31,117 @@ function obterContextoAdmin_() {
 
 /**
  * Salva o contexto admin completo
+ * Usa APENAS ScriptProperties com chave por planilha ID.
  * @param {Object} contexto
  */
 function salvarContextoAdmin_(contexto) {
   if (!contexto) {
     throw new Error('Contexto admin não pode ser nulo.');
   }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error('Nenhuma planilha ativa para salvar CONTEXTO_ADMIN.');
+  }
+
+  const planilhaId = ss.getId();
+  const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
+  const raw = JSON.stringify(contexto);
+
+  // Salva em ScriptProperties (único storage válido para bibliotecas)
+  PropertiesService.getScriptProperties().setProperty(chave, raw);
+}
+
+/**
+ * Registra um CONTEXTO_ADMIN pendente para ser aplicado pela planilha ADMIN.
+ * @param {string} planilhaId
+ * @param {Object} contexto
+ */
+function salvarContextoAdminPendente_(planilhaId, contexto) {
+  if (!planilhaId || !contexto) {
+    throw new Error('ID da planilha e contexto são obrigatórios.');
+  }
+
+  const props = PropertiesService.getScriptProperties();
+  const chave = 'PENDING_CONTEXTO_ADMIN_' + planilhaId;
+  Logger.log('[CONTEXTO_ADMIN][PENDENTE] Salvando pendente em ScriptProperties: ' + chave);
+  Logger.log('[CONTEXTO_ADMIN][PENDENTE] Payload: ' + JSON.stringify(contexto));
+  props.setProperty(chave, JSON.stringify(contexto));
+}
+
+/**
+ * Aplica o CONTEXTO_ADMIN pendente na planilha atual, se existir.
+ * Usa APENAS ScriptProperties (DocumentProperties não funciona em bibliotecas).
+ * @return {boolean} true se aplicou, false caso contrário
+ */
+function aplicarContextoAdminPendente_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) return false;
+
+  const planilhaId = ss.getId();
+  const props = PropertiesService.getScriptProperties();
+  const chave = 'PENDING_CONTEXTO_ADMIN_' + planilhaId;
+  const chaveDestino = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
   
-  PropertiesService
-    .getDocumentProperties()
-    .setProperty(PROPRIEDADES_ADMIN.CONTEXTO_ADMIN, JSON.stringify(contexto));
+  Logger.log('[CONTEXTO_ADMIN][APLICAR] Planilha ID: ' + planilhaId);
+
+  // Tenta aplicar pendente
+  const raw = props.getProperty(chave);
+  Logger.log('[CONTEXTO_ADMIN][APLICAR] Chave pendente: ' + chave);
+  Logger.log('[CONTEXTO_ADMIN][APLICAR] Encontrou pendente? ' + (!!raw));
+
+  if (!raw) {
+    Logger.log('[CONTEXTO_ADMIN][APLICAR] Nenhum pendente encontrado');
+    return false;
+  }
+
+  // Aplicar pendente em ScriptProperties
+  Logger.log('[CONTEXTO_ADMIN][APLICAR] Salvando em ScriptProperties: ' + chaveDestino);
+  props.setProperty(chaveDestino, raw);
+  
+  // Verifica se salvou
+  const verificacao = props.getProperty(chaveDestino);
+  Logger.log('[CONTEXTO_ADMIN][APLICAR] ScriptProperties verificação: ' + (verificacao ? 'OK (' + verificacao.length + ' chars)' : 'FALHOU'));
+
+  // Remove pendente
+  props.deleteProperty(chave);
+  Logger.log('[CONTEXTO_ADMIN][APLICAR] Pendente removido: ' + chave);
+  
+  return !!verificacao;
+}
+
+/**
+ * Salva o contexto admin em uma planilha ESPECÍFICA por ID
+ * @param {string} planilhaId - ID da planilha
+ * @param {Object} contexto - Objeto contexto
+ */
+function salvarContextoAdminPorId_(planilhaId, contexto) {
+  if (!planilhaId || !contexto) {
+    throw new Error('ID da planilha e contexto são obrigatórios.');
+  }
+  
+  const ss = SpreadsheetApp.openById(planilhaId);
+  const tempProps = PropertiesService.getUserProperties();
+  const chaveTemp = '_TEMP_CONTEXTO_SAVE_' + planilhaId;
+  
+  // Salvar temporariamente
+  tempProps.setProperty(chaveTemp, JSON.stringify(contexto));
+  
+  // Forçar a planilha como ativa
+  SpreadsheetApp.setActiveSpreadsheet(ss);
+  SpreadsheetApp.flush();
+  
+  // Recuperar e salvar no DocumentProperties correto
+  const contextoRecuperado = JSON.parse(tempProps.getProperty(chaveTemp));
+  PropertiesService.getDocumentProperties().setProperty(
+    PROPRIEDADES_ADMIN.CONTEXTO_ADMIN,
+    JSON.stringify(contextoRecuperado)
+  );
+  
+  // Limpar temporário
+  tempProps.deleteProperty(chaveTemp);
+  
+  return contextoRecuperado;
 }
 
 /**

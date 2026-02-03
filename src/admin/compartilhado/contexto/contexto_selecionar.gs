@@ -59,7 +59,7 @@ function selecionarContextoTrabalho_() {
 
   if (resp.getSelectedButton() !== ui.Button.OK) return;
 
-  const indice = Number(resp.getResponseText());
+  const indice = Number((resp.getResponseText() || '').trim().toUpperCase());
 
   if (!indice || indice < 1 || indice > contextos.length) {
     ui.alert('Seleção inválida.');

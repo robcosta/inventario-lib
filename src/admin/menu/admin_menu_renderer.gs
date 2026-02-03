@@ -4,7 +4,37 @@
  * ============================================================
  */
 
+/**
+ * API PÚBLICA — Renderizar menu (chamada pelo onOpen)
+ */
+function adminRenderMenu() {
+  adminRenderMenu_();
+}
+
 function adminRenderMenu_() {
+
+  // Aplica contexto pendente (se existir) na planilha ADMIN atual
+  try {
+    const aplicado = aplicarContextoAdminPendente_();
+    Logger.log('[ADMIN][MENU] Contexto pendente aplicado? ' + aplicado);
+  } catch (e) {
+    Logger.log('[ADMIN][MENU] Falha ao aplicar contexto pendente: ' + e.message);
+  }
+
+  // Se for TEMPLATE, limpa qualquer contexto e mostra apenas criar
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const nome = ss ? ss.getName() : '';
+    if (nome && nome.toUpperCase().indexOf('ADMIN: TEMPLATE') !== -1) {
+      const planilhaId = ss.getId();
+      const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
+      PropertiesService.getScriptProperties().deleteProperty(chave);
+      PropertiesService.getDocumentProperties().deleteProperty(PROPRIEDADES_ADMIN.CONTEXTO_ADMIN);
+      Logger.log('[ADMIN][MENU] TEMPLATE detectada, contexto limpo.');
+    }
+  } catch (e) {
+    Logger.log('[ADMIN][MENU] Falha ao limpar contexto da TEMPLATE: ' + e.message);
+  }
 
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('🏛️ Inventário – Administração');

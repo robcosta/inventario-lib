@@ -14,8 +14,8 @@ function gerenciarAcessosContexto_() {
     return;
   }
 
-  if (!contexto.pastaUnidadeId) {
-    ui.alert('Pasta da unidade não encontrada no contexto.');
+  if (!contexto.pastaLocalidadesId) {
+    ui.alert('Pasta de localidades não encontrada no contexto.');
     return;
   }
 
@@ -31,7 +31,7 @@ function gerenciarAcessosContexto_() {
 
   if (resp.getSelectedButton() !== ui.Button.OK) return;
 
-  const email = (resp.getResponseText() || '').trim();
+  const email = (resp.getResponseText() || '').trim().toUpperCase();
 
   if (!email || !email.includes('@')) {
     ui.alert('E-mail inválido.');
@@ -62,7 +62,7 @@ function gerenciarAcessosContexto_() {
     // ========================================================
     // 📁 PASTA — EDITOR
     // ========================================================
-    compartilharSemEmail(contexto.pastaUnidadeId, 'writer');
+    compartilharSemEmail(contexto.pastaLocalidadesId, 'writer');
 
     // ========================================================
     // 📄 PLANILHA OPERACIONAL (ADMIN) — LEITOR
@@ -102,7 +102,7 @@ function gerenciarAcessosContexto_() {
     // ========================================================
     // 📧 ENVIAR EMAIL ÚNICO
     // ========================================================
-    const pasta = DriveApp.getFolderById(contexto.pastaUnidadeId);
+    const pasta = DriveApp.getFolderById(contexto.pastaLocalidadesId);
     const planilhaCliente = DriveApp.getFileById(contexto.planilhaClienteId);
 
     const assunto = '✅ Acesso liberado ao Inventário Patrimonial - ' + contexto.nome;

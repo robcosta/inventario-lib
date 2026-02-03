@@ -15,19 +15,10 @@ function obterSistemaGlobal_() {
   return {
     // Pastas
     pastaRaizId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_RAIZ_ID),
-    pastaSistemaId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_SISTEMA_ID),
-    pastaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_GERAL_ID),
-    pastaCSVGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_CSV_GERAL_ID),
     pastaContextoId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_CONTEXTO_ID),
     
     // Planilha Geral
     planilhaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID),
-    
-    // Bibliotecas
-    libInventarioIdDev: props.getProperty(PROPRIEDADES_GLOBAL.LIB_INVENTARIO_ID_DEV),
-    libVisionIdDev: props.getProperty(PROPRIEDADES_GLOBAL.LIB_VISION_ID_DEV),
-    libInventarioIdProd: props.getProperty(PROPRIEDADES_GLOBAL.LIB_INVENTARIO_ID_PROD),
-    libVisionIdProd: props.getProperty(PROPRIEDADES_GLOBAL.LIB_VISION_ID_PROD),
     
     // Configurações
     visionApiKey: props.getProperty(PROPRIEDADES_GLOBAL.VISION_API_KEY),
@@ -49,15 +40,6 @@ function atualizarSistemaGlobal_(atualizacoes) {
   if (atualizacoes.pastaRaizId !== undefined) {
     props.setProperty(PROPRIEDADES_GLOBAL.PASTA_RAIZ_ID, atualizacoes.pastaRaizId);
   }
-  if (atualizacoes.pastaSistemaId !== undefined) {
-    props.setProperty(PROPRIEDADES_GLOBAL.PASTA_SISTEMA_ID, atualizacoes.pastaSistemaId);
-  }
-  if (atualizacoes.pastaGeralId !== undefined) {
-    props.setProperty(PROPRIEDADES_GLOBAL.PASTA_GERAL_ID, atualizacoes.pastaGeralId);
-  }
-  if (atualizacoes.pastaCSVGeralId !== undefined) {
-    props.setProperty(PROPRIEDADES_GLOBAL.PASTA_CSV_GERAL_ID, atualizacoes.pastaCSVGeralId);
-  }
   if (atualizacoes.pastaContextoId !== undefined) {
     props.setProperty(PROPRIEDADES_GLOBAL.PASTA_CONTEXTO_ID, atualizacoes.pastaContextoId);
   }
@@ -65,20 +47,6 @@ function atualizarSistemaGlobal_(atualizacoes) {
   // Planilha Geral
   if (atualizacoes.planilhaGeralId !== undefined) {
     props.setProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID, atualizacoes.planilhaGeralId);
-  }
-  
-  // Bibliotecas
-  if (atualizacoes.libInventarioIdDev !== undefined) {
-    props.setProperty(PROPRIEDADES_GLOBAL.LIB_INVENTARIO_ID_DEV, atualizacoes.libInventarioIdDev);
-  }
-  if (atualizacoes.libVisionIdDev !== undefined) {
-    props.setProperty(PROPRIEDADES_GLOBAL.LIB_VISION_ID_DEV, atualizacoes.libVisionIdDev);
-  }
-  if (atualizacoes.libInventarioIdProd !== undefined) {
-    props.setProperty(PROPRIEDADES_GLOBAL.LIB_INVENTARIO_ID_PROD, atualizacoes.libInventarioIdProd);
-  }
-  if (atualizacoes.libVisionIdProd !== undefined) {
-    props.setProperty(PROPRIEDADES_GLOBAL.LIB_VISION_ID_PROD, atualizacoes.libVisionIdProd);
   }
   
   // Configurações

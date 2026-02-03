@@ -18,8 +18,8 @@ function cliente_montarInformacoes__(contexto) {
   // ============================================================
   // PASTA DE TRABALHO (LINK)
   // ============================================================
-  if (contexto.pastaUnidadeId) {
-    const pasta = DriveApp.getFolderById(contexto.pastaUnidadeId);
+  if (contexto.pastaLocalidadesId) {
+    const pasta = DriveApp.getFolderById(contexto.pastaLocalidadesId);
     sheet.getRange('E9')
       .setValue(pasta.getUrl())
       .setFontColor('#1a73e8')
@@ -51,8 +51,8 @@ function cliente_montarInformacoes__(contexto) {
   // EDITORES (DA PASTA)
   // ============================================================
   let editores = [];
-  if (contexto.pastaUnidadeId) {
-    const pasta = DriveApp.getFolderById(contexto.pastaUnidadeId);
+  if (contexto.pastaLocalidadesId) {
+    const pasta = DriveApp.getFolderById(contexto.pastaLocalidadesId);
     editores = pasta.getEditors().map(u => u.getEmail());
   }
 

@@ -9,75 +9,10 @@
 
 /**
  * Retorna o objeto de contexto completo ou um objeto vazio se não existir.
+ * Usa o novo gerenciador CONTEXTO_ADMIN
  */
 function obterContextoAtivo_() {
-  const docProps = PropertiesService.getDocumentProperties();
-  const rawDoc = docProps.getProperty('ADMIN_CONTEXTO_ATIVO');
-
-  try {
-    if (rawDoc) {
-      const contextoDoc = JSON.parse(rawDoc);
-      const planilhaAtivaId = SpreadsheetApp.getActiveSpreadsheet().getId();
-
-      if (
-        contextoDoc &&
-        (contextoDoc.planilhaOperacionalId === planilhaAtivaId ||
-          contextoDoc.planilhaClienteId === planilhaAtivaId)
-      ) {
-        return contextoDoc;
-      }
-
-      // Contexto não pertence a esta planilha (ex.: template/copias)
-      docProps.deleteProperty('CONTEXTO_ATIVO');
-      return {};
-    }
-
-    // Compatibilidade: migra contexto antigo salvo em ScriptProperties
-    const scriptProps = PropertiesService.getScriptProperties();
-    const rawScript = scriptProps.getProperty('CONTEXTO_ATIVO');
-    if (!rawScript) {
-      // Fallback para planilha cliente
-      const rawClient = docProps.getProperty('CONTEXTO_TRABALHO');
-      if (!rawClient) return {};
-
-      const clientContexto = JSON.parse(rawClient);
-      if (!clientContexto || !clientContexto.nome) return {};
-
-      const lista = listarContextos_();
-      const alvo = lista.find(c =>
-        (c.nome || '').toUpperCase() === (clientContexto.nome || '').toUpperCase()
-      );
-
-      if (!alvo || !alvo.planilhaOperacionalId) return {};
-
-      const contextoDerivado = {
-        nome: clientContexto.nome,
-        pastaUnidadeId: clientContexto.pastaUnidadeId,
-        planilhaOperacionalId: alvo.planilhaOperacionalId,
-        pastaContextoId: alvo.pastaId,
-        planilhaClienteId: clientContexto.planilhaClienteId,
-        emailOperador: clientContexto.emailOperador
-      };
-
-      salvarContextoAtivo_(contextoDerivado);
-      return contextoDerivado;
-    }
-
-    const contextoScript = JSON.parse(rawScript);
-    const planilhaAtivaId = SpreadsheetApp.getActiveSpreadsheet().getId();
-
-    // Migra somente se o contexto for desta planilha
-    if (contextoScript && contextoScript.planilhaOperacionalId === planilhaAtivaId) {
-      docProps.setProperty('ADMIN_CONTEXTO_ATIVO', JSON.stringify(contextoScript));
-      scriptProps.deleteProperty('CONTEXTO_ATIVO');
-      return contextoScript;
-    }
-
-    return {};
-  } catch (e) {
-    console.error("Erro ao ler JSON do contexto: " + e.message);
-    return {};
-  }
+  return obterContextoAdmin_() || {};
 }
 
 /**
@@ -85,14 +20,7 @@ function obterContextoAtivo_() {
  */
 function salvarContextoAtivo_(contexto) {
   if (!contexto) return;
-
-  PropertiesService.getDocumentProperties().setProperty(
-    'ADMIN_CONTEXTO_ATIVO', 
-    JSON.stringify(contexto)
-  );
-
-  // Garante que não fique contexto legado no ScriptProperties
-  PropertiesService.getScriptProperties().deleteProperty('CONTEXTO_ATIVO');
+  salvarContextoAdmin_(contexto);
 }
 
 /**
@@ -113,7 +41,7 @@ function atualizarContexto__(novosDados) {
  */
 function planilhaTemContexto_() {
   const contexto = obterContextoAtivo_();
-  return !!(contexto && contexto.planilhaOperacionalId);
+  return !!(contexto && (contexto.id && contexto.nome && contexto.planilhaClienteId));
 }
 
 /**

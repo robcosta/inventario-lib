@@ -1,118 +1,87 @@
 /**
  * ============================================================
- * CONTEXTO — CRIAÇÃO
+ * CONTEXTO — CRIAÇÃO (NOVA LÓGICA - COPIA TEMPLATE)
  * ============================================================
  */
 function criarContextoTrabalho_() {
     Logger.log('[BOOTSTRAP][ADMIN] criarContextoTrabalho - INÍCIO');
     const ui = SpreadsheetApp.getUi();
 
-    // 🔒 Bloqueio: esta planilha já tem contexto  
-    if (planilhaTemContextoAdmin_()) {
-      SpreadsheetApp.getActiveSpreadsheet().toast(
-        'Esta planilha já pertence a um contexto. Não é permitido criar outro.',
-        '⚠️ Contexto Existente',
-        5
-      );
-      return;
-    }
-
-    // 🔎 Listar contextos existentes (informativo)
-    const contextosExistentes = listarContextos_();
-    let mensagemInfo = '';
-
-    if (contextosExistentes.length > 0) {
-      mensagemInfo += 'Contextos já existentes:\n\n';
-      contextosExistentes.forEach(ctx => {
-        mensagemInfo += '- ' + ctx.nome + '\n';
-      });
-      mensagemInfo += '\nInforme o nome do NOVO contexto:';
-    } else {
-      mensagemInfo =
-        'Nenhum contexto foi criado até o momento.\n\n' +
-        'Informe o nome do primeiro contexto:';
-    }
-
     // 1️⃣ Solicitar nome do contexto
     const resp = ui.prompt(
-      'Criar Contexto de Trabalho',
-      mensagemInfo,
+      'Criar Novo Contexto de Trabalho',
+      'Digite o nome do contexto (ex: DEL02 - FORTALEZA):',
       ui.ButtonSet.OK_CANCEL
     );
+    
     if (resp.getSelectedButton() !== ui.Button.OK) return;
 
-    const nomeUsuario = (resp.getResponseText() || '').trim();
+    const nomeUsuario = (resp.getResponseText() || '').trim().toUpperCase();
     if (!nomeUsuario) {
-      SpreadsheetApp.getActiveSpreadsheet().toast(
-        'O nome do contexto não pode estar vazio.',
-        '❌ Nome Inválido',
-        4
-      );
+      ui.alert('❌ O nome do contexto não pode estar vazio.');
       return;
     }
 
-    const nomeContexto = nomeUsuario.toUpperCase();
+    const nomeContexto = nomeUsuario;
 
-    // 2️⃣ Verificar se já existe globalmente
-    if (contextoComNomeExiste_(nomeContexto)) {
-      SpreadsheetApp.getActiveSpreadsheet().toast(
-        'O contexto "' + nomeContexto + '" já existe. Use "Selecionar Contexto de Trabalho".',
-        '⚠️ Contexto Já Existe',
-        5
-      );
+    // 2️⃣ Validar pasta raiz
+    const raiz = obterPastaInventario_();
+    if (!raiz) {
+      ui.alert('❌ Pasta "Inventário Patrimonial" não encontrada.');
       return;
     }
 
-    // 3️⃣ Criar estrutura de pastas
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      'Copiando planilha template...',
+      '📋 Criando',
+      3
+    );
+
+    // 3️⃣ COPIAR planilha ativa (template) e manter cópia como nova TEMPLATE
+    const ssTemplate = SpreadsheetApp.getActiveSpreadsheet();
+    const fileTemplate = DriveApp.getFileById(ssTemplate.getId());
+    const fileCopiaTemplate = fileTemplate.makeCopy('ADMIN: Template');
+    const ssTemplateCopia = SpreadsheetApp.openById(fileCopiaTemplate.getId());
+    // Garantir que a cópia (nova template) NÃO tenha contexto salvo
+    SpreadsheetApp.setActiveSpreadsheet(ssTemplateCopia);
+    PropertiesService.getDocumentProperties().deleteProperty('CONTEXTO_ADMIN');
+    PropertiesService.getDocumentProperties().deleteProperty('CONTEXTO_CLIENTE');
+
     SpreadsheetApp.getActiveSpreadsheet().toast(
       'Criando estrutura de pastas...',
       '📁 Configurando',
       3
     );
-    
-    const raiz = obterPastaInventario_();
-    if (!raiz) {
-      SpreadsheetApp.getActiveSpreadsheet().toast(
-        'Pasta "Inventário Patrimonial" não encontrada. Verifique a configuração.',
-        '❌ Erro',
-        5
-      );
-      return;
-    }
 
-    // Nova estrutura: CONTEXTO/DEL01 - CAUCAIA/
+    // 4️⃣ Criar estrutura de pastas CONTEXTO/nome/
     const pastaContextoMae = obterOuCriarSubpasta_(raiz, 'CONTEXTO');
     const pastaContextoDel = obterOuCriarSubpasta_(pastaContextoMae, nomeContexto);
     
-    // Subpastas do contexto
     const pastaPlanilhas = obterOuCriarSubpasta_(pastaContextoDel, 'PLANILHA');
     const pastaCSVAdmin = obterOuCriarSubpasta_(pastaPlanilhas, 'CSV_ADMIN');
     const pastaLocalidades = obterOuCriarSubpasta_(pastaContextoDel, 'LOCALIDADES');
 
+    // 5️⃣ Renomear a planilha ATIVA como ADMIN do novo contexto
+    ssTemplate.rename('ADMIN: ' + nomeUsuario);
+    const fileAdmin = DriveApp.getFileById(ssTemplate.getId());
+
+    // 6️⃣ MOVER planilha ADMIN para pasta PLANILHA
+    fileAdmin.moveTo(pastaPlanilhas);
+
     SpreadsheetApp.getActiveSpreadsheet().toast(
-      'Estrutura de pastas criada. Configurando planilhas...',
-      '✅ Progresso',
+      'Criando planilha cliente...',
+      '📊 Progresso',
       3
     );
 
-    // 4️⃣ Criar planilha admin
-    const planilhaAdmin = SpreadsheetApp.getActiveSpreadsheet();
-    planilhaAdmin.rename('ADMIN: ' + nomeUsuario);
-    DriveApp.getFileById(planilhaAdmin.getId()).moveTo(pastaPlanilhas);
-
-    // 5️⃣ Criar planilha cliente
+    // 7️⃣ Criar planilha CLIENTE
     const planilhaCliente = SpreadsheetApp.create('CLIENTE: ' + nomeUsuario);
     DriveApp.getFileById(planilhaCliente.getId()).moveTo(pastaLocalidades);
 
-    SpreadsheetApp.getActiveSpreadsheet().toast(
-      'Planilhas criadas. Salvando configurações...',
-      '⚙️ Progresso',
-      3
-    );
-
-    // 6️⃣ Criar CONTEXTO_ADMIN
+    // 8️⃣ Criar CONTEXTO_ADMIN e registrar pendente para a planilha ADMIN
+    Logger.log('[CONTEXTO_ADMIN][CRIAR] Planilha ADMIN ID: ' + ssTemplate.getId());
     const contextoAdmin = criarContextoAdmin_({
-      id: planilhaAdmin.getId(),
+      id: ssTemplate.getId(),
       nome: nomeContexto,
       emailOperador: Session.getActiveUser().getEmail(),
       pastaContextoDelId: pastaContextoDel.getId(),
@@ -123,7 +92,11 @@ function criarContextoTrabalho_() {
       planilhaGeralId: obterPlanilhaGeralId_()
     });
 
-    // 7️⃣ Atualizar sistema global com pasta CONTEXTO (se necessário)
+    Logger.log('[CONTEXTO_ADMIN][CRIAR] Contexto gerado: ' + JSON.stringify(contextoAdmin));
+    // Registrar pendente para aplicar quando a planilha ADMIN abrir
+    salvarContextoAdminPendente_(ssTemplate.getId(), contextoAdmin);
+
+    // 8️⃣ Atualizar sistema global
     const sistemaGlobal = obterSistemaGlobal_();
     if (!sistemaGlobal.pastaContextoId) {
       atualizarSistemaGlobal_({
@@ -131,10 +104,8 @@ function criarContextoTrabalho_() {
       });
     }
 
-    // 8️⃣ Criar CONTEXTO_CLIENTE
-    const ssAdmin = SpreadsheetApp.getActiveSpreadsheet();
+    // 9️⃣ Criar CONTEXTO_CLIENTE
     const ssCliente = SpreadsheetApp.openById(planilhaCliente.getId());
-    
     SpreadsheetApp.setActiveSpreadsheet(ssCliente);
     
     criarContextoCliente_({
@@ -142,19 +113,17 @@ function criarContextoTrabalho_() {
       nome: nomeContexto,
       emailOperador: Session.getActiveUser().getEmail(),
       pastaLocalidadesId: pastaLocalidades.getId(),
-      planilhaAdminId: planilhaAdmin.getId(),
+      planilhaAdminId: ssTemplate.getId(),
       planilhaGeralId: obterPlanilhaGeralId_()
     });
-    
-    SpreadsheetApp.setActiveSpreadsheet(ssAdmin);
 
-    // 9️⃣ Formatar planilha cliente
+    // 🔟 Formatar planilha cliente
     cliente_formatarPlanilhaInterface_(
       planilhaCliente.getId(),
       {
         nome: nomeContexto,
         planilhaClienteId: planilhaCliente.getId(),
-        pastaUnidadeId: pastaLocalidades.getId()
+        pastaLocalidadesId: pastaLocalidades.getId()
       }
     );
 
@@ -162,18 +131,10 @@ function criarContextoTrabalho_() {
       nome: nomeContexto
     });
 
-    // 🔟 Atualizar menu ADMIN
-    SpreadsheetApp.getActiveSpreadsheet().toast(
-      'Atualizando menu...',
-      '🔄 Finalizando',
-      2
-    );
-    
-    adminRenderMenu_();
-
+    // 1️⃣1️⃣ Mostrar confirmação e orientar refresh
     ui.alert(
-      'Contexto criado com sucesso!\n\n' +
-      'Feche e reabra a planilha para ver o menu atualizado.'
+      '✅ Contexto criado com sucesso!\n\n' +
+      'Recarregue a planilha (F5) para atualizar o menu.'
     );
 
     Logger.log('[BOOTSTRAP][ADMIN] criarContextoTrabalho - FIM');
