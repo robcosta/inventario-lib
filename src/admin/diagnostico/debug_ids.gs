@@ -5,6 +5,143 @@
  * Cole esta função em um script de teste para ver todos os IDs
  */
 
+function debugListarContextosDisponiveis() {
+  const sistema = obterSistemaGlobal_();
+  
+  let info = '📋 DEBUG: LISTAR CONTEXTOS\n';
+  info += '════════════════════════════════════════\n\n';
+  
+  info += '🌐 SISTEMA GLOBAL\n';
+  info += `├─ pastaContextoId: ${sistema.pastaContextoId || '(não configurado)'}\n`;
+  info += `└─ pastaRaizId: ${sistema.pastaRaizId || '(não configurado)'}\n\n`;
+  
+  if (!sistema.pastaContextoId) {
+    info += '❌ pastaContextoId não está configurado!\n';
+    info += 'Execute configuração inicial do sistema.\n';
+    SpreadsheetApp.getUi().alert(info);
+    return;
+  }
+  
+  try {
+    const pastaContexto = DriveApp.getFolderById(sistema.pastaContextoId);
+    info += `✅ Pasta CONTEXTO encontrada: ${pastaContexto.getName()}\n\n`;
+    
+    const pastasContextos = pastaContexto.getFolders();
+    let count = 0;
+    
+    info += '📂 CONTEXTOS ENCONTRADOS:\n';
+    
+    while (pastasContextos.hasNext()) {
+      const pasta = pastasContextos.next();
+      count++;
+      info += `\n${count}. ${pasta.getName()}\n`;
+      info += `   ID: ${pasta.getId()}\n`;
+      
+      // Verifica planilha ADMIN em qualquer subpasta (sem usar nome)
+      let encontrouPlanilha = false;
+      const subpastas = pasta.getFolders();
+      while (subpastas.hasNext() && !encontrouPlanilha) {
+        const sub = subpastas.next();
+        const planilhas = sub.getFilesByType(MimeType.GOOGLE_SHEETS);
+        if (planilhas.hasNext()) {
+          const planilha = planilhas.next();
+          info += `   ✅ Tem planilha ADMIN na subpasta: ${planilha.getName()}\n`;
+          encontrouPlanilha = true;
+        }
+      }
+
+      if (!encontrouPlanilha) {
+        const planilhasRaiz = pasta.getFilesByType(MimeType.GOOGLE_SHEETS);
+        if (planilhasRaiz.hasNext()) {
+          const planilha = planilhasRaiz.next();
+          info += `   ✅ Tem planilha ADMIN na raiz: ${planilha.getName()}\n`;
+          encontrouPlanilha = true;
+        }
+      }
+
+      if (!encontrouPlanilha) {
+        info += `   ❌ SEM planilha ADMIN (subpastas/raiz)\n`;
+      }
+    }
+    
+    info += `\n\n📊 Total: ${count} contextos\n`;
+    
+  } catch (e) {
+    info += `\n❌ ERRO: ${e.message}\n`;
+  }
+  
+  Logger.log(info);
+  SpreadsheetApp.getUi().alert(info);
+}
+
+/**
+ * Migra contextos antigos criando a pasta PLANILHAS
+ * e movendo planilhas ADMIN da raiz para essa pasta.
+ */
+function debugMigrarContextosPlanilhas() {
+  const sistema = obterSistemaGlobal_();
+  const pastaContextoId = sistema.pastaContextoId;
+
+  if (!pastaContextoId) {
+    SpreadsheetApp.getUi().alert('❌ pastaContextoId não configurado no sistema global.');
+    return;
+  }
+
+  let info = '🛠️ MIGRAÇÃO DE CONTEXTOS\n';
+  info += '════════════════════════════════════════\n\n';
+
+  try {
+    const pastaContexto = DriveApp.getFolderById(pastaContextoId);
+    const pastasContextos = pastaContexto.getFolders();
+    let totalMigrados = 0;
+
+    while (pastasContextos.hasNext()) {
+      const pasta = pastasContextos.next();
+      const nomeContexto = pasta.getName();
+
+      const subpastas = pasta.getFolders();
+      let temPlanilhaEmSubpasta = false;
+      while (subpastas.hasNext() && !temPlanilhaEmSubpasta) {
+        const sub = subpastas.next();
+        const planilhas = sub.getFilesByType(MimeType.GOOGLE_SHEETS);
+        if (planilhas.hasNext()) {
+          temPlanilhaEmSubpasta = true;
+        }
+      }
+
+      if (temPlanilhaEmSubpasta) {
+        info += `✅ ${nomeContexto}: já possui planilha em subpasta\n`;
+        continue;
+      }
+
+      const planilhasRaiz = pasta.getFilesByType(MimeType.GOOGLE_SHEETS);
+      if (!planilhasRaiz.hasNext()) {
+        info += `⚠️ ${nomeContexto}: sem planilhas na raiz\n`;
+        continue;
+      }
+
+      const pastaPlanilhas = pasta.createFolder('PLANILHA');
+      let movidas = 0;
+
+      while (planilhasRaiz.hasNext()) {
+        const planilha = planilhasRaiz.next();
+        planilha.moveTo(pastaPlanilhas);
+        movidas++;
+      }
+
+      totalMigrados++;
+      info += `🔁 ${nomeContexto}: PLANILHA criada, ${movidas} planilha(s) movida(s)\n`;
+    }
+
+    info += `\n✅ Migração concluída. Contextos atualizados: ${totalMigrados}\n`;
+  } catch (e) {
+    info += `\n❌ ERRO: ${e.message}\n`;
+  }
+
+  Logger.log(info);
+  SpreadsheetApp.getUi().alert(info);
+}
+
 function debugListarIds() {
   const ui = SpreadsheetApp.getUi();
   const contexto = obterContextoAtivo_();

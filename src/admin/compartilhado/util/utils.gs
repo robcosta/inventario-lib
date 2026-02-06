@@ -6,28 +6,31 @@
 
 /**
  * Obtém a pasta raiz do inventário
- * Prioridade: ScriptProperties -> Busca no Drive
+ * Prioridade: ScriptProperties -> Pasta mãe da planilha ativa
  * @return {GoogleAppsScript.Drive.Folder|null}
  */
 function obterPastaInventario_() {
-  // 1️⃣ Tentar via configuração global
+  // 1️⃣ Tentar via configuração global (ID)
   const sistemaGlobal = obterSistemaGlobal_();
   
   if (sistemaGlobal.pastaRaizId) {
     try {
       return DriveApp.getFolderById(sistemaGlobal.pastaRaizId);
     } catch (e) {
-      Logger.log('[UTILS] ID salvo inválido, buscando no Drive...');
+      Logger.log('[UTILS] ID salvo inválido, tentando obter pela planilha ativa...');
     }
   }
-  
-  // 2️⃣ Fallback: busca no Drive
-  const it = DriveApp.getFoldersByName('Inventario Patrimonial');
-  
-  if (!it.hasNext()) return null;
-  
-  const pasta = it.next();
-  
+
+  // 2️⃣ Fallback: obter pasta mãe da planilha ativa (ID)
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) return null;
+
+  const arquivo = DriveApp.getFileById(ss.getId());
+  const pais = arquivo.getParents();
+  if (!pais.hasNext()) return null;
+
+  const pasta = pais.next();
+
   // 3️⃣ Sincroniza o ID para uso futuro
   atualizarSistemaGlobal_({ pastaRaizId: pasta.getId() });
   

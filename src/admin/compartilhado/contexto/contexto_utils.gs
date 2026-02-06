@@ -46,34 +46,102 @@ function planilhaTemContexto_() {
 
 /**
  * Lista as pastas de contexto disponíveis no Drive para seleção.
+ * ✅ USANDO APENAS IDs - Lê ScriptProperties de cada planilha ADMIN
+ * Não procura por nome, apenas valida se o ID está acessível
  */
 function listarContextos_() {
-  const raiz = obterPastaInventario_();
-  if (!raiz) return [];
-
-  const pastasPlanilhas = raiz.getFoldersByName('PLANILHAS');
-  if (!pastasPlanilhas.hasNext()) return [];
-
-  const contextosFolder = pastasPlanilhas.next().getFoldersByName('CONTEXTOS');
-  if (!contextosFolder.hasNext()) return [];
-
-  const it = contextosFolder.next().getFolders();
-  const lista = [];
-
-  while (it.hasNext()) {
-    const pastaContexto = it.next();
-    const files = pastaContexto.getFilesByType(MimeType.GOOGLE_SHEETS);
-    
-    if (!files.hasNext()) continue;
-
-    const planilha = files.next();
-    lista.push({
-      nome: pastaContexto.getName(),
-      pastaId: pastaContexto.getId(),
-      planilhaOperacionalId: planilha.getId()
-    });
+  Logger.log('[LISTAR_CONTEXTOS] INÍCIO - Usando ScriptProperties (ID-based)');
+  
+  const sistema = obterSistemaGlobal_();
+  const pastaContextoId = sistema.pastaContextoId;
+  
+  if (!pastaContextoId) {
+    Logger.log('[LISTAR_CONTEXTOS] ❌ pastaContextoId não configurado');
+    return [];
   }
-  return lista;
+
+  try {
+    Logger.log('[LISTAR_CONTEXTOS] Acessando pasta CONTEXTO:', pastaContextoId);
+    const pastaContexto = DriveApp.getFolderById(pastaContextoId);
+    const pastasContextos = pastaContexto.getFolders();
+    const lista = [];
+    let count = 0;
+
+    while (pastasContextos.hasNext()) {
+      const pastaContextoDel = pastasContextos.next();
+      const nomeContexto = pastaContextoDel.getName();
+      count++;
+      
+      Logger.log('[LISTAR_CONTEXTOS] Processando contexto #' + count + ':', nomeContexto);
+
+      // 1️⃣ Iterar subpastas para encontrar o CONTEXTO_ADMIN em ScriptProperties
+      const subpastas = pastaContextoDel.getFolders();
+      let planilhaAdminId = null;
+
+      while (subpastas.hasNext()) {
+        const sub = subpastas.next();
+        const planilhas = sub.getFilesByType(MimeType.GOOGLE_SHEETS);
+        
+        while (planilhas.hasNext()) {
+          const planilha = planilhas.next();
+          const idPlanilha = planilha.getId();
+          const nomePlanilha = planilha.getName();
+          const nomeSubpasta = sub.getName();
+          
+          Logger.log('[LISTAR_CONTEXTOS]   Verificando planilha: ' + nomePlanilha + ' (ID: ' + idPlanilha + ')');
+          
+          // 2️⃣ Verificar se este ID tem CONTEXTO_ADMIN no ScriptProperties
+          const scriptProps = PropertiesService.getScriptProperties();
+          const chaveContexto = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + idPlanilha;
+          const rawContexto = scriptProps.getProperty(chaveContexto);
+          
+          if (rawContexto) {
+            try {
+              const contexto = JSON.parse(rawContexto);
+              
+              // ✅ Encontrou! Este é o ADMIN
+              planilhaAdminId = idPlanilha;
+              
+              Logger.log('[LISTAR_CONTEXTOS]   ✅ CONTEXTO_ADMIN encontrado! ID: ' + idPlanilha);
+              Logger.log('[LISTAR_CONTEXTOS]   Nome: ' + nomePlanilha);
+              break;
+            } catch (e) {
+              Logger.log('[LISTAR_CONTEXTOS]   ⚠️ CONTEXTO_ADMIN inválido nesta planilha');
+            }
+          }
+        }
+        
+        if (planilhaAdminId) break;
+      }
+
+      // 3️⃣ Se encontrou o ID, validar se a planilha ainda é acessível
+      if (planilhaAdminId) {
+        try {
+          const fileTest = DriveApp.getFileById(planilhaAdminId);
+          Logger.log('[LISTAR_CONTEXTOS]   ✅ Planilha ADMIN acessível: ' + fileTest.getName());
+          
+          lista.push({
+            nome: nomeContexto,
+            pastaId: pastaContextoDel.getId(),
+            planilhaOperacionalId: planilhaAdminId
+          });
+          
+        } catch (e) {
+          Logger.log('[LISTAR_CONTEXTOS]   ❌ Planilha ADMIN não acessível: ' + e.message);
+          // Não adiciona à lista - contexto inacessível é ignorado
+        }
+      } else {
+        Logger.log('[LISTAR_CONTEXTOS]   ❌ Nenhum CONTEXTO_ADMIN encontrado');
+      }
+    }
+
+    Logger.log('[LISTAR_CONTEXTOS] ✅ Total de contextos encontrados: ' + lista.length);
+    return lista;
+  } catch (e) {
+    Logger.log('[LISTAR_CONTEXTOS] ❌ Erro ao listar: ' + e.message);
+    Logger.log('[LISTAR_CONTEXTOS] Stack:', e.stack);
+    return [];
+  }
 }
 
 /**

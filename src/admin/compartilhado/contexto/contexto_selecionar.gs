@@ -22,33 +22,40 @@ function selecionarContextoTrabalho_() {
     return;
   }
 
-  // Descobrir qual é a pasta atual pelo ID
-  // Tentar primeiro planilhaContextoId (é o campo que sempre existe)
+  // Descobrir qual é o contexto atual pelo ID da planilha ADMIN
   let idAtual = null;
-  if (contextoAtual && contextoAtual.planilhaContextoId) {
-    idAtual = contextoAtual.planilhaContextoId;
-  } else if (contextoAtual && contextoAtual.planilhaOperacionalId) {
-    idAtual = contextoAtual.planilhaOperacionalId;
-  }
   let nomeAtual = 'NENHUMA';
   
-  Logger.log('ID Atual:', idAtual);
+  if (contextoAtual && contextoAtual.id) {
+    idAtual = contextoAtual.id;
+    nomeAtual = contextoAtual.nome || 'NENHUMA';
+  }
   
-  const encontrado = contextos.find(ctx => ctx.planilhaOperacionalId === idAtual || ctx.planilhaContextoId === idAtual);
+  Logger.log('ID Atual:', idAtual);
+  Logger.log('Nome Atual:', nomeAtual);
+  
+  const encontrado = contextos.find(ctx => ctx.planilhaOperacionalId === idAtual);
   if (encontrado) {
     nomeAtual = encontrado.nome;
   }
+
+  // Filtrar para remover o contexto atual da lista de opções
+  const outrosContextos = contextos.filter(ctx => ctx.planilhaOperacionalId !== idAtual);
   
-  Logger.log('Nome Atual:', nomeAtual);
+  if (outrosContextos.length === 0) {
+    ui.alert('Não há outros contextos disponíveis além do atual.');
+    return;
+  }
 
   let mensagem =
     'Contexto atual: ' + nomeAtual +
     '\n\nSelecione o contexto que deseja abrir:\n\n';
 
-  // Listar TODOS os contextos, marcando o atual com ✓
-  contextos.forEach((ctx, i) => {
-    const marcador = (ctx.planilhaOperacionalId === idAtual || ctx.planilhaContextoId === idAtual) ? '✓ ' : '';
-    mensagem += `${i + 1} - ${marcador}${ctx.nome}\n`;
+  // Listar apenas os OUTROS contextos (sem o atual)
+  const numerosEmoji = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+  outrosContextos.forEach((ctx, i) => {
+    const indiceEmoji = numerosEmoji[i] || `${i + 1}`;
+    mensagem += `${indiceEmoji} - ${ctx.nome}\n`;
   });
 
   const resp = ui.prompt(
@@ -61,22 +68,26 @@ function selecionarContextoTrabalho_() {
 
   const indice = Number((resp.getResponseText() || '').trim().toUpperCase());
 
-  if (!indice || indice < 1 || indice > contextos.length) {
+  if (!indice || indice < 1 || indice > outrosContextos.length) {
     ui.alert('Seleção inválida.');
     return;
   }
 
-  const escolhido = contextos[indice - 1];
+  const escolhido = outrosContextos[indice - 1];
 
-  // Se escolheu o atual, apenas avisa
-  if (escolhido.planilhaOperacionalId === idAtual || escolhido.planilhaContextoId === idAtual) {
-    ui.alert(`Você já está no contexto "${escolhido.nome}".`);
+  if (!escolhido.planilhaOperacionalId) {
+    ui.alert('❌ ERRO: O contexto "' + escolhido.nome + '" não possui planilha ADMIN válida.');
     return;
   }
 
-  if (!escolhido.planilhaOperacionalId) {
+  // Validação: verificar se planilha ainda existe
+  try {
+    const fileTest = DriveApp.getFileById(escolhido.planilhaOperacionalId);
+    Logger.log('[SELECIONAR_CONTEXTO] Planilha validada: ' + fileTest.getName());
+  } catch (e) {
     ui.alert(
-      'O contexto "' + escolhido.nome + '" não possui planilha operacional associada.'
+      '❌ ERRO: Não é possível acessar a planilha ADMIN do contexto "' + escolhido.nome + '".\n\n' +
+      'A planilha foi deletada ou as permissões foram revogadas.'
     );
     return;
   }
