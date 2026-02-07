@@ -76,29 +76,61 @@ function debugContextoPlanilhaAtual_() {
       
       const temContexto = planilhaTemContexto_();
       Logger.log('planilhaTemContexto_() retorna: ' + temContexto);
-      
-      SpreadsheetApp.getUi().alert(
-        'DEBUG CONTEXTO\n\n' +
-        'Planilha: ' + planilhaNome + '\n' +
-        'ID: ' + planilhaId + '\n\n' +
-        'Contexto encontrado: SIM\n' +
-        '  - nome: ' + contexto.nome + '\n' +
-        '  - planilhaClienteId: ' + (contexto.planilhaClienteId || 'NULO') + '\n' +
-        '  - planilhaOperacionalId: ' + (contexto.planilhaOperacionalId || 'NULO') + '\n\n' +
-        'planilhaTemContexto_(): ' + temContexto
-      );
+      Logger.log('[DEBUG] Análise completa finalizada.');
     } catch (e) {
       Logger.log('Erro ao parsear contexto: ' + e.message);
     }
   } else {
     Logger.log('Nenhum contexto encontrado em ScriptProperties para esta planilha');
-    SpreadsheetApp.getUi().alert(
-      'DEBUG CONTEXTO\n\n' +
-      'Planilha: ' + planilhaNome + '\n' +
-      'ID: ' + planilhaId + '\n\n' +
-      'Contexto encontrado: NÃO\n\n' +
-      'Chave buscada: ' + chave
-    );
+    Logger.log('[DEBUG] Análise completa finalizada.');
+  }
+}
+
+/**
+ * Corrigir contexto da planilha atual usando seus próprios dados
+ */
+function corrigirContextoPlanilhaAtual_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const planilhaId = ss.getId();
+  const planilhaNome = ss.getName();
+  
+  Logger.log('=== CORRIGIR CONTEXTO PLANILHA ATUAL ===');
+  Logger.log('Planilha ID: ' + planilhaId);
+  Logger.log('Planilha Nome: ' + planilhaNome);
+  
+  const scriptProps = PropertiesService.getScriptProperties();
+  const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
+  const rawContexto = scriptProps.getProperty(chave);
+  
+  if (!rawContexto) {
+    Logger.log('[CORRIGIR] ❌ Nenhum contexto encontrado para corrigir');
+    return;
+  }
+  
+  try {
+    const contexto = JSON.parse(rawContexto);
+    Logger.log('[CORRIGIR] Contexto atual: ' + JSON.stringify(contexto));
+    
+    // Corrigir campos essenciais baseado no ID da planilha
+    contexto.id = planilhaId;
+    contexto.planilhaOperacionalId = planilhaId;
+    
+    // O nome deve ser extraído do nome da planilha (remove "ADMIN: ")
+    const nomeExtraido = planilhaNome.replace(/^ADMIN:\s*/i, '').trim();
+    if (nomeExtraido) {
+      contexto.nome = nomeExtraido;
+    }
+    
+    Logger.log('[CORRIGIR] Contexto corrigido: ' + JSON.stringify(contexto));
+    Logger.log('[CORRIGIR] Salvando...');
+    
+    scriptProps.setProperty(chave, JSON.stringify(contexto));
+    
+    Logger.log('[CORRIGIR] ✅ Contexto corrigido com sucesso!');
+    Logger.log('[CORRIGIR] Recarregue a planilha (F5) para aplicar.');
+    
+  } catch (e) {
+    Logger.log('[CORRIGIR] ❌ Erro: ' + e.message);
   }
 }
 

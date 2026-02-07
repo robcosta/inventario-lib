@@ -40,29 +40,11 @@ function obterPlanilhaGeral_() {
   return spreadsheet;
 }
 
-/**
- * Retorna o ID da Planilha Geral
- */
-function obterPlanilhaGeralId_() {
-  return PropertiesService
-    .getScriptProperties()
-    .getProperty('PLANILHA_GERAL_ID');
-}
-
-/**
- * Define o ID da Planilha Geral
- */
-function setPlanilhaGeralId_(id) {
-
-  if (!id || typeof id !== 'string') {
-    throw new Error('ID inválido para Planilha Geral.');
-  }
-
-  PropertiesService
-    .getScriptProperties()
-    .setProperty('PLANILHA_GERAL_ID', id.trim());
-}
-
+// ============================================================
+// NOTA: obterPlanilhaGeralId_() e setPlanilhaGeralId_() 
+// foram removidas deste arquivo. Versões atualizadas estão em:
+// admin/compartilhado/config/sistema_global.gs
+// ============================================================
 
 function obterPastaGeral_() {
   const raiz = obterPastaInventario_();

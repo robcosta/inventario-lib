@@ -115,6 +115,10 @@ function debugContextoPlanilhaAtual() {
   debugContextoPlanilhaAtual_();
 }
 
+function corrigirContextoPlanilhaAtual() {
+  corrigirContextoPlanilhaAtual_();
+}
+
 /* ============================================================
  * HTML / UPLOAD CSV
  * ============================================================ */

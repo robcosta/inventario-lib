@@ -23,25 +23,33 @@ function salvarContextoAtivo_(contexto) {
   salvarContextoAdmin_(contexto);
 }
 
-/**
- * Atualiza campos específicos do contexto sem apagar o que já existe.
- * Ex: salvarContextoAtivo_({ pastaTrabalhoId: '...' })
- */
-function atualizarContexto__(novosDados) {
-  const contextoAtual = obterContextoAtivo_();
-  
-  // Mescla os dados atuais com as novas informações (Spread Operator)
-  const contextoMesclado = { ...contextoAtual, ...novosDados };
-  
-  salvarContextoAtivo_(contextoMesclado);
-}
+// ============================================================
+// NOTA: atualizarContexto__() foi removida (versão obsoleta).
+// Use atualizarContexto_() em contexto_atualizar.gs
+// ============================================================
 
 /**
  * Verifica se a planilha atual já possui um contexto configurado.
+ * ✅ Valida usando planilhaOperacionalId (ID da planilha ADMIN atual)
  */
 function planilhaTemContexto_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) return false;
+  
+  const planilhaId = ss.getId();
   const contexto = obterContextoAtivo_();
-  return !!(contexto && (contexto.id && contexto.nome && contexto.planilhaClienteId));
+  
+  // Contexto válido se: existe E tem planilhaOperacionalId correspondente
+  const valido = !!(contexto && contexto.planilhaOperacionalId === planilhaId);
+  
+  Logger.log('[CONTEXTO][VALIDACAO] Planilha: ' + planilhaId);
+  Logger.log('[CONTEXTO][VALIDACAO] Contexto existe? ' + !!contexto);
+  if (contexto) {
+    Logger.log('[CONTEXTO][VALIDACAO] contexto.planilhaOperacionalId: ' + contexto.planilhaOperacionalId);
+  }
+  Logger.log('[CONTEXTO][VALIDACAO] Resultado: ' + valido);
+  
+  return valido;
 }
 
 /**

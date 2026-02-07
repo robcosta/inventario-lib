@@ -39,7 +39,20 @@ function adminRenderMenu_() {
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('🏛️ Inventário – Administração');
 
-  if (!planilhaTemContexto_()) {
+  const temContexto = planilhaTemContexto_();
+  const contexto = obterContextoAtivo_();
+  
+  Logger.log('[ADMIN][MENU] planilhaTemContexto_() = ' + temContexto);
+  Logger.log('[ADMIN][MENU] Contexto: ' + JSON.stringify(contexto));
+  
+  if (contexto) {
+    Logger.log('[ADMIN][MENU] contexto.id = ' + contexto.id);
+    Logger.log('[ADMIN][MENU] contexto.nome = ' + contexto.nome);
+    Logger.log('[ADMIN][MENU] contexto.planilhaClienteId = ' + contexto.planilhaClienteId);
+  }
+
+  if (!temContexto) {
+    Logger.log('[ADMIN][MENU] Mostrando menu simplificado (Criar Contexto)');
     menu
       .addItem('➕ Criar Contexto de Trabalho', 'criarContextoTrabalho')
       .addToUi();

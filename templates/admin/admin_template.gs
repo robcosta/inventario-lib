@@ -125,6 +125,10 @@ function debugContextoPlanilhaAtual() {
   inventario.debugContextoPlanilhaAtual();
 }
 
+function corrigirContextoPlanilhaAtual() {
+  inventario.corrigirContextoPlanilhaAtual();
+}
+
 /* ============================================================
  * CSV — ENTRYPOINT (HTML)
  * ============================================================ */
