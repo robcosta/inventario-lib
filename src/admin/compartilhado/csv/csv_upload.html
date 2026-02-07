@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h3>📥 Importar CSV</h3>
+
+    <input type="file" id="files" accept=".csv" multiple />
+    <br><br>
+
+    <button onclick="upload()">Enviar</button>
+
+    <div id="msg"></div>
+
+    <script>
+      const tipo = '<?= tipoDestino ?>';
+
+      function upload() {
+        const files = document.getElementById('files').files;
+        const msg = document.getElementById('msg');
+        msg.innerHTML = '';
+
+        if (!files.length) {
+          alert('Selecione ao menos um CSV.');
+          return;
+        }
+
+        [...files].forEach(file => {
+          const reader = new FileReader();
+
+          reader.onload = e => {
+            google.script.run
+              .withSuccessHandler(() => {
+                msg.innerHTML += `<div style="color:green">✔️ ${file.name}</div>`;
+              })
+              .withFailureHandler(err => {
+                msg.innerHTML += `<div style="color:red">❌ ${err.message}</div>`;
+              })
+              .receberCSV(
+                tipo,
+                file.name,
+                e.target.result
+              );
+          };
+
+          reader.readAsDataURL(file);
+        });
+      }
+    </script>
+  </body>
+</html>
