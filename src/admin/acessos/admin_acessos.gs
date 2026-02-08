@@ -97,7 +97,7 @@ function gerenciarAcessosAdmin_() {
       'Contexto: ' + contexto.nome + '\n\n' +
       'Permissões:\n' +
       '• Editor na pasta de trabalho\n' +
-      '• Editor na planilha operacional\n' +
+      '• Editor na planilha admin\n' +
       '• Leitor na planilha geral\n' +
       '• Leitor nas bibliotecas\n\n' +
       'Pasta de trabalho: ' + pasta.getUrl();
@@ -121,7 +121,7 @@ function gerenciarAcessosAdmin_() {
  * Concede acesso de CLIENTE
  * - Editor na pasta de localidades
  * - Editor na planilha do cliente
- * - Leitor na planilha operacional
+ * - Leitor na planilha admin
  * - Leitor na planilha geral
  * - Leitor nas bibliotecas
  */
@@ -151,7 +151,7 @@ function gerenciarAcessosCliente_() {
     'Permissões:\n' +
     '• Editor na pasta de trabalho\n' +
     '• Editor na planilha do cliente\n' +
-    '• Leitor na planilha operacional\n' +
+    '• Leitor na planilha admin\n' +
     '• Leitor na planilha geral\n' +
     '• Leitor nas bibliotecas',
     ui.ButtonSet.OK_CANCEL
@@ -225,7 +225,7 @@ function gerenciarAcessosCliente_() {
       'Permissões:\n' +
       '• Editor na pasta de trabalho\n' +
       '• Editor na planilha do cliente\n' +
-      '• Leitor na planilha operacional\n' +
+      '• Leitor na planilha admin\n' +
       '• Leitor na planilha geral\n' +
       '• Leitor nas bibliotecas\n\n' +
       'Pasta de trabalho: ' + pasta.getUrl() + '\n' +
