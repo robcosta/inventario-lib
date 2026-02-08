@@ -57,14 +57,14 @@ function selecionarContextoTrabalho_() {
 
   const escolhido = outrosContextos[indice - 1];
 
-  if (!escolhido.planilhaOperacionalId) {
+  if (!escolhido.planilhaAdminId) {
     ui.alert('❌ ERRO: O contexto "' + escolhido.nome + '" não possui planilha ADMIN válida.');
     return;
   }
 
   // Validação: verificar se planilha ainda existe
   try {
-    const fileTest = DriveApp.getFileById(escolhido.planilhaOperacionalId);
+    const fileTest = DriveApp.getFileById(escolhido.planilhaAdminId);
     Logger.log('[SELECIONAR_CONTEXTO] Planilha validada: ' + fileTest.getName());
   } catch (e) {
     ui.alert(
@@ -75,10 +75,10 @@ function selecionarContextoTrabalho_() {
   }
 
   // ✅ Salvar contexto PENDENTE para a planilha de destino (não na atual!)
-  Logger.log('[SELECIONAR_CONTEXTO] Salvando contexto pendente para planilha: ' + escolhido.planilhaOperacionalId);
-  salvarContextoAdminPendente_(escolhido.planilhaOperacionalId, escolhido);
+  Logger.log('[SELECIONAR_CONTEXTO] Salvando contexto pendente para planilha: ' + escolhido.planilhaAdminId);
+  salvarContextoAdminPendente_(escolhido.planilhaAdminId, escolhido);
 
-  abrirPlanilhaNoNavegador_(escolhido.planilhaOperacionalId);
+  abrirPlanilhaNoNavegador_(escolhido.planilhaAdminId);
 }
 
   /**
@@ -97,7 +97,7 @@ function selecionarContextoTrabalho_() {
       nomeAtual = contextoAtual.nome || 'NENHUMA';
     }
 
-    const encontrado = lista.find(ctx => ctx.planilhaOperacionalId === idAtual);
+    const encontrado = lista.find(ctx => ctx.planilhaAdminId === idAtual);
     if (encontrado) {
       nomeAtual = encontrado.nome;
     }
@@ -107,7 +107,7 @@ function selecionarContextoTrabalho_() {
     }
 
     // Filtrar para remover o contexto atual da lista de opções
-    const outrosContextos = lista.filter(ctx => ctx.planilhaOperacionalId !== idAtual);
+    const outrosContextos = lista.filter(ctx => ctx.planilhaAdminId !== idAtual);
     if (outrosContextos.length === 0) {
       return { erro: 'apenas_atual', idAtual, nomeAtual, outrosContextos };
     }

@@ -180,7 +180,7 @@ function criarContextoCliente_(params) {
  * @param {string} params.pastaContextoId - ID da pasta contexto
  * @param {string} params.pastaCSVId - ID da pasta CSV
  * @param {string} params.pastaUnidadeId - ID da pasta unidade
- * @param {string} params.planilhaOperacionalId - ID da planilha operacional
+ * @param {string} params.planilhaAdminId - ID da planilha ADMIN
  * @param {string} params.planilhaClienteId - ID da planilha cliente
  * @returns {Object} Objeto CONTEXTO_ADMIN
  */
@@ -190,7 +190,7 @@ function criarContextoAdmin_(params) {
     pastaContextoId: params.pastaContextoId,
     pastaCSVId: params.pastaCSVId,
     pastaUnidadeId: params.pastaUnidadeId,
-    planilhaOperacionalId: params.planilhaOperacionalId,
+    planilhaAdminId: params.planilhaAdminId,
     planilhaClienteId: params.planilhaClienteId,
     criadoEm: new Date().toISOString()
   };

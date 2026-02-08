@@ -35,7 +35,7 @@ function test_montarMensagem_semContextos_() {
 function test_montarMensagem_apenasAtual_() {
   const contextoAtual = { id: 'A1', nome: 'TESTE - DEV' };
   const contextos = [
-    { nome: 'TESTE - DEV', planilhaOperacionalId: 'A1' }
+    { nome: 'TESTE - DEV', planilhaAdminId: 'A1' }
   ];
 
   return assertEquals_(
@@ -48,8 +48,8 @@ function test_montarMensagem_apenasAtual_() {
 function test_montarMensagem_listaOutros_() {
   const contextoAtual = { id: 'A1', nome: 'TESTE - DEV' };
   const contextos = [
-    { nome: 'TESTE - DEV', planilhaOperacionalId: 'A1' },
-    { nome: 'TESTE2 - DEV', planilhaOperacionalId: 'B2' }
+    { nome: 'TESTE - DEV', planilhaAdminId: 'A1' },
+    { nome: 'TESTE2 - DEV', planilhaAdminId: 'B2' }
   ];
 
   const resultado = montarMensagemSelecaoContexto_(contextoAtual, contextos);

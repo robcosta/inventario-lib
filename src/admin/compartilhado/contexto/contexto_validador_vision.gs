@@ -24,7 +24,7 @@ function validarContextoVision_(contexto) {
   // Campos obrigatórios
   const camposObrigatorios = {
     'pastaTrabalhoId': 'ID da pasta de trabalho',
-    'planilhaOperacionalId': 'ID da planilha operacional (alvo)',
+    'planilhaAdminId': 'ID da planilha ADMIN (alvo)',
     'planilhaGeralId': 'ID da planilha geral (mãe)'
   };
 
@@ -62,7 +62,7 @@ function validarContextoVision_(contexto) {
   let nomeContexto = 'Contexto';
   let nomeGeral = 'Geral';
   try {
-    nomeContexto = SpreadsheetApp.openById(contexto.planilhaOperacionalId).getName();
+    nomeContexto = SpreadsheetApp.openById(contexto.planilhaAdminId).getName();
   } catch (e) {
     console.warn('Não foi possível obter nome da planilha de contexto');
   }
@@ -75,7 +75,7 @@ function validarContextoVision_(contexto) {
   // Normalizar contexto para vision-core
   // Obs: planilhaContextoId é usada TANTO para buscas QUANTO para registrar controle em uma aba específica
   const contextoPadronizado = {
-    planilhaContextoId: contexto.planilhaOperacionalId,  // Planilha alvo (buscas + controle)
+    planilhaContextoId: contexto.planilhaAdminId,  // Planilha alvo (buscas + controle)
     planilhaGeralId: contexto.planilhaGeralId,            // Planilha mãe (fallback de buscas)
     nomeContexto: nomeContexto,                           // Nome real da planilha de contexto
     nomeGeral: nomeGeral,                                 // Nome real da planilha geral
@@ -88,7 +88,7 @@ function validarContextoVision_(contexto) {
   // 📋 LOG: Rastrear transformação de IDs
   console.log('=== 📋 NORMALIZAÇÃO DE CONTEXTO EM VALIDADOR_VISION ===');
   console.log('[VALIDADOR] Entrada (inventario-lib):');
-  console.log('  planilhaOperacionalId:', contexto.planilhaOperacionalId);
+  console.log('  planilhaAdminId:', contexto.planilhaAdminId);
   console.log('  planilhaGeralId:', contexto.planilhaGeralId);
   console.log('[VALIDADOR] Sa\u00edda (para vision-core):');
   console.log('  planilhaContextoId:', contextoPadronizado.planilhaContextoId);

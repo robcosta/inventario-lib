@@ -30,7 +30,7 @@ function salvarContextoAtivo_(contexto) {
 
 /**
  * Verifica se a planilha atual já possui um contexto configurado.
- * ✅ Valida usando planilhaOperacionalId (ID da planilha ADMIN atual)
+ * ✅ Valida usando planilhaAdminId (ID da planilha ADMIN atual)
  */
 function planilhaTemContexto_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -39,13 +39,13 @@ function planilhaTemContexto_() {
   const planilhaId = ss.getId();
   const contexto = obterContextoAtivo_();
   
-  // Contexto válido se: existe E tem planilhaOperacionalId correspondente
-  const valido = !!(contexto && contexto.planilhaOperacionalId === planilhaId);
+  // Contexto válido se: existe E tem planilhaAdminId correspondente
+  const valido = !!(contexto && contexto.planilhaAdminId === planilhaId);
   
   Logger.log('[CONTEXTO][VALIDACAO] Planilha: ' + planilhaId);
   Logger.log('[CONTEXTO][VALIDACAO] Contexto existe? ' + !!contexto);
   if (contexto) {
-    Logger.log('[CONTEXTO][VALIDACAO] contexto.planilhaOperacionalId: ' + contexto.planilhaOperacionalId);
+    Logger.log('[CONTEXTO][VALIDACAO] contexto.planilhaAdminId: ' + contexto.planilhaAdminId);
   }
   Logger.log('[CONTEXTO][VALIDACAO] Resultado: ' + valido);
   

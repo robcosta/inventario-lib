@@ -72,7 +72,7 @@ function debugContextoPlanilhaAtual_() {
       Logger.log('  - id: ' + contexto.id);
       Logger.log('  - nome: ' + contexto.nome);
       Logger.log('  - planilhaClienteId: ' + contexto.planilhaClienteId);
-      Logger.log('  - planilhaOperacionalId: ' + contexto.planilhaOperacionalId);
+      Logger.log('  - planilhaAdminId: ' + contexto.planilhaAdminId);
       
       const temContexto = planilhaTemContexto_();
       Logger.log('planilhaTemContexto_() retorna: ' + temContexto);
@@ -113,7 +113,7 @@ function corrigirContextoPlanilhaAtual_() {
     
     // Corrigir campos essenciais baseado no ID da planilha
     contexto.id = planilhaId;
-    contexto.planilhaOperacionalId = planilhaId;
+    contexto.planilhaAdminId = planilhaId;  // ✅ Atualizado para novo nome
     
     // O nome deve ser extraído do nome da planilha (remove "ADMIN: ")
     const nomeExtraido = planilhaNome.replace(/^ADMIN:\s*/i, '').trim();

@@ -84,7 +84,13 @@ function criarContextoTrabalho_() {
     const planilhaCliente = SpreadsheetApp.create('CLIENTE: ' + nomeUsuario);
     DriveApp.getFileById(planilhaCliente.getId()).moveTo(pastaLocalidades);
 
-    // 8️⃣ Criar CONTEXTO_ADMIN e registrar pendente para a planilha ADMIN
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      'Salvando contexto admin...',
+      '💾 Salvando',
+      3
+    );
+
+    // 8️⃣ Criar e SALVAR CONTEXTO_ADMIN diretamente (não usar PENDING na criação)
     Logger.log('[CONTEXTO_ADMIN][CRIAR] Planilha ADMIN ID: ' + ssTemplate.getId());
     const contextoAdmin = criarContextoAdmin_({
       id: ssTemplate.getId(),
@@ -99,8 +105,22 @@ function criarContextoTrabalho_() {
     });
 
     Logger.log('[CONTEXTO_ADMIN][CRIAR] Contexto gerado: ' + JSON.stringify(contextoAdmin));
-    // Registrar pendente para aplicar quando a planilha ADMIN abrir
-    salvarContextoAdminPendente_(ssTemplate.getId(), contextoAdmin);
+    
+    // Salvar DIRETAMENTE em ScriptProperties (não usar PENDING para criação)
+    // PENDING é usado apenas para TROCA de contextos
+    const props = PropertiesService.getScriptProperties();
+    const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + ssTemplate.getId();
+    props.setProperty(chave, JSON.stringify(contextoAdmin));
+    Logger.log('[CONTEXTO_ADMIN][CRIAR] Contexto salvo diretamente em: ' + chave);
+    
+    // Verificar se salvou
+    const verificacao = props.getProperty(chave);
+    if (!verificacao) {
+      Logger.log('[CONTEXTO_ADMIN][CRIAR] ❌ ERRO: Contexto não foi salvo!');
+      ui.alert('⚠️ Erro ao salvar contexto. Verifique os logs.');
+      return;
+    }
+    Logger.log('[CONTEXTO_ADMIN][CRIAR] ✅ Contexto salvo com sucesso (' + verificacao.length + ' chars)');
 
     SpreadsheetApp.getActiveSpreadsheet().toast(
       'Configurando contexto cliente...',
@@ -108,7 +128,7 @@ function criarContextoTrabalho_() {
       3
     );
 
-    // 8️⃣ Atualizar sistema global
+    // 9️⃣ Atualizar sistema global
     const sistemaGlobal = obterSistemaGlobal_();
     if (!sistemaGlobal.pastaContextoId) {
       atualizarSistemaGlobal_({
@@ -149,10 +169,22 @@ function criarContextoTrabalho_() {
       nome: nomeContexto
     });
 
-    // 1️⃣1️⃣ Mostrar confirmação e orientar refresh
+    // 1️⃣1️⃣ Voltar para planilha ADMIN e renderizar menu imediatamente
+    SpreadsheetApp.setActiveSpreadsheet(ssTemplate);
+    
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      'Ativando menu admin...',
+      '✅ Finalizando',
+      2
+    );
+    
+    // Renderizar menu imediatamente (sem precisar F5)
+    adminRenderMenu_();
+    
+    // 1️⃣2️⃣ Mostrar confirmação
     ui.alert(
-      '✅ Contexto criado com sucesso!\n\n' +
-      'Recarregue a planilha (F5) para atualizar o menu.'
+      '✅ Contexto "' + nomeContexto + '" criado com sucesso!\n\n' +
+      '🎉 Menu admin já está ativo e pronto para uso.'
     );
 
     Logger.log('[BOOTSTRAP][ADMIN] criarContextoTrabalho - FIM');

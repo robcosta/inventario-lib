@@ -168,6 +168,7 @@ function criarContextoAdmin_(dados) {
   const contexto = {
     // Identificação
     id: dados.id,
+    planilhaAdminId: dados.id,  // ID da planilha ADMIN (usado na validação)
     nome: dados.nome,
     emailOperador: dados.emailOperador || Session.getActiveUser().getEmail(),
     criadoEm: new Date().toISOString(),
