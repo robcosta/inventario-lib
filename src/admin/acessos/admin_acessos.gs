@@ -67,9 +67,9 @@ function gerenciarAcessosAdmin_() {
     // 📁 PASTA DE LOCALIDADES — EDITOR
     compartilharSemEmail(contexto.pastaLocalidadesId, 'writer');
 
-    // 📄 PLANILHA OPERACIONAL (ADMIN) — EDITOR
-    if (contexto.planilhaOperacionalId) {
-      compartilharSemEmail(contexto.planilhaOperacionalId, 'writer');
+    // 📄 PLANILHA ADMIN — EDITOR
+    if (contexto.planilhaAdminId) {
+      compartilharSemEmail(contexto.planilhaAdminId, 'writer');
     }
 
     // 📄 PLANILHA GERAL — LEITOR
@@ -193,9 +193,9 @@ function gerenciarAcessosCliente_() {
     // 📄 PLANILHA CLIENTE — EDITOR
     compartilharSemEmail(contexto.planilhaClienteId, 'writer');
 
-    // 📄 PLANILHA OPERACIONAL (ADMIN) — LEITOR
-    if (contexto.planilhaOperacionalId) {
-      compartilharSemEmail(contexto.planilhaOperacionalId, 'reader');
+    // 📄 PLANILHA ADMIN — LEITOR
+    if (contexto.planilhaAdminId) {
+      compartilharSemEmail(contexto.planilhaAdminId, 'reader');
     }
 
     // 📄 PLANILHA GERAL — LEITOR
