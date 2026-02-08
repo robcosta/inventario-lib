@@ -60,14 +60,14 @@ function clientAbrirPlanilhaContexto() {
     return;
   }
   
-  if (!contexto.planilhaOperacionalId) {
+  if (!contexto.planilhaAdminId) {
     SpreadsheetApp.getUi().alert('❌ Contexto incompleto. Não foi possível obter o ID da Planilha Contexto.');
     return;
   }
   
   try {
     // Abrir a planilha contexto
-    const url = 'https://docs.google.com/spreadsheets/d/' + contexto.planilhaOperacionalId + '/edit';
+    const url = 'https://docs.google.com/spreadsheets/d/' + contexto.planilhaAdminId + '/edit';
     SpreadsheetApp.getUi().showModelessDialog(
       HtmlService.createHtmlOutput('<script>window.location.href="' + url + '";</script>'),
       'Abrindo...'

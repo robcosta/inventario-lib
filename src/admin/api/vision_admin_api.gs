@@ -133,12 +133,12 @@ function processarImagem() {
         return;
       }
       
-      // Garantir que planilhaOperacionalId está definido
-      if (!contextoAtivo.planilhaOperacionalId) {
+      // Garantir que planilhaAdminId está definido
+      if (!contextoAtivo.planilhaAdminId) {
         const adminCtx = docProps.getProperty('ADMIN_CONTEXTO_ATIVO');
         if (adminCtx) {
           const adminContexto = JSON.parse(adminCtx);
-          contextoAtivo.planilhaOperacionalId = adminContexto.planilhaOperacionalId;
+          contextoAtivo.planilhaAdminId = adminContexto.planilhaAdminId;
         }
       }
     } catch (e) {
@@ -212,7 +212,7 @@ function processarImagem() {
 
   if (resultado.sucesso) {
     // Ler logs de auditoria
-    feedback = obterFeedbackCompleto_(resultado, contextoAtivo.planilhaOperacionalId);
+    feedback = obterFeedbackCompleto_(resultado, contextoAtivo.planilhaAdminId);
   } else {
     feedback = {
       sucesso: false,

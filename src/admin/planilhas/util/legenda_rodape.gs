@@ -26,7 +26,7 @@ function aplicarLegendasPlanilhaContexto_() {
   if (!pasta) return;
 
   const contexto = obterContextoAtivo_();
-  const ss = SpreadsheetApp.openById(contexto.planilhaOperacionalId);
+  const ss = SpreadsheetApp.openById(contexto.planilhaAdminId);
 
   ss.getSheets().forEach(sheet => {
     aplicarLegendaRodape_(sheet, pasta);

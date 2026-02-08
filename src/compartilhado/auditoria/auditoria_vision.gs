@@ -177,7 +177,7 @@ Taxa de sucesso: ${resumo.percentual_sucesso}%
  */
 function teste_obterLogsProcessamento() {
   const contexto = obterContextoAtivo_();
-  const logs = obterLogsProcessamento_(contexto.planilhaOperacionalId);
+  const logs = obterLogsProcessamento_(contexto.planilhaAdminId);
 
   console.log('Total de logs:', logs.length);
   console.log('Primeiros 5:', logs.slice(0, 5));
@@ -193,7 +193,7 @@ function teste_obterLogsProcessamento() {
  */
 function teste_feedback() {
   const contexto = obterContextoAtivo_();
-  const feedback = obterResumoProcessamento_(contexto.planilhaOperacionalId);
+  const feedback = obterResumoProcessamento_(contexto.planilhaAdminId);
 
   console.log('=== FEEDBACK COMPLETO ===');
   console.log(JSON.stringify(feedback, null, 2));

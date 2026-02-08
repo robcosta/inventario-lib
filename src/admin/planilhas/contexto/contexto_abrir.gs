@@ -8,7 +8,7 @@ function abrirPlanilhaContexto_() {
 
   const ui = SpreadsheetApp.getUi();
   const contexto = obterContextoAtivo_();
-  let planilhaId = contexto && contexto.planilhaOperacionalId;
+  let planilhaId = contexto && contexto.planilhaAdminId;
 
   if (!planilhaId) {
     const rawClient = PropertiesService
@@ -22,8 +22,8 @@ function abrirPlanilhaContexto_() {
         const alvo = lista.find(c =>
           (c.nome || '').toUpperCase() === (clientContexto.nome || '').toUpperCase()
         );
-        if (alvo && alvo.planilhaOperacionalId) {
-          planilhaId = alvo.planilhaOperacionalId;
+        if (alvo && alvo.planilhaAdminId) {
+          planilhaId = alvo.planilhaAdminId;
         }
       } catch (e) {
         // ignore

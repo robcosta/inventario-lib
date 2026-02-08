@@ -4,7 +4,7 @@
  * ============================================================
  * Concede acesso de ADMINISTRADOR
  * - Editor na pasta de localidades
- * - Editor na planilha operacional
+ * - Editor na planilha admin
  * - Leitor na planilha geral
  * - Leitor nas bibliotecas
  */
@@ -28,7 +28,7 @@ function gerenciarAcessosAdmin_() {
     'Informe o e-mail do usuário ADMIN.\n\n' +
     'Permissões:\n' +
     '• Editor na pasta de trabalho\n' +
-    '• Editor na planilha operacional\n' +
+    '• Editor na planilha admin\n' +
     '• Leitor na planilha geral\n' +
     '• Leitor nas bibliotecas',
     ui.ButtonSet.OK_CANCEL

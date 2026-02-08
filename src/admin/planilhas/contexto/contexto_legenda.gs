@@ -9,9 +9,9 @@ function atualizarLegendasPlanilhaContexto_(contexto) {
     return;
   }
 
-  // ✅ VALIDAÇÃO 2: Verificar se planilhaOperacionalId está definido
-  if (!contexto.planilhaOperacionalId || contexto.planilhaOperacionalId.trim() === '') {
-    console.warn('atualizarLegendasPlanilhaContexto_: planilhaOperacionalId vazio ou não definido');
+  // ✅ VALIDAÇÃO 2: Verificar se planilhaAdminId está definido
+  if (!contexto.planilhaAdminId || contexto.planilhaAdminId.trim() === '') {
+    console.warn('atualizarLegendasPlanilhaContexto_: planilhaAdminId vazio ou não definido');
     return;
   }
 
@@ -27,7 +27,7 @@ function atualizarLegendasPlanilhaContexto_(contexto) {
   if (listaPastas.length === 0) {
     // Se não houver pastas, apenas limpa as legendas antigas e sai
     try {
-      limparLegendasAntigas_(contexto.planilhaOperacionalId);
+      limparLegendasAntigas_(contexto.planilhaAdminId);
     } catch (e) {
       console.warn('atualizarLegendasPlanilhaContexto_: Erro ao limpar legendas:', e.message);
     }
@@ -41,7 +41,7 @@ function atualizarLegendasPlanilhaContexto_(contexto) {
   try {
     // Tentativa 1: Usar planilha ativa (mais rápido e seguro)
     const ssAtiva = SpreadsheetApp.getActiveSpreadsheet();
-    if (ssAtiva && ssAtiva.getId && ssAtiva.getId() === contexto.planilhaOperacionalId) {
+    if (ssAtiva && ssAtiva.getId && ssAtiva.getId() === contexto.planilhaAdminId) {
       ss = ssAtiva;
       planilhaEncontrada = true;
     }
@@ -52,12 +52,12 @@ function atualizarLegendasPlanilhaContexto_(contexto) {
   // Tentativa 2: Abrir planilha pelo ID
   if (!planilhaEncontrada) {
     try {
-      ss = SpreadsheetApp.openById(contexto.planilhaOperacionalId);
+      ss = SpreadsheetApp.openById(contexto.planilhaAdminId);
       planilhaEncontrada = true;
     } catch (e) {
       console.error(
         'atualizarLegendasPlanilhaContexto_: Falha ao acessar planilha.',
-        'ID: ' + contexto.planilhaOperacionalId,
+        'ID: ' + contexto.planilhaAdminId,
         'Erro: ' + e.message
       );
       
@@ -67,7 +67,7 @@ function atualizarLegendasPlanilhaContexto_(contexto) {
         if (ss && ss.getId()) {
           const novoContexto = {
             ...contexto,
-            planilhaOperacionalId: ss.getId()
+            planilhaAdminId: ss.getId()
           };
           salvarContextoAtivo_(novoContexto);
           planilhaEncontrada = true;

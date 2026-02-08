@@ -73,10 +73,10 @@ function validarPlanilhaFormatada_(spreadsheetId) {
 function validarPlanilhaContextoFormatada_() {
   try {
     const contexto = obterContextoAtivo_();
-    if (!contexto || !contexto.planilhaOperacionalId) {
+    if (!contexto || !contexto.planilhaAdminId) {
       return false;
     }
-    return validarPlanilhaFormatada_(contexto.planilhaOperacionalId);
+    return validarPlanilhaFormatada_(contexto.planilhaAdminId);
   } catch (e) {
     console.error('Erro ao validar Contexto:', e.message);
     return false;

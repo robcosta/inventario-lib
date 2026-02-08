@@ -11,14 +11,14 @@ function popularPlanilhaContexto_() {
   const ui = SpreadsheetApp.getUi();
 
   const contexto = obterContextoAtivo_();
-  if (!contexto || !contexto.planilhaOperacionalId) {
+  if (!contexto || !contexto.planilhaAdminId) {
     ui.alert('Contexto ativo não encontrado.');
     return;
   }
 
   // planilha = Planilha de Destino (Cliente)
   const planilha = SpreadsheetApp.openById(
-    contexto.planilhaOperacionalId
+    contexto.planilhaAdminId
   );
 
   const pastaCSV = DriveApp.getFolderById(contexto.pastaCSVId);
