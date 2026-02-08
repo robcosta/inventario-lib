@@ -65,12 +65,18 @@ function criarContextoTrabalho_() {
     ssTemplate.rename('ADMIN: ' + nomeUsuario);
     const fileAdmin = DriveApp.getFileById(ssTemplate.getId());
 
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      'Organizando planilha ADMIN...',
+      '📂 Movendo',
+      3
+    );
+
     // 6️⃣ MOVER planilha ADMIN para pasta PLANILHA
     fileAdmin.moveTo(pastaPlanilhas);
 
     SpreadsheetApp.getActiveSpreadsheet().toast(
       'Criando planilha cliente...',
-      '📊 Progresso',
+      '📊 Criando',
       3
     );
 
@@ -96,6 +102,12 @@ function criarContextoTrabalho_() {
     // Registrar pendente para aplicar quando a planilha ADMIN abrir
     salvarContextoAdminPendente_(ssTemplate.getId(), contextoAdmin);
 
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      'Configurando contexto cliente...',
+      '⚙️ Configurando',
+      3
+    );
+
     // 8️⃣ Atualizar sistema global
     const sistemaGlobal = obterSistemaGlobal_();
     if (!sistemaGlobal.pastaContextoId) {
@@ -116,6 +128,12 @@ function criarContextoTrabalho_() {
       planilhaAdminId: ssTemplate.getId(),
       planilhaGeralId: obterPlanilhaGeralId_()
     });
+
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      'Formatando planilha cliente...',
+      '🎨 Finalizando',
+      4
+    );
 
     // 🔟 Formatar planilha cliente
     cliente_formatarPlanilhaInterface_(
