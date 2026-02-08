@@ -24,7 +24,6 @@ function onOpen() {
       return;
     }
     
-    // 2️⃣ VERIFICAR CONTEXTO_CLIENTE (DocumentProperties - planilhas cliente não são bibliotecas)
     const propsDoc = PropertiesService.getDocumentProperties();
     const rawCliente = propsDoc.getProperty('CONTEXTO_CLIENTE');
     if (rawCliente) {

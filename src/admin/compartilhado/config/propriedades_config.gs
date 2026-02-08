@@ -13,7 +13,13 @@ const PROPRIEDADES_GLOBAL = {
   PASTA_CONTEXTO_ID: 'PASTA_CONTEXTO_ID',
   
   // ============================================================
-  // 📊 PLANILHA GERAL
+  // � PASTAS — PLANILHA GERAL
+  // ============================================================
+  PASTA_GERAL_ID: 'PASTA_GERAL_ID',
+  PASTA_CSV_GERAL_ID: 'PASTA_CSV_GERAL_ID',
+  
+  // ============================================================
+  // �📊 PLANILHA GERAL
   // ============================================================
   PLANILHA_GERAL_ID: 'PLANILHA_GERAL_ID',
   

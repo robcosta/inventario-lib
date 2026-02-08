@@ -1,6 +1,5 @@
 /**
  * Reconstrói a legenda em todas as abas com fundo branco e lista completa de pastas.
- * Com validação robusta para evitar erros ao acessar planilhas.
  */
 function atualizarLegendasPlanilhaContexto_(contexto) {
   // ✅ VALIDAÇÃO 1: Verificar contexto

@@ -17,6 +17,10 @@ function obterSistemaGlobal_() {
     pastaRaizId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_RAIZ_ID),
     pastaContextoId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_CONTEXTO_ID),
     
+    // Pastas — Planilha Geral
+    pastaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_GERAL_ID),
+    pastaCSVGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_CSV_GERAL_ID),
+    
     // Planilha Geral
     planilhaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID),
     
@@ -42,6 +46,17 @@ function atualizarSistemaGlobal_(atualizacoes) {
   }
   if (atualizacoes.pastaContextoId !== undefined) {
     props.setProperty(PROPRIEDADES_GLOBAL.PASTA_CONTEXTO_ID, atualizacoes.pastaContextoId);
+  }
+  
+  // Pastas — Planilha Geral
+  if (atualizacoes.pastaPlanilhasId !== undefined) {
+    props.setProperty(PROPRIEDADES_GLOBAL.PASTA_PLANILHAS_ID, atualizacoes.pastaPlanilhasId);
+  }
+  if (atualizacoes.pastaGeralId !== undefined) {
+    props.setProperty(PROPRIEDADES_GLOBAL.PASTA_GERAL_ID, atualizacoes.pastaGeralId);
+  }
+  if (atualizacoes.pastaCSVGeralId !== undefined) {
+    props.setProperty(PROPRIEDADES_GLOBAL.PASTA_CSV_GERAL_ID, atualizacoes.pastaCSVGeralId);
   }
   
   // Planilha Geral

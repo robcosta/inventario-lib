@@ -123,6 +123,10 @@ function repararContextoAdmin() {
   repararContextoAdmin_();
 }
 
+function runTestsPlanilhaGeral() {
+  runTestsPlanilhaGeral_();
+}
+
 /* ============================================================
  * HTML / UPLOAD CSV
  * ============================================================ */

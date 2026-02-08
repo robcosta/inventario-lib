@@ -118,7 +118,7 @@ function testarAcessoContextoVision_(contexto) {
 
   // Testar acesso às planilhas
   const planilhasTestar = [
-    { id: contexto.planilhaContextoId, nome: 'Operacional (Alvo)' },
+    { id: contexto.planilhaAdminId, nome: 'ADMIN (Alvo)' },
     { id: contexto.planilhaGeralId, nome: 'Geral (Mãe)' }
   ];
 

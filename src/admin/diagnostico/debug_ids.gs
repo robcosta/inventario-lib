@@ -89,18 +89,18 @@ function debugMigrarContextosPlanilhas() {
 
   let info = '🛠️ MIGRAÇÃO DE CONTEXTOS\n';
   info += '════════════════════════════════════════\n\n';
+  let totalMigrados = 0;
 
   try {
     const pastaContexto = DriveApp.getFolderById(pastaContextoId);
     const pastasContextos = pastaContexto.getFolders();
-    let totalMigrados = 0;
-
     while (pastasContextos.hasNext()) {
       const pasta = pastasContextos.next();
       const nomeContexto = pasta.getName();
 
-      const subpastas = pasta.getFolders();
+      // Verifica se já tem planilha em subpasta
       let temPlanilhaEmSubpasta = false;
+      const subpastas = pasta.getFolders();
       while (subpastas.hasNext() && !temPlanilhaEmSubpasta) {
         const sub = subpastas.next();
         const planilhas = sub.getFilesByType(MimeType.GOOGLE_SHEETS);
@@ -108,31 +108,29 @@ function debugMigrarContextosPlanilhas() {
           temPlanilhaEmSubpasta = true;
         }
       }
-
       if (temPlanilhaEmSubpasta) {
         info += `✅ ${nomeContexto}: já possui planilha em subpasta\n`;
         continue;
       }
 
+      // Verifica se tem planilha na raiz
       const planilhasRaiz = pasta.getFilesByType(MimeType.GOOGLE_SHEETS);
       if (!planilhasRaiz.hasNext()) {
         info += `⚠️ ${nomeContexto}: sem planilhas na raiz\n`;
         continue;
       }
 
+      // Cria pasta PLANILHA e move planilhas
       const pastaPlanilhas = pasta.createFolder('PLANILHA');
       let movidas = 0;
-
       while (planilhasRaiz.hasNext()) {
         const planilha = planilhasRaiz.next();
         planilha.moveTo(pastaPlanilhas);
         movidas++;
       }
-
       totalMigrados++;
       info += `🔁 ${nomeContexto}: PLANILHA criada, ${movidas} planilha(s) movida(s)\n`;
     }
-
     info += `\n✅ Migração concluída. Contextos atualizados: ${totalMigrados}\n`;
   } catch (e) {
     info += `\n❌ ERRO: ${e.message}\n`;

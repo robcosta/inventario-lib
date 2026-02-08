@@ -129,6 +129,14 @@ function corrigirContextoPlanilhaAtual() {
   inventario.corrigirContextoPlanilhaAtual();
 }
 
+function repararContextoAdmin() {
+  inventario.repararContextoAdmin();
+}
+
+function runTestsPlanilhaGeral() {
+  inventario.runTestsPlanilhaGeral();
+}
+
 /* ============================================================
  * CSV — ENTRYPOINT (HTML)
  * ============================================================ */
