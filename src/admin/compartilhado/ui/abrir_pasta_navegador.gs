@@ -8,7 +8,10 @@
  * @param {string} pastaId
  */
 function abrirPastaNoNavegador_(pastaId) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> bugfix-contexto-persistencia
   const url = `https://drive.google.com/drive/folders/${pastaId}`;
 
   const html = HtmlService.createHtmlOutput(

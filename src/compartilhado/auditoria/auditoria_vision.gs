@@ -15,6 +15,7 @@
 function obterLogsProcessamento_(planilhaId, abaControle = '__CONTROLE_PROCESSAMENTO__') {
   try {
     const ss = SpreadsheetApp.openById(planilhaId);
+<<<<<<< HEAD
     const aba = ss.getSheetByName(abaControle);
 
     if (!aba) {
@@ -23,6 +24,26 @@ function obterLogsProcessamento_(planilhaId, abaControle = '__CONTROLE_PROCESSAM
     }
 
     // Esperado: [timestamp, arquivo, status, erro, detalhes]
+=======
+    const abasPreferidas = [abaControle, '__CONTROLE_PROCESSAMENTO__', 'CONTROLE', 'Log'];
+    let aba = null;
+
+    for (const nome of abasPreferidas) {
+      if (!nome) continue;
+      aba = ss.getSheetByName(nome);
+      if (aba) break;
+    }
+
+    if (!aba) {
+      console.warn(`⚠️ Aba de controle não encontrada (${abasPreferidas.filter(Boolean).join(', ')})`);
+      return [];
+    }
+
+    // Schema esperado (SCHEMA_CONTROLE_COLUNAS):
+    // [Data/Hora, File ID, Nome original, Nome final, Status, Planilha, Linha, 
+    //  Tipo Identificador, Valor Identificador, Origem Identificador, 
+    //  Tipo de Alteração, Tempo Processamento (ms), Operador, Observação]
+>>>>>>> bugfix-contexto-persistencia
     const dados = aba.getDataRange().getValues();
 
     if (dados.length < 2) {
@@ -33,10 +54,26 @@ function obterLogsProcessamento_(planilhaId, abaControle = '__CONTROLE_PROCESSAM
     const logs = dados.slice(1).map((row, idx) => ({
       linha: idx + 2,
       timestamp: row[0],
+<<<<<<< HEAD
       arquivo: row[1] || '',
       status: row[2] || 'PENDENTE',
       erro: row[3] || '',
       detalhes: row[4] || ''
+=======
+      fileId: row[1] || '',
+      nomeOriginal: row[2] || '',
+      nomeFinal: row[3] || '',
+      status: row[4] || 'PENDENTE',
+      planilha: row[5] || '',
+      linhaPlanilha: row[6] || '',
+      tipoIdentificador: row[7] || '',
+      valorIdentificador: row[8] || '',
+      origemIdentificador: row[9] || '',
+      tipoAlteracao: row[10] || '',
+      tempoProcessamentoMs: row[11] || 0,
+      operador: row[12] || '',
+      observacao: row[13] || ''
+>>>>>>> bugfix-contexto-persistencia
     }));
 
     return logs;
@@ -67,9 +104,15 @@ function resumirLogsProcessamento_(logs) {
   const resumo = logs.reduce(
     (acc, log) => {
       acc.total++;
+<<<<<<< HEAD
       if (log.status === 'OK' || log.status === 'SUCESSO') acc.sucesso++;
       else if (log.status === 'ERRO') acc.erro++;
       else acc.pendente++;
+=======
+      if (log.status === 'ERRO') acc.erro++;
+      else if (!log.status || log.status === 'PENDENTE') acc.pendente++;
+      else acc.sucesso++;
+>>>>>>> bugfix-contexto-persistencia
       return acc;
     },
     { total: 0, sucesso: 0, erro: 0, pendente: 0 }
@@ -83,8 +126,13 @@ function resumirLogsProcessamento_(logs) {
     tempo_inicio: logs.length > 0 ? logs[0].timestamp : null,
     tempo_fim: logs.length > 0 ? logs[logs.length - 1].timestamp : null,
     erros_lista: logs
+<<<<<<< HEAD
       .filter(l => l.status === 'ERRO' && l.erro)
       .map(l => `• ${l.arquivo}: ${l.erro}`)
+=======
+      .filter(l => l.status === 'ERRO' && l.observacao)
+      .map(l => `• ${l.nomeOriginal}: ${l.observacao}`)
+>>>>>>> bugfix-contexto-persistencia
       .slice(0, 5) // Primeiros 5 erros
   };
 }
@@ -158,7 +206,11 @@ Taxa de sucesso: ${resumo.percentual_sucesso}%
  */
 function teste_obterLogsProcessamento() {
   const contexto = obterContextoAtivo_();
+<<<<<<< HEAD
   const logs = obterLogsProcessamento_(contexto.planilhaOperacionalId);
+=======
+  const logs = obterLogsProcessamento_(contexto.planilhaAdminId);
+>>>>>>> bugfix-contexto-persistencia
 
   console.log('Total de logs:', logs.length);
   console.log('Primeiros 5:', logs.slice(0, 5));
@@ -174,7 +226,11 @@ function teste_obterLogsProcessamento() {
  */
 function teste_feedback() {
   const contexto = obterContextoAtivo_();
+<<<<<<< HEAD
   const feedback = obterResumoProcessamento_(contexto.planilhaOperacionalId);
+=======
+  const feedback = obterResumoProcessamento_(contexto.planilhaAdminId);
+>>>>>>> bugfix-contexto-persistencia
 
   console.log('=== FEEDBACK COMPLETO ===');
   console.log(JSON.stringify(feedback, null, 2));

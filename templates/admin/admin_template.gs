@@ -41,8 +41,12 @@ function selecionarContextoTrabalho() {
 /* ============================================================
  * PROXIES — ACESSOS
  * ============================================================ */
-function gerenciarAcessosContexto() {
-  inventario.gerenciarAcessosContexto();
+function gerenciarAcessosAdmin() {
+  inventario.gerenciarAcessosAdmin();
+}
+function gerenciarAcessosCliente() {
+  inventario.gerenciarAcessosCliente();
+}
 }
 
 /* ============================================================
@@ -57,6 +61,10 @@ function escolherPastaTrabalho() {
 }
 
 function abrirPastasTrabalho() {
+<<<<<<< HEAD
+=======
+  // Abre somente a pasta de trabalho atual, sem alterar a pasta padrão
+>>>>>>> bugfix-contexto-persistencia
   inventario.abrirPastasTrabalho();
 }
 
@@ -116,6 +124,18 @@ function executarDiagnostico() {
   inventario.executarDiagnostico();
 }
 
+function debugContextoPlanilhaAtual() {
+  inventario.debugContextoPlanilhaAtual();
+}
+function corrigirContextoPlanilhaAtual() {
+  inventario.corrigirContextoPlanilhaAtual();
+}
+function repararContextoAdmin() {
+  inventario.repararContextoAdmin();
+}
+function runTestsPlanilhaGeral() {
+  inventario.runTestsPlanilhaGeral();
+}
 /* ============================================================
  * CSV — ENTRYPOINT (HTML)
  * ============================================================ */

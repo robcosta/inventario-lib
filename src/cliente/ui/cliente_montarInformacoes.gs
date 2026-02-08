@@ -35,8 +35,13 @@ function cliente_montarInformacoes_(contexto) {
   // ============================================================
   // LINK DA PASTA (E9) → TEXTO FIXO "Clique aqui"
   // ============================================================
+<<<<<<< HEAD
   if (contexto.pastaUnidadeId) {
     const pasta = DriveApp.getFolderById(contexto.pastaUnidadeId);
+=======
+  if (contexto.pastaLocalidadesId) {
+    const pasta = DriveApp.getFolderById(contexto.pastaLocalidadesId);
+>>>>>>> bugfix-contexto-persistencia
     const richLink = SpreadsheetApp.newRichTextValue()
       .setText('Clique aqui')
       .setLinkUrl(0, 'Clique aqui'.length, pasta.getUrl())

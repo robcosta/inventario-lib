@@ -18,7 +18,6 @@ patrimonio-lib/
 │  │  └─ contexto/
 │  │     └─ contexto_atualizar.gs  ← Gerencia contexto (obter, salvar)
 │  ├─ pasta_trabalho/
-│  ├─ planilhas/
 │  └─ acessos/
 └─ cliente/
    ├─ api/client_api.gs

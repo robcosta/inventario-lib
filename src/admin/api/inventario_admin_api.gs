@@ -29,8 +29,17 @@ function selecionarContextoTrabalho() {
 /* ============================================================
  * ACESSOS
  * ============================================================ */
+<<<<<<< HEAD
 function gerenciarAcessosContexto() {
   gerenciarAcessosContexto_();
+=======
+function gerenciarAcessosAdmin() {
+  gerenciarAcessosAdmin_();
+}
+
+function gerenciarAcessosCliente() {
+  gerenciarAcessosCliente_();
+>>>>>>> bugfix-contexto-persistencia
 }
 
 /* ============================================================
@@ -107,6 +116,25 @@ function executarDiagnostico() {
   executarDiagnostico_();
 }
 
+<<<<<<< HEAD
+=======
+function debugContextoPlanilhaAtual() {
+  debugContextoPlanilhaAtual_();
+}
+
+function corrigirContextoPlanilhaAtual() {
+  corrigirContextoPlanilhaAtual_();
+}
+
+function repararContextoAdmin() {
+  repararContextoAdmin_();
+}
+
+function runTestsPlanilhaGeral() {
+  runTestsPlanilhaGeral_();
+}
+
+>>>>>>> bugfix-contexto-persistencia
 /* ============================================================
  * HTML / UPLOAD CSV
  * ============================================================ */

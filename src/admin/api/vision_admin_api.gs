@@ -36,6 +36,73 @@ function processarImagem() {
     return;
   }
 
+<<<<<<< HEAD
+=======
+  // ✅ VALIDAÇÃO: Verificar se a pasta ativa ainda existe
+  if (!verificarSePastaExiste_(contextoAtivo.pastaTrabalhoId)) {
+    ui.alert(
+      '⚠️ Pasta de Trabalho Deletada',
+      'A pasta de trabalho ativa foi deletada ou está na lixeira.\n\n' +
+      'Escolha outra pasta ou crie uma nova no menu:\n' +
+      '🗂️ Pastas de Trabalho'
+    );
+    return;
+  }
+
+  // ===== VALIDAÇÃO: VERIFICAR FORMATAÇÃO DAS PLANILHAS =====
+  const contextoFormatado = validarPlanilhaContextoFormatada_();
+  const geralFormatado = validarPlanilhaGeralFormatada_();
+  
+  // Se alguma planilha não estiver formatada
+  if (!contextoFormatado || !geralFormatado) {
+    let planilhasNaoFormatadas = [];
+    if (!contextoFormatado) planilhasNaoFormatadas.push('📋 Contexto');
+    if (!geralFormatado) planilhasNaoFormatadas.push('📋 Geral');
+    
+    const planilhaNaoFormatada = planilhasNaoFormatadas.join('\n');
+    
+    const resposta = ui.alert(
+      '⚠️ Planilhas Não Formatadas',
+      `Processamento de imagens requer que todas as planilhas estejam formatadas.\n\n` +
+      `Planilha(s) que precisa(m) de formatação:\n${planilhaNaoFormatada}\n\n` +
+      `Deseja formatar agora?`,
+      ui.ButtonSet.YES_NO
+    );
+    
+    // Se usuário clicou NÃO
+    if (resposta !== ui.Button.YES) {
+      ui.alert('❌ Cancelado', 'Processamento cancelado. Formate as planilhas e tente novamente.', ui.ButtonSet.OK);
+      return;
+    }
+    
+    // Formatar apenas as planilhas que precisam
+    try {
+      if (!contextoFormatado) {
+        formatarPlanilhaContexto_();
+      }
+      if (!geralFormatado) {
+        formatarPlanilhaGeral_();
+      }
+      
+      ui.alert(
+        '✅ Formatação Concluída',
+        'Planilhas formatadas com sucesso!\n\n' +
+        'É necessário reiniciar o processamento das imagens.\n\n' +
+        'Acione "Processar Imagens" novamente.',
+        ui.ButtonSet.OK
+      );
+    } catch (e) {
+      console.error('Erro ao formatar planilhas:', e.message);
+      ui.alert(
+        '❌ Erro na Formatação',
+        'Ocorreu um erro ao formatar as planilhas:\n\n' + e.message,
+        ui.ButtonSet.OK
+      );
+    }
+    return;
+  }
+
+>>>>>>> bugfix-contexto-persistencia
   // ===== PASSO 1B: COMPLETAR CONTEXTO COM DADOS DO ADMIN =====
   // Obter planilhaGeralId APENAS das ScriptProperties (seguro)
   if (!contextoAtivo.planilhaGeralId) {
@@ -69,12 +136,21 @@ function processarImagem() {
         return;
       }
       
+<<<<<<< HEAD
       // Garantir que planilhaOperacionalId está definido
       if (!contextoAtivo.planilhaOperacionalId) {
         const adminCtx = docProps.getProperty('ADMIN_CONTEXTO_ATIVO');
         if (adminCtx) {
           const adminContexto = JSON.parse(adminCtx);
           contextoAtivo.planilhaOperacionalId = adminContexto.planilhaOperacionalId;
+=======
+      // Garantir que planilhaAdminId está definido
+      if (!contextoAtivo.planilhaAdminId) {
+        const adminCtx = docProps.getProperty('ADMIN_CONTEXTO_ATIVO');
+        if (adminCtx) {
+          const adminContexto = JSON.parse(adminCtx);
+          contextoAtivo.planilhaAdminId = adminContexto.planilhaAdminId;
+>>>>>>> bugfix-contexto-persistencia
         }
       }
     } catch (e) {
@@ -100,12 +176,17 @@ function processarImagem() {
   );
 
   if (confirmacao !== ui.Button.YES) {
+<<<<<<< HEAD
     ui.alert('❌ Cancelado', 'Processamento cancelado pelo usuário.');
+=======
+    ui.alert('❌ Cancelado', 'Processamento cancelado pelo usuário.', ui.ButtonSet.OK);
+>>>>>>> bugfix-contexto-persistencia
     return;
   }
 
   // ===== PASSO 3: BUSCAR COR DO DESTAQUE =====
   // Prioridade:
+<<<<<<< HEAD
   // 1. Cor armazenada no contexto (escolhida pelo usuário na planilha)
   // 2. Cor da identidade da pasta (paleta automática)
   // 3. Cor padrão azul
@@ -114,6 +195,21 @@ function processarImagem() {
     contextoAtivo.corDestaque = identidade?.cor || '#1557B0';
   }
 
+=======
+  // 1. Cor da identidade da pasta (paleta automática)
+  // 2. Cor armazenada no contexto (caso ainda exista)
+  // 3. Cor padrão azul
+  let corDestaque = null;
+  try {
+    const identidade = gerenciarIdentidadePasta_(contextoAtivo.pastaTrabalhoId, null, contextoAtivo);
+    corDestaque = identidade?.cor || null;
+  } catch (e) {
+    console.warn('processarImagem: falha ao obter cor da pasta:', e.message);
+  }
+
+  contextoAtivo.corDestaque = corDestaque || contextoAtivo.corDestaque || '#1557B0';
+
+>>>>>>> bugfix-contexto-persistencia
   // ===== PASSO 4: CHAMAR VISION COM WRAPPER =====
   let resultado = null;
   try {
@@ -143,7 +239,11 @@ function processarImagem() {
 
   if (resultado.sucesso) {
     // Ler logs de auditoria
+<<<<<<< HEAD
     feedback = obterFeedbackCompleto_(resultado, contextoAtivo.planilhaOperacionalId);
+=======
+    feedback = obterFeedbackCompleto_(resultado, contextoAtivo.planilhaAdminId);
+>>>>>>> bugfix-contexto-persistencia
   } else {
     feedback = {
       sucesso: false,

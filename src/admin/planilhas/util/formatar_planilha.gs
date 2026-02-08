@@ -4,9 +4,13 @@
  * ============================================================
  */
 function formatarPlanilha_(spreadsheetId) {
+<<<<<<< HEAD
   const ss = SpreadsheetApp.openById(
     spreadsheetId || SpreadsheetApp.getActive().getId()
   );
+=======
+  const ss = SpreadsheetApp.openById(spreadsheetId);
+>>>>>>> bugfix-contexto-persistencia
 
   const sheets = ss.getSheets();
   const contexto = obterContextoAtivo_(); // Obtém contexto para a legenda
@@ -61,10 +65,13 @@ function formatarPlanilha_(spreadsheetId) {
       }
 
       if (valA.startsWith('Tombamento')) {
+<<<<<<< HEAD
         if (data[i][7] !== '') {
           data[i][8] = data[i][7];
           data[i][7] = '';
         }
+=======
+>>>>>>> bugfix-contexto-persistencia
         blocos.tombamentoHeader.push(linha);
         continue;
       }

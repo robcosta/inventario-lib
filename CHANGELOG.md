@@ -1,4 +1,100 @@
-## v3.1.0 – 2026-01-28
+# Changelog - Inventario
+
+Todas as mudanças notáveis serão documentadas aqui.  
+Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/).  
+Versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
+
+---
+
+## [Unreleased]
+
+### Em Desenvolvimento
+- Sistema de contextos múltiplos em fase de testes
+- Arquitetura baseada em IDs completamente implementada
+
+---
+
+## v0.11.1 – 2026-02-07
+
+### 🐛 Corrigido - Bugs Críticos de Persistência de Contexto
+
+#### Bug #1: Contexto não salvava ID ao selecionar
+- **Arquivo:** `contexto_criar.gs` / `contexto_selecionar.gs`
+- Contexto criado/selecionado não persistia campo `id`
+- Causava falha na validação `planilhaTemContexto_()`
+
+#### Bug #2: listarContextos_() descartava dados completos
+- **Arquivo:** `contexto_utils.gs` 
+- Função `listarContextos_()` retornava apenas 3 campos (nome, pastaId, planilhaOperacionalId)
+- Agora retorna contexto completo de ScriptProperties com todos os campos
+- Implementação expandida para 100+ linhas com logs detalhados
+
+#### Bug #3: Contexto não persistia ao trocar planilhas  
+- **Arquivo:** `contexto_selecionar.gs`
+- `selecionarContextoTrabalho_()` salvava contexto na planilha ORIGEM antes de abrir planilha DESTINO
+- Alterado para usar `salvarContextoAdminPendente_()` que persiste na planilha correta
+- Contexto pendente aplicado automaticamente no `onOpen` da planilha destino
+
+### 🔄 Modificado
+
+#### Validação de Contexto Refatorada
+- **Arquivo:** `contexto_utils.gs` - `planilhaTemContexto_()`
+- Validação alterada de `id && nome && planilhaClienteId` para `planilhaOperacionalId === planilhaAtualId`  
+- Usa campo essencial (planilhaOperacionalId) ao invés de campos opcionais
+- Mais robusto e consistente com arquitetura de IDs
+
+#### Menu Admin com Debug Detalhado
+- **Arquivo:** `admin_menu_renderer.gs`
+- Adicionados logs extensivos para rastreamento de validação de contexto
+- Facilita diagnóstico de problemas de menu
+
+### 🗑️ Removido - Limpeza de Código (Duplicações)
+
+#### Funções Duplicadas de Planilha Geral
+- **Arquivo:** `geral_util.gs`
+- ❌ Removidas: `obterPlanilhaGeralId_()`, `setPlanilhaGeralId_()`  
+- ✅ Mantidas em: `sistema_global.gs` (versão correta usa constante PROPRIEDADES_GLOBAL)
+
+#### Função de Atualização Obsoleta
+- **Arquivo:** `contexto_utils.gs`
+- ❌ Removida: `atualizarContexto__()` (2 underscores)
+- ✅ Mantida em: `contexto_atualizar.gs` - `atualizarContexto_()` (com validações completas + JSDoc)
+
+#### Arquivo Cliente Obsoleto
+- **Arquivo DELETADO:** `cliente_info.gs` (80 linhas)
+- ❌ Continha: `cliente_montarInformacoes__()` (não usada)  
+- ✅ Versão ativa: `cliente_montarInformacoes.gs` - `cliente_montarInformacoes_()` (usada em 3 lugares)
+
+### ✨ Novo - Ferramentas de Diagnóstico
+
+#### Função de Debug de Contexto
+- **Arquivo:** `admin_diagnostico.gs`
+- `debugContextoPlanilhaAtual_()` - Diagnóstico completo via logs (sem UI)
+- Exibe todos os campos do contexto, validações, e estado de ScriptProperties
+
+#### Função de Correção One-Time
+- **Arquivo:** `admin_diagnostico.gs`  
+- `corrigirContextoPlanilhaAtual_()` - Corrige contextos incompletos/trocados (legado)
+- ⚠️ Temporária - remover após uso em todas as planilhas afetadas
+
+#### Documentação de Rastreamento
+- **Arquivo NOVO:** `LEMBRETES_REMOCAO.md`
+- Rastreia funções temporárias para remoção futura
+- Lista duplicações identificadas e status de remoção
+
+### 📊 Técnico
+
+- **Deploy:** 55 arquivos (anteriormente 56, -1 após deletar cliente_info.gs)
+- **Análise:** 167 funções escaneadas, 3 duplicações críticas eliminadas
+- **Branch:** `bugfix-contexto-persistencia`
+- **Commits:** 
+  - `9917f69` - fix: Corrigir bugs críticos de persistência (#1, #2, #3)
+  - `66d882f` - refactor: remove duplicações de código
+
+---
+
+## v0.13.0 – 2026-01-28
+
 
 ### ✨ Novo - Sistema de Cores de Destaque Refatorado
 

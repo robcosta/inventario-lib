@@ -11,14 +11,22 @@ function popularPlanilhaContexto_() {
   const ui = SpreadsheetApp.getUi();
 
   const contexto = obterContextoAtivo_();
+<<<<<<< HEAD
   if (!contexto || !contexto.planilhaOperacionalId) {
+=======
+  if (!contexto || !contexto.planilhaAdminId) {
+>>>>>>> bugfix-contexto-persistencia
     ui.alert('Contexto ativo não encontrado.');
     return;
   }
 
   // planilha = Planilha de Destino (Cliente)
   const planilha = SpreadsheetApp.openById(
+<<<<<<< HEAD
     contexto.planilhaOperacionalId
+=======
+    contexto.planilhaAdminId
+>>>>>>> bugfix-contexto-persistencia
   );
 
   const pastaCSV = DriveApp.getFolderById(contexto.pastaCSVId);

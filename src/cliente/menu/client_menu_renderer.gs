@@ -4,11 +4,14 @@
  * ============================================================
  */
 
-function renderMenuClient() {
+function renderMenuClient(contextoOverride) {
   const ui = SpreadsheetApp.getUi();
+  const contexto = contextoOverride || _client_obterContexto();
+  const temContexto = !!contexto;
+
   const menu = ui.createMenu('📦 Inventário Patrimonial');
 
-  if (!_client_temContexto()) {
+  if (!temContexto) {
     menu
       .addItem('ℹ️ Atualizar Informações', 'clientAtualizarInformacoes')
       .addToUi();
@@ -18,7 +21,16 @@ function renderMenuClient() {
   menu
     .addItem('🔄 Atualizar Informações', 'clientAtualizarInformacoes')
     .addSeparator()
-    .addItem('📂 Abrir Pasta de Trabalho', 'clientAbrirPastaTrabalho')
-    .addItem('▶️ Processar Imagens', 'clientProcessarImagens')
+    .addSubMenu(
+      ui.createMenu('🗂️ Pastas de Trabalho')
+        .addItem('📂 Abrir pasta de trabalho', 'clientAbrirPastaTrabalho')
+        .addItem('🔁 Escolher pasta', 'clientEscolherPastaTrabalho')
+        .addItem('➕ Criar pasta', 'clientCriarPastaTrabalho')
+    )
+    .addSeparator()
+    .addItem('🖼️ Processar Imagens', 'clientProcessarImagens')
+    .addSeparator()
+    .addItem('📘 Abrir Planilha Geral', 'clientAbrirPlanilhaGeral')
+    .addItem('📗 Abrir Planilha Contexto', 'clientAbrirPlanilhaContexto')
     .addToUi();
 }

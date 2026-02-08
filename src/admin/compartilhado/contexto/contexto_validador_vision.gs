@@ -24,7 +24,11 @@ function validarContextoVision_(contexto) {
   // Campos obrigatórios
   const camposObrigatorios = {
     'pastaTrabalhoId': 'ID da pasta de trabalho',
+<<<<<<< HEAD
     'planilhaOperacionalId': 'ID da planilha operacional (alvo)',
+=======
+    'planilhaAdminId': 'ID da planilha ADMIN (alvo)',
+>>>>>>> bugfix-contexto-persistencia
     'planilhaGeralId': 'ID da planilha geral (mãe)'
   };
 
@@ -44,6 +48,7 @@ function validarContextoVision_(contexto) {
     return { valido: false, erros, avisos, contexto_normalizado: null };
   }
 
+<<<<<<< HEAD
   // Normalizar contexto para vision-core
   const contextoPadronizado = {
     planilhaContextoId: contexto.planilhaOperacionalId,
@@ -53,6 +58,60 @@ function validarContextoVision_(contexto) {
     ABA_CONTROLE: contexto.ABA_CONTROLE || '__CONTROLE_PROCESSAMENTO__'
   };
 
+=======
+  // ✅ BUSCAR COR DA PASTA (sempre prioriza a identidade da pasta)
+  let corDestaque = contexto.corDestaque || null;
+  if (contexto.pastaTrabalhoId) {
+    try {
+      const identidade = gerenciarIdentidadePasta_(contexto.pastaTrabalhoId, null, contexto);
+      if (identidade && identidade.cor) {
+        corDestaque = identidade.cor;
+      }
+    } catch (e) {
+      console.warn('Erro ao buscar cor da pasta:', e.message);
+    }
+  }
+  corDestaque = corDestaque || '#1557B0';
+
+  // Obter nomes das planilhas
+  let nomeContexto = 'Contexto';
+  let nomeGeral = 'Geral';
+  try {
+    nomeContexto = SpreadsheetApp.openById(contexto.planilhaAdminId).getName();
+  } catch (e) {
+    console.warn('Não foi possível obter nome da planilha de contexto');
+  }
+  try {
+    nomeGeral = SpreadsheetApp.openById(contexto.planilhaGeralId).getName();
+  } catch (e) {
+    console.warn('Não foi possível obter nome da planilha geral');
+  }
+
+  // Normalizar contexto para vision-core
+  // Obs: planilhaContextoId é usada TANTO para buscas QUANTO para registrar controle em uma aba específica
+  const contextoPadronizado = {
+    planilhaContextoId: contexto.planilhaAdminId,  // Planilha alvo (buscas + controle)
+    planilhaGeralId: contexto.planilhaGeralId,            // Planilha mãe (fallback de buscas)
+    nomeContexto: nomeContexto,                           // Nome real da planilha de contexto
+    nomeGeral: nomeGeral,                                 // Nome real da planilha geral
+    corDestaque: corDestaque, // ✅ Cor da pasta buscada acima
+    pastaTrabalhoId: contexto.pastaTrabalhoId,            // ✅ ID da pasta (necessário para buscar nome)
+    pastaTrabalhoNome: contexto.pastaTrabalhoNome,        // ✅ Nome da pasta (para preencher localidade)
+    ABA_CONTROLE: contexto.ABA_CONTROLE || '__CONTROLE_PROCESSAMENTO__'
+  };
+
+  // 📋 LOG: Rastrear transformação de IDs
+  console.log('=== 📋 NORMALIZAÇÃO DE CONTEXTO EM VALIDADOR_VISION ===');
+  console.log('[VALIDADOR] Entrada (inventario-lib):');
+  console.log('  planilhaAdminId:', contexto.planilhaAdminId);
+  console.log('  planilhaGeralId:', contexto.planilhaGeralId);
+  console.log('[VALIDADOR] Sa\u00edda (para vision-core):');
+  console.log('  planilhaContextoId:', contextoPadronizado.planilhaContextoId);
+  console.log('  planilhaGeralId:', contextoPadronizado.planilhaGeralId);
+  console.log('[VALIDADOR] S\u00e3o iguais?', contextoPadronizado.planilhaContextoId === contextoPadronizado.planilhaGeralId);
+  console.log('=== 📋 FIM DO LOG ===');
+
+>>>>>>> bugfix-contexto-persistencia
   return {
     valido: true,
     erros: [],
@@ -75,7 +134,11 @@ function testarAcessoContextoVision_(contexto) {
 
   // Testar acesso às planilhas
   const planilhasTestar = [
+<<<<<<< HEAD
     { id: contexto.planilhaContextoId, nome: 'Operacional (Alvo)' },
+=======
+    { id: contexto.planilhaAdminId, nome: 'ADMIN (Alvo)' },
+>>>>>>> bugfix-contexto-persistencia
     { id: contexto.planilhaGeralId, nome: 'Geral (Mãe)' }
   ];
 

@@ -15,10 +15,11 @@
  */
 function onOpen(e) {
   try {
-    clientRenderMenu(); // biblioteca
-
-    // Atualiza informações automaticamente se houver contexto
-    clientAtualizarInformacoes();
+  const raw = PropertiesService.getDocumentProperties().getProperty('CONTEXTO_TRABALHO');
+  const contexto = raw ? JSON.parse(raw) : null;
+  inventario.clientRenderMenuComContexto(contexto);
+  // Atualiza informações automaticamente se houver contexto
+  inventario.clientAtualizarInformacoesComContexto(contexto);
   } catch (err) {
     Logger.log('[CLIENT][ONOPEN][ERRO]');
     Logger.log(err);
@@ -30,14 +31,40 @@ function onOpen(e) {
  * ============================================================
  */
 
-function clientAtualizarInformacoes() {
-  clientAtualizarInformacoes();
-}
-
-function clientAbrirPastaTrabalho() {
-  clientAbrirPastaTrabalho();
-}
+// ...existing code...
 
 function clientProcessarImagens() {
   clientProcessarImagens();
+=======
+function clientRenderMenu() {
+  inventario.clientRenderMenu();
+}
+
+function clientAtualizarInformacoes() {
+  inventario.clientAtualizarInformacoes();
+}
+
+function clientAbrirPastaTrabalho() {
+  inventario.clientAbrirPastaTrabalho();
+}
+
+function clientProcessarImagens() {
+  inventario.clientProcessarImagens();
+}
+
+function clientEscolherPastaTrabalho() {
+  inventario.clientEscolherPastaTrabalho();
+}
+
+function clientCriarPastaTrabalho() {
+  inventario.clientCriarPastaTrabalho();
+}
+
+function clientAbrirPlanilhaGeral() {
+  inventario.clientAbrirPlanilhaGeral();
+}
+
+function clientAbrirPlanilhaContexto() {
+  inventario.clientAbrirPlanilhaContexto();
+>>>>>>> bugfix-contexto-persistencia
 }
