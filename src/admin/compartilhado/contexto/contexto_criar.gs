@@ -6,6 +6,23 @@
 function criarContextoTrabalho_() {
     Logger.log('[BOOTSTRAP][ADMIN] criarContextoTrabalho - INÍCIO');
     const ui = SpreadsheetApp.getUi();
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const nomeAtual = ss ? ss.getName() : '';
+    const ehTemplate = nomeAtual.toUpperCase().indexOf('TEMPLATE') !== -1;
+
+    // ⚠️ Validar se já existe contexto ativo
+    const temContexto = planilhaTemContexto_();
+    
+    if (temContexto && !ehTemplate) {
+      ui.alert(
+        '⚠️ Contexto já existe',
+        'Esta planilha já possui um contexto de trabalho configurado.\n\n' +
+        '💡 Use "🔧 Reparar Contexto" se o menu não está aparecendo corretamente.\n\n' +
+        '📝 Nome da planilha: ' + nomeAtual,
+        ui.ButtonSet.OK
+      );
+      return;
+    }
 
     // 1️⃣ Solicitar nome do contexto
     const resp = ui.prompt(

@@ -119,6 +119,10 @@ function corrigirContextoPlanilhaAtual() {
   corrigirContextoPlanilhaAtual_();
 }
 
+function repararContextoAdmin() {
+  repararContextoAdmin_();
+}
+
 /* ============================================================
  * HTML / UPLOAD CSV
  * ============================================================ */

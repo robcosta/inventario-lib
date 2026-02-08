@@ -21,40 +21,47 @@ function adminRenderMenu_() {
     Logger.log('[ADMIN][MENU] Falha ao aplicar contexto pendente: ' + e.message);
   }
 
-  // Se for TEMPLATE, limpa qualquer contexto e mostra apenas criar
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const nome = ss ? ss.getName() : '';
-    if (nome && nome.toUpperCase().indexOf('ADMIN: TEMPLATE') !== -1) {
-      const planilhaId = ss.getId();
-      const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
-      PropertiesService.getScriptProperties().deleteProperty(chave);
-      PropertiesService.getDocumentProperties().deleteProperty(PROPRIEDADES_ADMIN.CONTEXTO_ADMIN);
-      Logger.log('[ADMIN][MENU] TEMPLATE detectada, contexto limpo.');
-    }
-  } catch (e) {
-    Logger.log('[ADMIN][MENU] Falha ao limpar contexto da TEMPLATE: ' + e.message);
-  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const nomeAtual = ss ? ss.getName() : '';
+  const ehTemplate = nomeAtual.toUpperCase().indexOf('TEMPLATE') !== -1;
+  const temContexto = planilhaTemContexto_();
+  const contexto = obterContextoAtivo_();
+  
+  Logger.log('[ADMIN][MENU] Planilha: ' + nomeAtual);
+  Logger.log('[ADMIN][MENU] É Template? ' + ehTemplate);
+  Logger.log('[ADMIN][MENU] Tem Contexto? ' + temContexto);
+  Logger.log('[ADMIN][MENU] Contexto: ' + JSON.stringify(contexto));
 
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('🏛️ Inventário – Administração');
 
-  const temContexto = planilhaTemContexto_();
-  const contexto = obterContextoAtivo_();
-  
-  Logger.log('[ADMIN][MENU] planilhaTemContexto_() = ' + temContexto);
-  Logger.log('[ADMIN][MENU] Contexto: ' + JSON.stringify(contexto));
-  
-  if (contexto) {
-    Logger.log('[ADMIN][MENU] contexto.id = ' + contexto.id);
-    Logger.log('[ADMIN][MENU] contexto.nome = ' + contexto.nome);
-    Logger.log('[ADMIN][MENU] contexto.planilhaClienteId = ' + contexto.planilhaClienteId);
-  }
-
-  if (!temContexto) {
-    Logger.log('[ADMIN][MENU] Mostrando menu simplificado (Criar Contexto)');
+  // ========== TEMPLATE: Sempre permite criar contexto ==========
+  if (ehTemplate) {
+    // Limpar qualquer contexto existente no Template (não deveria ter)
+    if (contexto) {
+      try {
+        const planilhaId = ss.getId();
+        const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
+        PropertiesService.getScriptProperties().deleteProperty(chave);
+        PropertiesService.getDocumentProperties().deleteProperty(PROPRIEDADES_ADMIN.CONTEXTO_ADMIN);
+        Logger.log('[ADMIN][MENU] TEMPLATE tinha contexto (removido).');
+      } catch (e) {
+        Logger.log('[ADMIN][MENU] Erro ao limpar Template: ' + e.message);
+      }
+    }
+    Logger.log('[ADMIN][MENU] Renderizando menu Template (Criar Contexto)');
     menu
       .addItem('➕ Criar Contexto de Trabalho', 'criarContextoTrabalho')
+      .addToUi();
+    return;
+  }
+
+  // ========== ADMIN: X sem contexto → Oferecer reparar ==========
+  if (!temContexto) {
+    Logger.log('[ADMIN][MENU] ADMIN sem contexto válido - oferecendo reparar');
+    menu
+      .addItem('➕ Criar Contexto de Trabalho', 'criarContextoTrabalho')
+      .addItem('🔧 Reparar Contexto', 'repararContextoAdmin')
       .addToUi();
     return;
   }
@@ -126,7 +133,6 @@ menu
     .addSubMenu(
       ui.createMenu('🧪 Diagnóstico')
         .addItem('📊 Executar Diagnóstico', 'executarDiagnostico')
-        .addItem('🔍 Debug Contexto Atual', 'debugContextoPlanilhaAtual')
     );
   menu.addToUi();
 }

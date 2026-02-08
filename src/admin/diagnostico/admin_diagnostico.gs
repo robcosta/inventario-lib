@@ -5,6 +5,68 @@
  */
 
 /**
+ * Reparar contexto (com UI amigável)
+ */
+function repararContextoAdmin_() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const planilhaId = ss.getId();
+  const scriptProps = PropertiesService.getScriptProperties();
+  const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
+  const rawContexto = scriptProps.getProperty(chave);
+  
+  if (!rawContexto) {
+    ui.alert(
+      '❌ Nenhum contexto encontrado',
+      'Esta planilha não possui contexto salvo.\n\n' +
+      '💡 Use "Criar Contexto de Trabalho" se esta for uma planilha Template.',
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+  
+  // Confirmar antes de reparar
+  const resposta = ui.alert(
+    '🔧 Reparar Contexto',
+    'Esta ação vai atualizar o contexto desta planilha:\n\n' +
+    '• Corrige campo planilhaAdminId\n' +
+    '• Atualiza ID baseado na planilha atual\n' +
+    '• Extrai nome do título da planilha\n\n' +
+    'Deseja continuar?',
+    ui.ButtonSet.YES_NO
+  );
+  
+  if (resposta !== ui.Button.YES) {
+    return;
+  }
+  
+  try {
+    corrigirContextoPlanilhaAtual_();
+    
+    // Verificar se corrigiu
+    const rawCorrigido = scriptProps.getProperty(chave);
+    const contextoCorrigido = rawCorrigido ? JSON.parse(rawCorrigido) : null;
+    
+    if (contextoCorrigido && contextoCorrigido.planilhaAdminId) {
+      ui.alert(
+        '✅ Contexto reparado!',
+        'O contexto foi atualizado com sucesso.\n\n' +
+        '📋 Contexto: ' + contextoCorrigido.nome + '\n' +
+        '🔑 ID: ' + contextoCorrigido.id + '\n\n' +
+        '🔄 Recarregue a planilha (F5) para ver o menu completo.',
+        ui.ButtonSet.OK
+      );
+    } else {
+      ui.alert('⚠️ Correção concluída, mas recomenda-se verificar os logs.');
+    }
+    
+  } catch (e) {
+    ui.alert('❌ Erro ao reparar contexto:\n\n' + e.message);
+    Logger.log('[REPARAR] Erro: ' + e.message);
+  }
+}
+
+/**
  * Executa diagnóstico do sistema
  */
 function executarDiagnostico_() {
@@ -22,27 +84,56 @@ function executarDiagnostico_() {
     // Verificar sistema global
     const sistemaGlobal = obterSistemaGlobal_();
     
+    // Contar recursos
+    const totalLocalidades = (contextoAdmin.localidades || []).length;
+    const totalAcessos = (contextoAdmin.acessoLista || []).length;
+    const totalCSVs = (contextoAdmin.csvAdminImportados || []).length;
+    
     const resultado = `
 ✅ DIAGNÓSTICO DO SISTEMA
 
-📊 CONTEXTO ADMIN:
-- ID: ${contextoAdmin.id}
-- Nome: ${contextoAdmin.nome}
-- Email: ${contextoAdmin.emailOperador}
+📋 CONTEXTO ADMIN:
+- ID: ${contextoAdmin.id || 'não definido'}
+- Nome: ${contextoAdmin.nome || 'não definido'}
+- Email Operador: ${contextoAdmin.emailOperador || 'não definido'}
+- Criado Em: ${contextoAdmin.criadoEm || 'não definido'}
+
+🆔 IDS DAS PLANILHAS:
+- Planilha ADMIN: ${contextoAdmin.planilhaAdminId || 'não definido'}
+- Planilha Cliente: ${contextoAdmin.planilhaClienteId || 'não definido'}
+- Planilha Geral: ${contextoAdmin.planilhaGeralId || 'não definido'}
+
+📁 IDS DAS PASTAS:
+- Pasta Contexto (DEL): ${contextoAdmin.pastaContextoDelId || 'não definido'}
+- Pasta Planilhas: ${contextoAdmin.pastaPlanilhasId || 'não definido'}
+- Pasta CSV Admin: ${contextoAdmin.pastaCSVAdminId || 'não definido'}
+- Pasta Localidades: ${contextoAdmin.pastaLocalidadesId || 'não definido'}
+
+📍 LOCALIDADES:
+- Total: ${totalLocalidades}
+- Ativa: ${contextoAdmin.localidadeAtivaNome || 'nenhuma'}
+${totalLocalidades > 0 ? '- IDs: ' + contextoAdmin.localidades.map(l => l.id).join(', ') : ''}
+
+👥 ACESSOS:
+- Total: ${totalAcessos}
+${totalAcessos > 0 ? '- Usuários: ' + contextoAdmin.acessoLista.map(a => a.email).join(', ') : ''}
+
+📊 CSVs IMPORTADOS:
+- Total: ${totalCSVs}
 
 🌐 SISTEMA GLOBAL:
 - Pasta Raiz ID: ${sistemaGlobal.pastaRaizId || 'não configurado'}
-- Pasta Contexto ID: ${sistemaGlobal.pastaContextoId || 'não configurado'}
-- Planilha Geral ID: ${sistemaGlobal.planilhaGeralId || 'não configurado'}
+- Pasta Contextos ID: ${sistemaGlobal.pastaContextoId || 'não configurado'}
 
-✓ Sistema funcionando corretamente!
+✅ Diagnóstico concluído!
     `;
     
     ui.alert(resultado);
     
   } catch (e) {
-    ui.alert('❌ Erro no Diagnóstico: ' + e.message);
-    Logger.log(e);
+    ui.alert('❌ Erro no Diagnóstico:\n\n' + e.message);
+    Logger.log('[DIAGNOSTICO] Erro: ' + e.message);
+    Logger.log(e.stack);
   }
 }
 

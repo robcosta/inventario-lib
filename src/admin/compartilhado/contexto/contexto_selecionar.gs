@@ -112,6 +112,13 @@ function selecionarContextoTrabalho_() {
       return { erro: 'apenas_atual', idAtual, nomeAtual, outrosContextos };
     }
 
+    // Ordenar alfabeticamente por nome
+    outrosContextos.sort((a, b) => {
+      const nomeA = (a.nome || '').toUpperCase();
+      const nomeB = (b.nome || '').toUpperCase();
+      return nomeA.localeCompare(nomeB);
+    });
+
     let mensagem =
       'Contexto atual: ' + nomeAtual +
       '\n\nSelecione o contexto que deseja abrir:\n\n';
