@@ -73,61 +73,62 @@ function executarDiagnostico_() {
   const ui = SpreadsheetApp.getUi();
   
   try {
-    // Verificar contexto admin
-    const contextoAdmin = obterContextoAdmin_();
-    
-    if (!contextoAdmin) {
-      ui.alert('⚠️ Nenhum contexto admin encontrado nesta planilha.');
-      return;
-    }
-    
-    // Verificar sistema global
+    // Sempre ler os IDs diretamente das ScriptProperties (sistema global)
     const sistemaGlobal = obterSistemaGlobal_();
-    
-    // Contar recursos
-    const totalLocalidades = (contextoAdmin.localidades || []).length;
-    const totalAcessos = (contextoAdmin.acessoLista || []).length;
-    const totalCSVs = (contextoAdmin.csvAdminImportados || []).length;
-    
+    // Tentar obter contexto admin detalhado
+    let contextoAdmin = null;
+    try {
+      contextoAdmin = obterContextoAdmin_();
+    } catch (e) {}
+
+    const totalLocalidades = (contextoAdmin && contextoAdmin.localidades) ? contextoAdmin.localidades.length : 0;
+    const totalAcessos = (contextoAdmin && contextoAdmin.acessoLista) ? contextoAdmin.acessoLista.length : 0;
+    const totalCSVs = (contextoAdmin && contextoAdmin.csvAdminImportados) ? contextoAdmin.csvAdminImportados.length : 0;
+
     const resultado = `
 ✅ DIAGNÓSTICO DO SISTEMA
 
 📋 CONTEXTO ADMIN:
-- ID: ${contextoAdmin.id || 'não definido'}
-- Nome: ${contextoAdmin.nome || 'não definido'}
-- Email Operador: ${contextoAdmin.emailOperador || 'não definido'}
-- Criado Em: ${contextoAdmin.criadoEm || 'não definido'}
+- ID: ${contextoAdmin?.id || 'não definido'}
+- Nome: ${contextoAdmin?.nome || 'não definido'}
+- Email Operador: ${contextoAdmin?.emailOperador || 'não definido'}
+- Criado Em: ${contextoAdmin?.criadoEm || 'não definido'}
 
 🆔 IDS DAS PLANILHAS:
-- Planilha ADMIN: ${contextoAdmin.planilhaAdminId || 'não definido'}
-- Planilha Cliente: ${contextoAdmin.planilhaClienteId || 'não definido'}
-- Planilha Geral: ${contextoAdmin.planilhaGeralId || 'não definido'}
+- Planilha ADMIN: ${contextoAdmin?.planilhaAdminId || 'não definido'}
+- Planilha Cliente: ${contextoAdmin?.planilhaClienteId || 'não definido'}
+- Planilha Geral (Global): ${sistemaGlobal.planilhaGeralId || 'não definido'}
 
 📁 IDS DAS PASTAS:
-- Pasta Contexto (DEL): ${contextoAdmin.pastaContextoDelId || 'não definido'}
-- Pasta Planilhas: ${contextoAdmin.pastaPlanilhasId || 'não definido'}
-- Pasta CSV Admin: ${contextoAdmin.pastaCSVAdminId || 'não definido'}
-- Pasta Localidades: ${contextoAdmin.pastaLocalidadesId || 'não definido'}
+- Pasta Contexto (DEL): ${contextoAdmin?.pastaContextoDelId || 'não definido'}
+- Pasta Planilhas: ${contextoAdmin?.pastaPlanilhasId || 'não definido'}
+- Pasta CSV Admin: ${contextoAdmin?.pastaCSVAdminId || 'não definido'}
+- Pasta Localidades: ${contextoAdmin?.pastaLocalidadesId || 'não definido'}
+- Pasta Raiz (Global): ${sistemaGlobal.pastaRaizId || 'não configurado'}
+- Pasta Contextos (Global): ${sistemaGlobal.pastaContextoId || 'não configurado'}
+- Pasta PLANILHAS (Global): ${sistemaGlobal.pastaPlanilhasId || 'não configurado'}
+- Pasta GERAL (Global): ${sistemaGlobal.pastaGeralId || 'não configurado'}
+- Pasta CSV_GERAL (Global): ${sistemaGlobal.pastaCSVGeralId || 'não configurado'}
 
 📍 LOCALIDADES:
 - Total: ${totalLocalidades}
-- Ativa: ${contextoAdmin.localidadeAtivaNome || 'nenhuma'}
+- Ativa: ${contextoAdmin?.localidadeAtivaNome || 'nenhuma'}
 ${totalLocalidades > 0 ? '- IDs: ' + contextoAdmin.localidades.map(l => l.id).join(', ') : ''}
 
 👥 ACESSOS:
 - Total: ${totalAcessos}
 ${totalAcessos > 0 ? '- Usuários: ' + contextoAdmin.acessoLista.map(a => a.email).join(', ') : ''}
 
-📊 CSVs IMPORTADOS:
+📊 CSVs IMPORTADOS (Contexto):
 - Total: ${totalCSVs}
+${totalCSVs > 0 ? '- Arquivos: ' + contextoAdmin.csvAdminImportados.map(c => c.nome).join(', ') : ''}
 
-🌐 SISTEMA GLOBAL:
-- Pasta Raiz ID: ${sistemaGlobal.pastaRaizId || 'não configurado'}
-- Pasta Contextos ID: ${sistemaGlobal.pastaContextoId || 'não configurado'}
+📊 CSVs Gerais (registro global):
+- Total: ${(sistemaGlobal.csvGeralRegistro && sistemaGlobal.csvGeralRegistro.length) || 0}
+- IDs: ${(sistemaGlobal.csvGeralRegistro && sistemaGlobal.csvGeralRegistro.map(c=>c.id).join(', ')) || 'nenhum'}
 
 ✅ Diagnóstico concluído!
     `;
-    
     ui.alert(resultado);
     
   } catch (e) {

@@ -63,8 +63,21 @@ function criarOuRecriarPlanilhaGeral_() {
   const ss = SpreadsheetApp.create('Planilha Geral');
   DriveApp.getFileById(ss.getId()).moveTo(pastaGeral);
 
-  // registra o ID correto
+  // ==========================================================
+  // 💾 Registra IDs no sistema global
+  // ==========================================================
   setPlanilhaGeralId_(ss.getId());
+  // Confirmação visual e log
+  try {
+    toast_('ID da nova Planilha Geral salvo: ' + ss.getId(), 'ID Atualizado', 5);
+  } catch (e) {}
+  Logger.log('[GERAL] Novo ID da Planilha Geral salvo: ' + ss.getId());
+
+  atualizarSistemaGlobal_({
+    pastaGeralId: pastaGeral.getId(),
+    pastaCSVGeralId: pastaCSV.getId()
+  });
+  Logger.log('[GERAL] IDs salvos: planilha=' + ss.getId() + ', pastaGeral=' + pastaGeral.getId() + ', pastaCSV=' + pastaCSV.getId());
 
   const abaPadrao = ss.getSheets()[0];
   let criouAlgumaAba = false;

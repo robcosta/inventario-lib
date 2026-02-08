@@ -133,6 +133,8 @@ menu
     .addSubMenu(
       ui.createMenu('🧪 Diagnóstico')
         .addItem('📊 Executar Diagnóstico', 'executarDiagnostico')
+        .addSeparator()
+        .addItem('🧪 Testar Planilha Geral', 'runTestsPlanilhaGeral')
     );
   menu.addToUi();
 }
