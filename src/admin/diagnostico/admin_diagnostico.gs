@@ -1,3 +1,28 @@
+// CSVs físicos nas pastas
+    let csvGeralArquivos = [];
+    let csvAdminArquivos = [];
+    try {
+      const pastaCSVGeral = sistemaGlobal.pastaCSVGeralId ? DriveApp.getFolderById(sistemaGlobal.pastaCSVGeralId) : null;
+      if (pastaCSVGeral) {
+        const files = pastaCSVGeral.getFiles();
+        while (files.hasNext()) {
+          const file = files.next();
+          csvGeralArquivos.push(`${file.getName()} (${file.getId()})`);
+        }
+        csvGeralArquivos.sort((a, b) => a.localeCompare(b));
+      }
+    } catch (e) {}
+    try {
+      const pastaCSVAdmin = contextoAdmin?.pastaCSVAdminId ? DriveApp.getFolderById(contextoAdmin.pastaCSVAdminId) : null;
+      if (pastaCSVAdmin) {
+        const files = pastaCSVAdmin.getFiles();
+        while (files.hasNext()) {
+          const file = files.next();
+          csvAdminArquivos.push(`${file.getName()} (${file.getId()})`);
+        }
+        csvAdminArquivos.sort((a, b) => a.localeCompare(b));
+      }
+    } catch (e) {}
 /**
  * ============================================================
  * DIAGNÓSTICO
@@ -24,18 +49,16 @@ function repararContextoAdmin_() {
     );
     return;
   }
-  
+
   // Confirmar antes de reparar
   const resposta = ui.alert(
     '🔧 Reparar Contexto',
-    'Esta ação vai atualizar o contexto desta planilha:\n\n' +
     '• Corrige campo planilhaAdminId\n' +
     '• Atualiza ID baseado na planilha atual\n' +
-    '• Extrai nome do título da planilha\n\n' +
-    'Deseja continuar?',
+    '• Extrai nome do título da planilha',
     ui.ButtonSet.YES_NO
   );
-  
+
   if (resposta !== ui.Button.YES) {
     return;
   }
@@ -59,7 +82,6 @@ function repararContextoAdmin_() {
     } else {
       ui.alert('⚠️ Correção concluída, mas recomenda-se verificar os logs.');
     }
-    
   } catch (e) {
     ui.alert('❌ Erro ao reparar contexto:\n\n' + e.message);
     Logger.log('[REPARAR] Erro: ' + e.message);
@@ -71,7 +93,6 @@ function repararContextoAdmin_() {
  */
 function executarDiagnostico_() {
   const ui = SpreadsheetApp.getUi();
-  
   try {
     // Sempre ler os IDs diretamente das ScriptProperties (sistema global)
     const sistemaGlobal = obterSistemaGlobal_();
@@ -85,52 +106,103 @@ function executarDiagnostico_() {
     const totalAcessos = (contextoAdmin && contextoAdmin.acessoLista) ? contextoAdmin.acessoLista.length : 0;
     const totalCSVs = (contextoAdmin && contextoAdmin.csvAdminImportados) ? contextoAdmin.csvAdminImportados.length : 0;
 
+    // Localidade ativa (nome e id)
+    let localidadeAtivaNome = contextoAdmin?.localidadeAtivaNome || 'nenhuma';
+    let localidadeAtivaId = 'não definido';
+    let demaisLocalidades = [];
+    if (Array.isArray(contextoAdmin?.localidades) && contextoAdmin.localidades.length > 0) {
+      const locais = contextoAdmin.localidades;
+      const ativa = locais.find(l => l.nome === localidadeAtivaNome);
+      localidadeAtivaId = ativa ? ativa.id : 'não definido';
+      demaisLocalidades = locais
+        .filter(l => l.nome !== localidadeAtivaNome)
+        .map(l => `- ${l.nome}: ${l.id}`)
+        .sort((a, b) => a.localeCompare(b));
+    // fim do bloco das localidades
+    }
+
+    // CSVs importados (nomes e ids)
+    let csvImportados = [];
+    if (Array.isArray(contextoAdmin?.csvAdminImportados) && contextoAdmin.csvAdminImportados.length > 0) {
+      csvImportados = contextoAdmin.csvAdminImportados
+        .map(c => `- ${c.nome}\n  - ID: ${c.id}`)
+        .sort((a, b) => a.localeCompare(b));
+    }
+
+    // CSVs gerais (registro global: nome e id)
+    let csvGeralRegistro = [];
+    if (Array.isArray(sistemaGlobal?.csvGeralRegistro) && sistemaGlobal.csvGeralRegistro.length > 0) {
+      csvGeralRegistro = sistemaGlobal.csvGeralRegistro
+        .map(c => `- ${c.nome}\n  - ID: ${c.id}`)
+        .sort((a, b) => a.localeCompare(b));
+    }
+
+    // CSVs físicos nas pastas
+    let csvGeralArquivos = [];
+    let csvAdminArquivos = [];
+    try {
+      const pastaCSVGeral = sistemaGlobal.pastaCSVGeralId ? DriveApp.getFolderById(sistemaGlobal.pastaCSVGeralId) : null;
+      if (pastaCSVGeral) {
+        const files = pastaCSVGeral.getFilesByType(MimeType.CSV);
+        while (files.hasNext()) {
+          const file = files.next();
+          csvGeralArquivos.push(`- ${file.getName()}\n  - ID: ${file.getId()}`);
+        }
+        csvGeralArquivos.sort((a, b) => a.localeCompare(b));
+      }
+    } catch (e) {}
+    try {
+      const pastaCSVAdmin = contextoAdmin?.pastaCSVAdminId ? DriveApp.getFolderById(contextoAdmin.pastaCSVAdminId) : null;
+      if (pastaCSVAdmin) {
+        const files = pastaCSVAdmin.getFilesByType(MimeType.CSV);
+        while (files.hasNext()) {
+          const file = files.next();
+          csvAdminArquivos.push(`- ${file.getName()}\n  - ID: ${file.getId()}`);
+        }
+        csvAdminArquivos.sort((a, b) => a.localeCompare(b));
+      }
+    } catch (e) {}
+
     const resultado = `
-✅ DIAGNÓSTICO DO SISTEMA
+  ✅ DIAGNÓSTICO DO SISTEMA
 
-📋 CONTEXTO ADMIN:
-- ID: ${contextoAdmin?.id || 'não definido'}
-- Nome: ${contextoAdmin?.nome || 'não definido'}
-- Email Operador: ${contextoAdmin?.emailOperador || 'não definido'}
-- Criado Em: ${contextoAdmin?.criadoEm || 'não definido'}
+  📋 CONTEXTO ADMIN:
 
-🆔 IDS DAS PLANILHAS:
-- Planilha ADMIN: ${contextoAdmin?.planilhaAdminId || 'não definido'}
-- Planilha Cliente: ${contextoAdmin?.planilhaClienteId || 'não definido'}
-- Planilha Geral (Global): ${sistemaGlobal.planilhaGeralId || 'não definido'}
+    🆔 IDS DAS PLANILHAS:
+    - Planilha ADMIN: ${contextoAdmin?.planilhaAdminId || 'não definido'}
+    - Planilha Cliente: ${contextoAdmin?.planilhaClienteId || 'não definido'}
+    - Planilha Geral (Global): ${sistemaGlobal.planilhaGeralId || 'não definido'}
 
-📁 IDS DAS PASTAS:
-- Pasta Contexto (DEL): ${contextoAdmin?.pastaContextoDelId || 'não definido'}
-- Pasta Planilhas: ${contextoAdmin?.pastaPlanilhasId || 'não definido'}
-- Pasta CSV Admin: ${contextoAdmin?.pastaCSVAdminId || 'não definido'}
-- Pasta Localidades: ${contextoAdmin?.pastaLocalidadesId || 'não definido'}
-- Pasta Raiz (Global): ${sistemaGlobal.pastaRaizId || 'não configurado'}
-- Pasta Contextos (Global): ${sistemaGlobal.pastaContextoId || 'não configurado'}
-- Pasta PLANILHAS (Global): ${sistemaGlobal.pastaPlanilhasId || 'não configurado'}
-- Pasta GERAL (Global): ${sistemaGlobal.pastaGeralId || 'não configurado'}
-- Pasta CSV_GERAL (Global): ${sistemaGlobal.pastaCSVGeralId || 'não configurado'}
+    📁 IDS DAS PASTAS:
+    - Pasta Contexto (DEL): ${contextoAdmin?.pastaContextoDelId || 'não definido'}
+    - Pasta CSV Admin: ${contextoAdmin?.pastaCSVAdminId || 'não definido'}
+    - Pasta Localidades: ${contextoAdmin?.pastaLocalidadesId || 'não definido'}
+    - Pasta Raiz (Global): ${sistemaGlobal.pastaRaizId || 'não configurado'}
+    - Pasta Contextos (Global): ${sistemaGlobal.pastaContextoId || 'não configurado'}
+    - Pasta GERAL (Global): ${sistemaGlobal.pastaGeralId || 'não configurado'}
+    - Pasta CSV_GERAL (Global): ${sistemaGlobal.pastaCSVGeralId || 'não configurado'}
 
-📍 LOCALIDADES:
-- Total: ${totalLocalidades}
-- Ativa: ${contextoAdmin?.localidadeAtivaNome || 'nenhuma'}
-${totalLocalidades > 0 ? '- IDs: ' + contextoAdmin.localidades.map(l => l.id).join(', ') : ''}
+    📍 LOCALIDADES:
+    - Total: ${totalLocalidades}
+    - Ativa:
+      - ${localidadeAtivaNome}: ${localidadeAtivaId}
+    ${demaisLocalidades.length > 0 ? '- Demais:\n' + demaisLocalidades.map(l => `${l}`).join('\n') : ''}
 
-👥 ACESSOS:
-- Total: ${totalAcessos}
-${totalAcessos > 0 ? '- Usuários: ' + contextoAdmin.acessoLista.map(a => a.email).join(', ') : ''}
+    👥 ACESSOS:
+    - Total: ${totalAcessos}
+    ${totalAcessos > 0 ? '- Usuários: ' + contextoAdmin.acessoLista.map(a => a.email).join(', ') : ''}
 
-📊 CSVs IMPORTADOS (Contexto):
-- Total: ${totalCSVs}
-${totalCSVs > 0 ? '- Arquivos: ' + contextoAdmin.csvAdminImportados.map(c => c.nome).join(', ') : ''}
+    📊 CSVs IMPORTADOS (Contexto):
+    - Total: ${csvAdminArquivos.length}
+    ${csvAdminArquivos.length > 0 ? csvAdminArquivos.join('\n') : '- Arquivos na pasta: nenhum'}
 
-📊 CSVs Gerais (registro global):
-- Total: ${(sistemaGlobal.csvGeralRegistro && sistemaGlobal.csvGeralRegistro.length) || 0}
-- IDs: ${(sistemaGlobal.csvGeralRegistro && sistemaGlobal.csvGeralRegistro.map(c=>c.id).join(', ')) || 'nenhum'}
+    📊 CSVs Gerais (registro global):
+    - Total: ${csvGeralArquivos.length}
+    ${csvGeralArquivos.length > 0 ? csvGeralArquivos.join('\n') : '- Nenhum arquivo na pasta'}
 
-✅ Diagnóstico concluído!
-    `;
+    ✅ Diagnóstico concluído!
+      `;
     ui.alert(resultado);
-    
   } catch (e) {
     ui.alert('❌ Erro no Diagnóstico:\n\n' + e.message);
     Logger.log('[DIAGNOSTICO] Erro: ' + e.message);
