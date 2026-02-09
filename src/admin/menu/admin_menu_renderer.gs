@@ -47,10 +47,8 @@ function adminRenderMenu_() {
   // ==========================================================
   if (ehTemplate) {
     menu
-      .addItem('➕ Criar Novo Contexto', 'criarContextoTrabalho');
-
-    // Versão (informativa)
-    adicionarVersaoAoMenu_(menu);
+      .addItem('➕ Criar Novo Contexto', 'criarContextoTrabalho')
+      .addItem('ℹ️ Versão', 'mostrarVersaoSistema');
 
     menu.addToUi();
     return;
@@ -61,11 +59,8 @@ function adminRenderMenu_() {
   // ==========================================================
   if (!temContexto) {
     menu
-      .addItem('🔧 Reparar Contexto', 'repararContextoAdmin');
-
-    // Versão (informativa)
-    adicionarVersaoAoMenu_(menu);
-
+      .addItem('🔧 Reparar Contexto', 'repararContextoAdmin')
+      .addItem('ℹ️ Versão', 'mostrarVersaoSistema');
     menu.addToUi();
     return;
   }

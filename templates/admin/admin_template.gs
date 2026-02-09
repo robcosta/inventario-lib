@@ -45,12 +45,8 @@ function selecionarContextoTrabalho() {
 /* ============================================================
  * PROXIES — ACESSOS
  * ============================================================ */
-function gerenciarAcessosAdmin() {
-  inventario.gerenciarAcessosAdmin();
-}
-
-function gerenciarAcessosCliente() {
-  inventario.gerenciarAcessosCliente();
+function gerenciarAcessosContexto() {
+  inventario.gerenciarAcessosContexto();
 }
 
 /* ============================================================
@@ -125,25 +121,34 @@ function executarDiagnostico() {
   inventario.executarDiagnostico();
 }
 
-function debugContextoPlanilhaAtual() {
-  inventario.debugContextoPlanilhaAtual();
+function mostrarVersaoSistema() {
+   inventario.mostrarVersaoSistema();  
 }
-
-function corrigirContextoPlanilhaAtual() {
-  inventario.corrigirContextoPlanilhaAtual();
-}
-
-function repararContextoAdmin() {
-  inventario.repararContextoAdmin();
-}
-
-function runTestsPlanilhaGeral() {
-  inventario.runTestsPlanilhaGeral();
-}
-
 /* ============================================================
  * CSV — ENTRYPOINT (HTML)
  * ============================================================ */
 function receberCSV(tipo, nomeArquivo, dataUrl) {
   return inventario.receberCSV(tipo, nomeArquivo, dataUrl);
+}
+
+function verContextoScript() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const planilhaId = ss.getId();
+  const chave = 'CONTEXTO_ADMIN_' + planilhaId;
+  const props = PropertiesService.getScriptProperties();
+  const contexto = props.getProperty(chave);
+  
+  if (contexto) {
+    const obj = JSON.parse(contexto);
+    Logger.log('Contexto encontrado: ' + Object.keys(obj).join(', '));
+    SpreadsheetApp.getUi().alert('Contexto OK! IDs:\n' + 
+      'pastaPlanilhas: ' + obj.pastaPlanilhasId + '\n' +
+      'pastaLocalidades: ' + obj.pastaLocalidadesId);
+  } else {
+    SpreadsheetApp.getUi().alert('Contexto não encontrado! Chave: ' + chave);
+  }
+}
+
+function runTestsPlanilhaGeral() {
+  inventario.runTestsPlanilhaGeral();
 }
