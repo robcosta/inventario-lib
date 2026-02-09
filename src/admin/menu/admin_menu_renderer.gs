@@ -114,7 +114,7 @@ function adminRenderMenu_() {
   // ==========================================================
   menu
     .addSubMenu(
-      ui.createMenu('📗 Planilha Contexto')
+      ui.createMenu('📕 Planilha ADMIN')
         .addItem('📤 Importar CSV', 'importarCSVContexto')
         .addItem('📊 Popular', 'popularPlanilhaContexto')
         .addItem('🎨 Formatar', 'formatarPlanilhaContexto')

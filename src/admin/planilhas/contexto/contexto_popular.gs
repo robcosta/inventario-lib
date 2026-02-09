@@ -1,41 +1,72 @@
 /**
  * ============================================================
- * CONTEXTO — POPULAR PLANILHA A PARTIR DE CSV_CONTEXTO
- * (INCREMENTAL + LIMPEZA DA PÁGINA PADRÃO)
+ * PLANILHA CONTEXTO — POPULAR A PARTIR DE CSV (ID-BASED)
  * ============================================================
+ * Cada CSV gera uma aba distinta.
+ * Abas vazias são removidas (exceto técnicas).
+ *
+ * Fonte única dos CSVs:
+ * → contexto.pastaCSVAdminId
+ */
+
+/**
+ * Bridge chamada pelo menu.
+ * Resolve IDs a partir do contexto ativo.
  */
 function popularPlanilhaContexto_() {
-
-  // ss = Planilha onde o script está rodando (Admin)
-  const ss = SpreadsheetApp.getActiveSpreadsheet(); 
-  const ui = SpreadsheetApp.getUi();
-
   const contexto = obterContextoAtivo_();
+
   if (!contexto || !contexto.planilhaAdminId) {
-    ui.alert('Contexto ativo não encontrado.');
-    return;
+    throw new Error(
+      'Contexto inválido: planilhaAdminId ausente ao popular Planilha Contexto.'
+    );
   }
 
-  // planilha = Planilha de Destino (Cliente)
-  const planilha = SpreadsheetApp.openById(
-    contexto.planilhaAdminId
+  if (!contexto.pastaCSVAdminId) {
+    throw new Error(
+      'Contexto inválido: pastaCSVAdminId ausente ao popular Planilha Contexto.'
+    );
+  }
+
+  const resultado = popularPlanilhaContextoPorId_(
+    contexto.planilhaAdminId,
+    contexto.pastaCSVAdminId
   );
 
-  const pastaCSV = DriveApp.getFolderById(contexto.pastaCSVId);
-  if (!pastaCSV) {
-    ui.alert('Pasta CSV_CONTEXTO não encontrada.');
-    return;
+  toast_(
+    `Contexto atualizado: ${resultado.novos} novo(s), ${resultado.atualizados} atualizado(s).`,
+    'Concluído',
+    6
+  );
+}
+
+/**
+ * ============================================================
+ * FUNÇÃO REAL (ID-BASED)
+ * ============================================================
+ * Não depende de UI nem de planilha ativa.
+ */
+function popularPlanilhaContextoPorId_(spreadsheetId, pastaCsvAdminId) {
+
+  if (!spreadsheetId || typeof spreadsheetId !== 'string') {
+    throw new Error('spreadsheetId inválido ao popular Planilha Contexto.');
   }
+
+  if (!pastaCsvAdminId || typeof pastaCsvAdminId !== 'string') {
+    throw new Error('pastaCsvAdminId inválido ao popular Planilha Contexto.');
+  }
+
+  const planilha = SpreadsheetApp.openById(spreadsheetId);
+  const pastaCSV = DriveApp.getFolderById(pastaCsvAdminId);
 
   const arquivos = pastaCSV.getFilesByType(MimeType.CSV);
   if (!arquivos.hasNext()) {
-    ui.alert('Nenhum CSV encontrado em CSV_CONTEXTO.');
-    return;
+    return { novos: 0, atualizados: 0 };
   }
 
-  // -------------------------------
-  // Mapeia abas existentes na PLANILHA DE DESTINO
-  // -------------------------------
+  // ----------------------------------------------------------
+  // Mapear abas existentes
+  // ----------------------------------------------------------
   const abasExistentes = {};
   planilha.getSheets().forEach(sheet => {
     abasExistentes[sheet.getName()] = sheet;
@@ -44,8 +75,9 @@ function popularPlanilhaContexto_() {
   let novos = 0;
   let atualizados = 0;
 
-  toast_('Verificando CSVs do contexto...', 'Processando');
-
+  // ----------------------------------------------------------
+  // Processar CSVs
+  // ----------------------------------------------------------
   while (arquivos.hasNext()) {
     const file = arquivos.next();
     const nomeAba = nomeAbaPorCSV_(file.getName());
@@ -59,10 +91,8 @@ function popularPlanilhaContexto_() {
       sheet.clearContents();
       atualizados++;
     } else {
-      // Cria a aba na planilha de DESTINO
       sheet = planilha.insertSheet(nomeAba);
-      // Atualiza o mapa para evitar duplicidade no loop
-      abasExistentes[nomeAba] = sheet; 
+      abasExistentes[nomeAba] = sheet;
       novos++;
     }
 
@@ -71,75 +101,63 @@ function popularPlanilhaContexto_() {
       .setValues(dados);
   }
 
-  // 🔥 CORREÇÃO 1: Força o Google a salvar tudo antes de verificar vazias
   SpreadsheetApp.flush();
 
-  // -------------------------------
-  // Remove abas vazias se existir
-  // 🔥 CORREÇÃO 2: Passa a 'planilha' (destino), não a 'ss' (origem)
-  // -------------------------------
-  removerAbasVazias_(planilha);  
-    
-  toast_(
-    `Contexto atualizado: ${novos} novo(s), ${atualizados} atualizado(s).`,
-    'Concluído',
-    6
-  );
+  removerAbasVaziasPorId_(spreadsheetId);
+
+  return { novos, atualizados };
 }
 
 /**
  * ============================================================
- * REMOVER ABAS VAZIAS
+ * REMOVER ABAS VAZIAS (ID-BASED)
  * ============================================================
  */
+function removerAbasVaziasPorId_(spreadsheetId) {
 
-function removerAbasVazias_(planilhaAlvo) {
+  const planilha = SpreadsheetApp.openById(spreadsheetId);
+  const sheets = planilha.getSheets();
 
-  // Usa a planilha passada por parâmetro
-  const sheets = planilhaAlvo.getSheets();
-  
-  // Tenta ativar a primeira aba segura (Controle ou índice 0)
-  // Isso evita erro ao deletar a aba que estava ativa
+  // Tentar focar uma aba segura antes de deletar
   try {
-     const controle = planilhaAlvo.getSheetByName('__CONTROLE_PROCESSAMENTO__');
-     if(controle) {
-       planilhaAlvo.setActiveSheet(controle);
-     } else {
-       planilhaAlvo.setActiveSheet(sheets[0]);
-     }
-  } catch(e) {
-    // Silencia erro se não conseguir focar (comum em openById)
-  }
+    const controle = planilha.getSheetByName('__CONTROLE_PROCESSAMENTO__');
+    if (controle) {
+      planilha.setActiveSheet(controle);
+    } else if (sheets.length > 0) {
+      planilha.setActiveSheet(sheets[0]);
+    }
+  } catch (e) {}
 
   const abasParaRemover = [];
 
   sheets.forEach(sheet => {
-
     const nome = sheet.getName();
 
-    // ❌ Nunca remove aba técnica
+    // Nunca remover aba técnica
     if (nome === '__CONTROLE_PROCESSAMENTO__') return;
 
-    // Verifica se tem dados reais
     const range = sheet.getDataRange();
-    
-    // Otimização: Se for apenas A1 e estiver vazio, nem pega values
-    if (range.getLastRow() === 1 && range.getLastColumn() === 1 && range.getValue() === "") {
-        abasParaRemover.push(sheet);
-        return;
+
+    // Caso simples: apenas A1 vazio
+    if (
+      range.getLastRow() === 1 &&
+      range.getLastColumn() === 1 &&
+      range.getValue() === ''
+    ) {
+      abasParaRemover.push(sheet);
+      return;
     }
 
     const values = range.getValues();
     let temDadoReal = false;
 
-    // Loop quebra assim que acha 1 dado, economizando processamento
-    outerLoop:
+    outer:
     for (let i = 0; i < values.length; i++) {
       for (let j = 0; j < values[i].length; j++) {
         const v = values[i][j];
         if (v !== '' && v !== null && v !== undefined) {
           temDadoReal = true;
-          break outerLoop;
+          break outer;
         }
       }
     }
@@ -149,23 +167,14 @@ function removerAbasVazias_(planilhaAlvo) {
     }
   });
 
-  if (abasParaRemover.length === 0) return;
-
-  // 🔒 Remove de trás para frente para evitar conflito de índice
+  // Remover de trás para frente
   abasParaRemover.reverse().forEach(sheet => {
     try {
-      planilhaAlvo.deleteSheet(sheet);
+      planilha.deleteSheet(sheet);
     } catch (e) {
-      Logger.log(`Erro ao deletar aba ${sheet.getName()}: ${e.message}`);
+      Logger.log(
+        `Erro ao deletar aba ${sheet.getName()}: ${e.message}`
+      );
     }
   });
-
-  // Nota: Toast só aparece se for a planilha ativa do usuário
-  try {
-    SpreadsheetApp.getActive().toast(
-      `🧹 ${abasParaRemover.length} aba(s) vazia(s) removida(s)`,
-      'Limpeza concluída',
-      5
-    );
-  } catch(e) {}
 }

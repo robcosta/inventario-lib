@@ -6,65 +6,49 @@
 
 function receberCSV_(tipo, nomeArquivo, dataUrl) {
 
-  Logger.log('[CSV-BACKEND] Iniciando recebimento de CSV');
-  Logger.log('[CSV-BACKEND] Tipo: ' + tipo);
-  Logger.log('[CSV-BACKEND] Nome arquivo: ' + nomeArquivo);
-  try {
-    SpreadsheetApp.getActive().toast(
-      'Recebendo arquivo: ' + nomeArquivo,
-      '⏳ Iniciando importação',
-      4
-    );
-  } catch (e) {}
+  Logger.log('[CSV] Recebendo CSV');
+  Logger.log('[CSV] Tipo lógico: ' + tipo);
+  Logger.log('[CSV] Arquivo: ' + nomeArquivo);
 
   let pastaDestino = null;
 
+  // ==========================================================
+  // CSV DA PLANILHA GERAL
+  // ==========================================================
   if (tipo === 'GERAL') {
-    Logger.log('[CSV-BACKEND] Obtendo pasta CSV_GERAL...');
-    try {
-      SpreadsheetApp.getActive().toast(
-        'Obtendo pasta CSV_GERAL...',
-        '📂 Localizando pasta',
-        3
-      );
-    } catch (e) {}
     pastaDestino = obterPastaCSVGeral_();
   }
 
-  if (tipo === 'CONTEXTO') {
-    Logger.log('[CSV-BACKEND] Obtendo pasta CSV_CONTEXTO...');
-    try {
-      SpreadsheetApp.getActive().toast(
-        'Obtendo pasta CSV_CONTEXTO...',
-        '📂 Localizando pasta',
-        3
+  // ==========================================================
+  // CSV DO CONTEXTO ADMIN (PADRÃO ÚNICO)
+  // ==========================================================
+  else {
+    const contexto = obterContextoAtivo_();
+
+    if (!contexto || !contexto.pastaCSVAdminId) {
+      throw new Error(
+        'Contexto inválido ou pasta CSV_ADMIN não configurada.'
       );
-    } catch (e) {}
-    pastaDestino = obterPastaCSVContexto_();
+    }
+
+    pastaDestino = DriveApp.getFolderById(
+      contexto.pastaCSVAdminId
+    );
   }
 
   if (!pastaDestino) {
-    Logger.log('[CSV-BACKEND] ❌ ERRO: Pasta de destino não encontrada!');
-    try {
-      SpreadsheetApp.getActive().toast(
-        'Erro: Pasta de destino não encontrada para tipo: ' + tipo,
-        '❌ Erro ao salvar CSV',
-        8
-      );
-    } catch (e) {}
-    throw new Error('Pasta de destino não encontrada para tipo: ' + tipo);
-  }
-
-  Logger.log('[CSV-BACKEND] ✅ Pasta obtida: ' + pastaDestino.getName() + ' (ID: ' + pastaDestino.getId() + ')');
-  try {
-    SpreadsheetApp.getActive().toast(
-      'Salvando arquivo em: ' + pastaDestino.getName(),
-      '💾 Salvando CSV',
-      4
+    throw new Error(
+      'Pasta de destino não resolvida (tipo=' + tipo + ')'
     );
-  } catch (e) {}
+  }
 
   salvarCSV_(nomeArquivo, dataUrl, pastaDestino);
 
-  Logger.log('[CSV-BACKEND] ✅ CSV salvo com sucesso!');
+  try {
+    SpreadsheetApp.getActive().toast(
+      'CSV importado com sucesso: ' + nomeArquivo,
+      '✅ Importação concluída',
+      4
+    );
+  } catch (e) {}
 }
