@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * PLANILHA GERAL — CRIAR / RECRIAR
+ * PLANILHA GERAL — CRIAR / RECRIAR (ID-BASED + DATA DOS CSVs)
  * ============================================================
  */
 function criarOuRecriarPlanilhaGeral_() {
@@ -24,7 +24,7 @@ function criarOuRecriarPlanilhaGeral_() {
   // 🔎 Verifica se já existe Planilha Geral
   // ==========================================================
   const existentes = pastaGeral.getFilesByType(MimeType.GOOGLE_SHEETS);
-  let existePlanilha = existentes.hasNext();
+  const existePlanilha = existentes.hasNext();
 
   if (existePlanilha) {
     const resp = ui.alert(
@@ -41,7 +41,7 @@ function criarOuRecriarPlanilhaGeral_() {
   toast_('Preparando recriação da Planilha Geral...', 'Planilha Geral');
 
   // ==========================================================
-  // 🗑️ Remove TODAS as planilhas antigas da pasta
+  // 🗑️ Remove planilhas antigas
   // ==========================================================
   let removidas = 0;
   const antigos = pastaGeral.getFilesByType(MimeType.GOOGLE_SHEETS);
@@ -56,31 +56,28 @@ function criarOuRecriarPlanilhaGeral_() {
   }
 
   // ==========================================================
-  // 🆕 Cria nova planilha
+  // 🆕 Cria nova planilha (nome provisório)
   // ==========================================================
   toast_('Criando nova Planilha Geral...', 'Planilha Geral');
 
-  const ss = SpreadsheetApp.create('Planilha Geral');
+  const ss = SpreadsheetApp.create('GERAL: EM CONSTRUÇÃO');
   DriveApp.getFileById(ss.getId()).moveTo(pastaGeral);
 
   // ==========================================================
   // 💾 Registra IDs no sistema global
   // ==========================================================
   setPlanilhaGeralId_(ss.getId());
-  // Confirmação visual e log
-  try {
-    toast_('ID da nova Planilha Geral salvo: ' + ss.getId(), 'ID Atualizado', 5);
-  } catch (e) {}
-  Logger.log('[GERAL] Novo ID da Planilha Geral salvo: ' + ss.getId());
 
   atualizarSistemaGlobal_({
     pastaGeralId: pastaGeral.getId(),
     pastaCSVGeralId: pastaCSV.getId()
   });
-  Logger.log('[GERAL] IDs salvos: planilha=' + ss.getId() + ', pastaGeral=' + pastaGeral.getId() + ', pastaCSV=' + pastaCSV.getId());
+
+  Logger.log('[GERAL] Planilha criada: ' + ss.getId());
 
   const abaPadrao = ss.getSheets()[0];
   let criouAlgumaAba = false;
+  let dataMaisRecenteCSV = null;
 
   const files = pastaCSV.getFilesByType(MimeType.CSV);
 
@@ -88,8 +85,8 @@ function criarOuRecriarPlanilhaGeral_() {
 
   while (files.hasNext()) {
     const file = files.next();
-    let dados = lerCSVComEdicao_(file);
 
+    const dados = lerCSVComEdicao_(file);
     if (!dados || !dados.length) continue;
 
     const nomeAba = nomeAbaPorCSV_(file.getName());
@@ -100,6 +97,12 @@ function criarOuRecriarPlanilhaGeral_() {
       .setValues(dados);
 
     criouAlgumaAba = true;
+
+    // 🕒 Captura data mais recente dos CSVs
+    const dataArquivo = file.getLastUpdated();
+    if (!dataMaisRecenteCSV || dataArquivo > dataMaisRecenteCSV) {
+      dataMaisRecenteCSV = dataArquivo;
+    }
   }
 
   // ==========================================================
@@ -109,7 +112,19 @@ function criarOuRecriarPlanilhaGeral_() {
     ss.deleteSheet(abaPadrao);
   }
 
-  toast_('Planilha Geral criada com sucesso!', 'Concluído', 6);
+  // ==========================================================
+  // 🏷️ Renomear Planilha Geral com data do CSV
+  // ==========================================================
+  if (dataMaisRecenteCSV) {
+    const dataFormatada = Utilities.formatDate(
+      dataMaisRecenteCSV,
+      Session.getScriptTimeZone(),
+      'yyyy-MM-dd HH:mm'
+    );
 
+    ss.rename(`GERAL: Importado em ${dataFormatada}`);
+  }
+
+  toast_('Planilha Geral criada com sucesso!', 'Concluído', 6);
   ui.alert('Planilha Geral criada com sucesso a partir dos CSVs.');
 }
