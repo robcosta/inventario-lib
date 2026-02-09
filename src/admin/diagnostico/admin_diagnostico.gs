@@ -28,66 +28,6 @@
  * DIAGNÓSTICO
  * ============================================================
  */
-
-/**
- * Reparar contexto (com UI amigável)
- */
-function repararContextoAdmin_() {
-  const ui = SpreadsheetApp.getUi();
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const planilhaId = ss.getId();
-  const scriptProps = PropertiesService.getScriptProperties();
-  const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
-  const rawContexto = scriptProps.getProperty(chave);
-  
-  if (!rawContexto) {
-    ui.alert(
-      '❌ Nenhum contexto encontrado',
-      'Esta planilha não possui contexto salvo.\n\n' +
-      '💡 Use "Criar Contexto de Trabalho" se esta for uma planilha Template.',
-      ui.ButtonSet.OK
-    );
-    return;
-  }
-
-  // Confirmar antes de reparar
-  const resposta = ui.alert(
-    '🔧 Reparar Contexto',
-    '• Corrige campo planilhaAdminId\n' +
-    '• Atualiza ID baseado na planilha atual\n' +
-    '• Extrai nome do título da planilha',
-    ui.ButtonSet.YES_NO
-  );
-
-  if (resposta !== ui.Button.YES) {
-    return;
-  }
-  
-  try {
-    corrigirContextoPlanilhaAtual_();
-    
-    // Verificar se corrigiu
-    const rawCorrigido = scriptProps.getProperty(chave);
-    const contextoCorrigido = rawCorrigido ? JSON.parse(rawCorrigido) : null;
-    
-    if (contextoCorrigido && contextoCorrigido.planilhaAdminId) {
-      ui.alert(
-        '✅ Contexto reparado!',
-        'O contexto foi atualizado com sucesso.\n\n' +
-        '📋 Contexto: ' + contextoCorrigido.nome + '\n' +
-        '🔑 ID: ' + contextoCorrigido.id + '\n\n' +
-        '🔄 Recarregue a planilha (F5) para ver o menu completo.',
-        ui.ButtonSet.OK
-      );
-    } else {
-      ui.alert('⚠️ Correção concluída, mas recomenda-se verificar os logs.');
-    }
-  } catch (e) {
-    ui.alert('❌ Erro ao reparar contexto:\n\n' + e.message);
-    Logger.log('[REPARAR] Erro: ' + e.message);
-  }
-}
-
 /**
  * Executa diagnóstico do sistema
  */

@@ -1,11 +1,19 @@
 /**
  * ============================================================
- * MENU ADMIN — RENDERIZAÇÃO
+ * MENU ADMIN — RENDERIZAÇÃO (VERSÃO FINAL CANÔNICA)
  * ============================================================
+ *
+ * Regras:
+ * - ADMIN:TEMPLATE → SOMENTE "Criar Novo Contexto"
+ * - ADMIN:<CONTEXTO> SEM contexto válido → SOMENTE "Reparar Contexto"
+ * - ADMIN:<CONTEXTO> COM contexto válido → MENU COMPLETO
+ *
+ * Observação:
+ * - Exibe versão do sistema no final do menu (somente informativo)
  */
 
 /**
- * API PÚBLICA — Renderizar menu (chamada pelo onOpen)
+ * API PÚBLICA — chamada pelo onOpen
  */
 function adminRenderMenu() {
   adminRenderMenu_();
@@ -13,61 +21,57 @@ function adminRenderMenu() {
 
 function adminRenderMenu_() {
 
-  // Aplica contexto pendente (se existir) na planilha ADMIN atual
+  // ==========================================================
+  // 0️⃣ Aplicar contexto pendente (troca de contexto)
+  // ==========================================================
   try {
-    const aplicado = aplicarContextoAdminPendente_();
-    Logger.log('[ADMIN][MENU] Contexto pendente aplicado? ' + aplicado);
+    aplicarContextoAdminPendente_();
   } catch (e) {
-    Logger.log('[ADMIN][MENU] Falha ao aplicar contexto pendente: ' + e.message);
+    Logger.log('[ADMIN][MENU] Contexto pendente não aplicado: ' + e.message);
   }
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const nomeAtual = ss ? ss.getName() : '';
-  const ehTemplate = nomeAtual.toUpperCase().indexOf('TEMPLATE') !== -1;
+  if (!ss) return;
+
+  const nomeAtual = ss.getName();
+  const nomeUpper = nomeAtual.toUpperCase();
+  const ehTemplate = nomeUpper.indexOf('TEMPLATE') !== -1;
+
   const temContexto = planilhaTemContexto_();
-  const contexto = obterContextoAtivo_();
-  
-  Logger.log('[ADMIN][MENU] Planilha: ' + nomeAtual);
-  Logger.log('[ADMIN][MENU] É Template? ' + ehTemplate);
-  Logger.log('[ADMIN][MENU] Tem Contexto? ' + temContexto);
-  Logger.log('[ADMIN][MENU] Contexto: ' + JSON.stringify(contexto));
 
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('🏛️ Inventário – Administração');
 
-  // ========== TEMPLATE: Sempre permite criar contexto ==========
+  // ==========================================================
+  // 1️⃣ ADMIN: TEMPLATE → apenas criar
+  // ==========================================================
   if (ehTemplate) {
-    // Limpar qualquer contexto existente no Template (não deveria ter)
-    if (contexto) {
-      try {
-        const planilhaId = ss.getId();
-        const chave = PROPRIEDADES_ADMIN.CONTEXTO_ADMIN + '_' + planilhaId;
-        PropertiesService.getScriptProperties().deleteProperty(chave);
-        PropertiesService.getDocumentProperties().deleteProperty(PROPRIEDADES_ADMIN.CONTEXTO_ADMIN);
-        Logger.log('[ADMIN][MENU] TEMPLATE tinha contexto (removido).');
-      } catch (e) {
-        Logger.log('[ADMIN][MENU] Erro ao limpar Template: ' + e.message);
-      }
-    }
-    Logger.log('[ADMIN][MENU] Renderizando menu Template (Criar Contexto)');
     menu
-      .addItem('➕ Criar Contexto de Trabalho', 'criarContextoTrabalho')
-      .addToUi();
-    return;
-  }
+      .addItem('➕ Criar Novo Contexto', 'criarContextoTrabalho');
 
-  // ========== ADMIN: X sem contexto → Oferecer reparar ==========
-  if (!temContexto) {
-    Logger.log('[ADMIN][MENU] ADMIN sem contexto válido - oferecendo reparar');
-    menu
-      .addItem('➕ Criar Contexto de Trabalho', 'criarContextoTrabalho')
-      .addItem('🔧 Reparar Contexto', 'repararContextoAdmin')
-      .addToUi();
+    // Versão (informativa)
+    adicionarVersaoAoMenu_(menu);
+
+    menu.addToUi();
     return;
   }
 
   // ==========================================================
-  // CONTEXTO
+  // 2️⃣ ADMIN:<CONTEXTO> SEM contexto válido → reparar
+  // ==========================================================
+  if (!temContexto) {
+    menu
+      .addItem('🔧 Reparar Contexto', 'repararContextoAdmin');
+
+    // Versão (informativa)
+    adicionarVersaoAoMenu_(menu);
+
+    menu.addToUi();
+    return;
+  }
+
+  // ==========================================================
+  // 3️⃣ ADMIN:<CONTEXTO> COM contexto válido → menu completo
   // ==========================================================
   menu
     .addItem('🔁 Selecionar Contexto', 'selecionarContextoTrabalho')
@@ -78,31 +82,29 @@ function adminRenderMenu_() {
     )
     .addSeparator();
 
+  // ==========================================================
+  // PASTAS DE TRABALHO
+  // ==========================================================
+  menu
+    .addSubMenu(
+      ui.createMenu('🗂️ Pastas de Trabalho')
+        .addItem('📂 Abrir pasta de trabalho', 'abrirPastasTrabalho')
+        .addItem('🔁 Escolher pasta', 'escolherPastaTrabalho')
+        .addItem('➕ Criar pasta', 'criarPastaTrabalho')
+    )
+    .addSeparator();
 
   // ==========================================================
-// PASTAS DE TRABALHO
-// ==========================================================
-menu
-  .addSeparator()
-  .addSubMenu(
-    ui.createMenu('🗂️ Pastas de Trabalho')
-      .addItem('📂 Abrir pasta de trabalho', 'abrirPastasTrabalho')
-      .addItem('🔁 Escolher pasta', 'escolherPastaTrabalho')
-      .addItem('➕ Criar pasta', 'criarPastaTrabalho')
-  )
-  .addSeparator();
- 
-  // ==========================================================
-  // PROCESSAR IMAGEM - API VISION
+  // PROCESSAMENTO DE IMAGEM (VISION)
   // ==========================================================
   menu
     .addItem('🖼️ Processar Imagem', 'processarImagem')
     .addSeparator();
+
   // ==========================================================
   // PLANILHA GERAL
   // ==========================================================
   menu
-    .addSeparator()
     .addSubMenu(
       ui.createMenu('📘 Planilha Geral')
         .addItem('📂 Abrir Planilha', 'abrirPlanilhaGeral')
@@ -125,7 +127,7 @@ menu
     .addSeparator();
 
   // ==========================================================
-  // CLIENTE / SUPORTE
+  // CLIENTE / DIAGNÓSTICO
   // ==========================================================
   menu
     .addItem('🎨 Formatar Planilha Cliente', 'formatarPlanilhaCliente')
@@ -136,6 +138,8 @@ menu
         .addSeparator()
         .addItem('🧪 Testar Planilha Geral', 'runTestsPlanilhaGeral')
     );
+
+  menu.addItem('ℹ️ Versão', 'mostrarVersaoSistema');
+
   menu.addToUi();
 }
-

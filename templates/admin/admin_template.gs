@@ -34,6 +34,10 @@ function criarContextoTrabalho() {
   inventario.criarContextoTrabalho();
 }
 
+function repararContextoAdmin() {
+  inventario.repararContextoAdmin();
+}
+
 function selecionarContextoTrabalho() {
   inventario.selecionarContextoTrabalho();
 }

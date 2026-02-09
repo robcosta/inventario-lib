@@ -2,10 +2,10 @@
  * ============================================================
  * API PÚBLICA — ADMIN (INVENTÁRIO)
  * ============================================================
- * 
- * ❗ Este arquivo é o ÚNICO ponto de entrada do menu.
- * ❗ Não contém lógica de negócio.
- * ❗ Apenas delega chamadas para funções internas (_).
+ *
+ * ❗ ÚNICO ponto de entrada do menu ADMIN
+ * ❗ NÃO contém lógica de negócio
+ * ❗ Apenas delega chamadas para funções internas (_)
  */
 
 /* ============================================================
@@ -19,11 +19,15 @@ function adminRenderMenu() {
  * CONTEXTO
  * ============================================================ */
 function criarContextoTrabalho() {
-  criarContextoTrabalho_();
+  criarContextoFluxoTemplate_();
 }
 
 function selecionarContextoTrabalho() {
   selecionarContextoTrabalho_();
+}
+
+function repararContextoAdmin() {
+  repararContextoAdmin_();
 }
 
 /* ============================================================
@@ -56,7 +60,7 @@ function abrirPastasTrabalho() {
  * PROCESSAMENTO DE IMAGENS (VISION)
  * ============================================================ */
 function processarImagem() {
-  processarImagem_(); // função de teste/manual
+  processarImagem_(); // teste/manual
 }
 
 function processarImagensDaPasta() {
@@ -111,16 +115,16 @@ function executarDiagnostico() {
   executarDiagnostico_();
 }
 
+function mostrarVersaoSistema() {
+   mostrarVersaoSistema_();  
+}
+
 function debugContextoPlanilhaAtual() {
   debugContextoPlanilhaAtual_();
 }
 
 function corrigirContextoPlanilhaAtual() {
   corrigirContextoPlanilhaAtual_();
-}
-
-function repararContextoAdmin() {
-  repararContextoAdmin_();
 }
 
 function runTestsPlanilhaGeral() {
@@ -135,4 +139,14 @@ function runTestsPlanilhaGeral() {
  */
 function receberCSV(tipo, nomeArquivo, dataUrl) {
   receberCSV_(tipo, nomeArquivo, dataUrl);
+}
+
+/* ============================================================
+ * ADMIN TEMPLATE — LIMPEZA CONTROLADA
+ * ============================================================ *
+ * ⚠️ Uso restrito ao ADMIN: TEMPLATE
+ * ⚠️ NÃO exposto no menu
+ */
+function limparContextoAdmin() {
+  limparContextoAtivo_();
 }
