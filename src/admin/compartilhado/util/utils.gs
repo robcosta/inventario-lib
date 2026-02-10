@@ -49,14 +49,6 @@ function obterOuCriarSubpasta_(pai, nome) {
 }
 
 /**
- * Verifica se a planilha tem contexto admin
- * @return {boolean}
- */
-function admin_planilhaTemContexto_() {
-  return planilhaTemContextoAdmin_();
-}
-
-/**
  * ============================================================
  * ABRIR PLANILHA NO NAVEGADOR (NOVA ABA)
  * ============================================================
@@ -97,4 +89,29 @@ function toast_(mensagem, titulo, tempo) {
     titulo || 'Inventário',
     tempo || 5
   );
+}
+
+/**
+ * ============================================================
+ * DRIVE — SUBPASTA (OBTER OU CRIAR)
+ * ============================================================
+ * Retorna uma subpasta existente ou cria se não existir.
+ *
+ * @param {GoogleAppsScript.Drive.Folder} pastaPai
+ * @param {string} nomeSubpasta
+ * @return {GoogleAppsScript.Drive.Folder}
+ */
+function obterOuCriarSubpasta_(pastaPai, nomeSubpasta) {
+  if (!pastaPai) {
+    throw new Error('obterOuCriarSubpasta_: pastaPai inválida.');
+  }
+
+  if (!nomeSubpasta || typeof nomeSubpasta !== 'string') {
+    throw new Error('obterOuCriarSubpasta_: nomeSubpasta inválido.');
+  }
+
+  const it = pastaPai.getFoldersByName(nomeSubpasta);
+  return it.hasNext()
+    ? it.next()
+    : pastaPai.createFolder(nomeSubpasta);
 }

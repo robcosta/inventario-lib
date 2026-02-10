@@ -19,7 +19,7 @@ function adminRenderMenu() {
  * CONTEXTO
  * ============================================================ */
 function criarContextoTrabalho() {
-  criarContextoFluxoTemplate_();
+  criarContextoTrabalho_();
 }
 
 function selecionarContextoTrabalho() {

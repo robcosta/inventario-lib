@@ -1,73 +1,74 @@
 /**
  * ============================================================
- * CONTEXTO — REPARAR (RECADASTRAR CONTEXTO EXISTENTE)
+ * CONTEXTO — REPARAR CONTEXTO ADMIN
  * ============================================================
- * Usado para contextos antigos que:
- * - têm planilhas e pastas corretas no Drive
- * - mas não existem mais no ScriptProperties
+ * - Reconstrói o contexto a partir do Drive
+ * - Regrava em ScriptProperties
+ * - NÃO cria contexto novo
  */
+
 function repararContextoAdmin_() {
   const ui = SpreadsheetApp.getUi();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const nomePlanilha = ss.getName();
 
-  if (!nomePlanilha || nomePlanilha.toUpperCase().indexOf('ADMIN:') !== 0) {
+  if (!/^ADMIN:/i.test(nomePlanilha)) {
     ui.alert('Esta função só pode ser executada em uma planilha ADMIN.');
     return;
   }
 
-  const nomeContexto = nomePlanilha.replace(/^ADMIN:\s*/i, '').toUpperCase();
+  const nomeContexto = nomePlanilha.replace(/^ADMIN:\s*/i, '').trim();
 
-  // 🔍 Inferir estrutura de pastas a partir da planilha ADMIN
+  // 📂 PLANILHA → pasta PLANILHA
   const fileAdmin = DriveApp.getFileById(ss.getId());
-  const pastaPlanilhas = fileAdmin.getParents().hasNext()
-    ? fileAdmin.getParents().next()
-    : null;
-
-  if (!pastaPlanilhas) {
-    ui.alert('Não foi possível localizar a pasta PLANILHA do contexto.');
+  if (!fileAdmin.getParents().hasNext()) {
+    ui.alert('Pasta PLANILHA não encontrada.');
     return;
   }
 
-  const pastaContexto = pastaPlanilhas.getParents().hasNext()
-    ? pastaPlanilhas.getParents().next()
-    : null;
+  const pastaPlanilhas = fileAdmin.getParents().next();
 
-  if (!pastaContexto) {
-    ui.alert('Não foi possível localizar a pasta raiz do contexto.');
+  // 📂 CONTEXTO → pasta mãe
+  if (!pastaPlanilhas.getParents().hasNext()) {
+    ui.alert('Pasta do CONTEXTO não encontrada.');
     return;
   }
 
-  // Subpastas esperadas
+  const pastaContexto = pastaPlanilhas.getParents().next();
+
+  // Subpastas obrigatórias
   const pastaCSVAdmin = obterOuCriarSubpasta_(pastaPlanilhas, 'CSV_ADMIN');
   const pastaLocalidades = obterOuCriarSubpasta_(pastaContexto, 'LOCALIDADES');
 
-  // 🔎 Tentar localizar planilha CLIENTE
+  // Localizar planilha CLIENTE
   let planilhaClienteId = null;
-  const files = pastaLocalidades.getFilesByType(MimeType.GOOGLE_SHEETS);
-  if (files.hasNext()) {
-    planilhaClienteId = files.next().getId();
+  const filesCliente = pastaLocalidades.getFilesByType(MimeType.GOOGLE_SHEETS);
+  if (filesCliente.hasNext()) {
+    planilhaClienteId = filesCliente.next().getId();
   }
 
   const contextoAdmin = {
     nome: nomeContexto,
+
     planilhaAdminId: ss.getId(),
-    planilhaClienteId: planilhaClienteId,
+    planilhaClienteId,
+    planilhaGeralId: obterPlanilhaGeralId_(),
+
     pastaContextoId: pastaContexto.getId(),
     pastaPlanilhasId: pastaPlanilhas.getId(),
     pastaCSVAdminId: pastaCSVAdmin.getId(),
-    pastaLocalidadesId: pastaLocalidades.getId(),
-    planilhaGeralId: obterPlanilhaGeralId_(),
-    emailOperador: Session.getActiveUser().getEmail(),
-    reparadoEm: new Date().toISOString()
+    pastaLocalidadesId: pastaLocalidades.getId()
   };
 
+
+  limparContextoAtivo_();
   definirContextoAtivo_(contextoAdmin);
+
 
   adminRenderMenu_();
 
   ui.alert(
-    '✅ Contexto "' + nomeContexto + '" reparado com sucesso!\n\n' +
+    `✅ Contexto "${nomeContexto}" reparado com sucesso!\n\n` +
     'Ele foi recadastrado no sistema.'
   );
 }
