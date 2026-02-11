@@ -12,7 +12,6 @@
  * ❗ NÃO salva contexto diretamente
  * ❗ NÃO contém lógica de persistência
  */
-
 function selecionarContextoTrabalho_() {
   const ui = SpreadsheetApp.getUi();
 
@@ -65,9 +64,13 @@ function selecionarContextoTrabalho_() {
     return;
   }
 
-  definirContextoAtivo_(escolhido);
+  // 🚀 MODELO CORRETO:
+  // NÃO altera contexto da planilha atual
+  // Apenas abre a planilha do outro contexto
+
   abrirPlanilhaNoNavegador_(escolhido.planilhaAdminId);
 }
+
 
 /* ============================================================
  * FUNÇÕES AUXILIARES (PUROS)

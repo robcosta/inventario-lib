@@ -31,7 +31,7 @@ function onOpen() {
  * PROXIES — CONTEXTO
  * ============================================================ */
 function criarContextoTrabalho() {
-  inventario.criarContextoFluxoTemplateDetalhes();
+  inventario.criarContextoTrabalho();
 }
 
 function repararContextoAdmin() {
