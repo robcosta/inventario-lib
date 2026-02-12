@@ -1,121 +1,116 @@
 /**
  * ============================================================
- * WRAPPER DE INTEGRAÇÃO - VISION
+ * WRAPPER DE INTEGRAÇÃO - VISION (100% ID-BASED)
  * ============================================================
- * Centraliza todas as chamadas ao inventario-vision-core.
- * Gerencia validação, tratamento de erros e callbacks.
+ * Responsabilidade:
+ * - Validar contexto de planilhas
+ * - Receber pastaId explicitamente
+ * - Chamar vision-core
+ * - Controlar retry
+ *
+ * ❗ Não depende de pastaTrabalhoId no contexto
+ * ❗ Não altera contexto
+ * ❗ Não define cor
+ * ============================================================
  */
+
 
 /**
- * Chama vision.batchProcessarPastaCompleta com contexto validado.
- * @param {Object} contextoAtivo - Contexto do patrimonio-lib
- * @param {Object} options - Opções { callbacks: {...}, pastaId: string }
- * @return {Object} { sucesso: boolean, resultado: {...}, erro: {...} }
+ * Executa batch na Vision.
+ * @param {Object} contextoAtivo
+ * @param {Object} options { pastaId: string, callbacks }
+ * @return {Object}
  */
 function chamarVisionBatch_(contextoAtivo, options = {}) {
-  const startTime = new Date().getTime();
 
-  // Passo 1: Preparar e validar contexto
+  const startTime = Date.now();
+
+  // =============================
+  // PASSO 1 — VALIDAR CONTEXTO
+  // =============================
   const preparo = prepararContextoVision_(contextoAtivo);
 
   if (!preparo.sucesso) {
+
     const erro = {
       tipo: 'VALIDACAO_FALHOU',
       mensagem: preparo.erros.join('; '),
       detalhes: preparo.erros,
-      tempo_ms: new Date().getTime() - startTime
+      tempo_ms: Date.now() - startTime
     };
 
-    // Callback de erro
-    if (options.callbacks?.onErro) {
-      options.callbacks.onErro(erro);
-    }
+    options.callbacks?.onErro?.(erro);
 
-    return { sucesso: false, resultado: null, erro };
+    return { sucesso: false, resultado: null, erro, tempo_ms: erro.tempo_ms };
   }
 
-  // Avisos
-  if (preparo.avisos && preparo.avisos.length > 0) {
-    console.warn('⚠️ Avisos na preparação:', preparo.avisos);
-  }
+  // =============================
+  // PASSO 2 — PASTA EXPLÍCITA
+  // =============================
+  const pastaId = options.pastaId;
 
-  // Passo 2: Montar ID da pasta (pode vir em opções)
-  const pastaTrabalhoId = options.pastaId || contextoAtivo.pastaTrabalhoId;
+  if (!pastaId || typeof pastaId !== 'string') {
 
-  if (!pastaTrabalhoId) {
     const erro = {
       tipo: 'PASTA_NAO_DEFINIDA',
-      mensagem: 'ID da pasta de trabalho não fornecido',
-      tempo_ms: new Date().getTime() - startTime
+      mensagem: 'ID da pasta não fornecido explicitamente ao wrapper.',
+      tempo_ms: Date.now() - startTime
     };
 
-    if (options.callbacks?.onErro) {
-      options.callbacks.onErro(erro);
-    }
+    options.callbacks?.onErro?.(erro);
 
-    return { sucesso: false, resultado: null, erro };
+    return { sucesso: false, resultado: null, erro, tempo_ms: erro.tempo_ms };
   }
 
-  // Passo 3: Chamar vision-core
-  let resultadoVision = null;
-  let erroVision = null;
-
+  // =============================
+  // PASSO 3 — EXECUTAR VISION
+  // =============================
   try {
-    // Callback: início
-    if (options.callbacks?.onInicio) {
-      options.callbacks.onInicio({
-        pasta: contextoAtivo.pastaTrabalhoNome || 'Sem nome',
-        timestamp: new Date().toLocaleString()
-      });
-    }
 
-    // CHAMADA REAL AO VISION-CORE
-    resultadoVision = vision.batchProcessarPastaCompleta(
-      pastaTrabalhoId,
+    options.callbacks?.onInicio?.({
+      pastaId,
+      timestamp: new Date().toLocaleString()
+    });
+
+    const resultadoVision = vision.batchProcessarPastaCompleta(
+      pastaId,
       preparo.dados.contexto_vision
     );
 
-    // Callback: sucesso
-    if (options.callbacks?.onSucesso) {
-      options.callbacks.onSucesso({
-        pasta: preparo.dados.metadata.pastaTrabalhoNome,
-        timestamp: new Date().toLocaleString(),
-        tempo_ms: new Date().getTime() - startTime
-      });
-    }
+    options.callbacks?.onSucesso?.({
+      pastaId,
+      timestamp: new Date().toLocaleString(),
+      tempo_ms: Date.now() - startTime
+    });
+
+    return {
+      sucesso: true,
+      resultado: resultadoVision,
+      erro: null,
+      tempo_ms: Date.now() - startTime
+    };
 
   } catch (e) {
-    erroVision = {
+
+    const erroVision = {
       tipo: 'VISION_EXCEPTION',
       mensagem: e.message,
       stack: e.stack,
-      tempo_ms: new Date().getTime() - startTime
+      tempo_ms: Date.now() - startTime
     };
 
-    // Callback: erro
-    if (options.callbacks?.onErro) {
-      options.callbacks.onErro(erroVision);
-    }
+    options.callbacks?.onErro?.(erroVision);
 
-    return { sucesso: false, resultado: null, erro: erroVision };
+    return { sucesso: false, resultado: null, erro: erroVision, tempo_ms: erroVision.tempo_ms };
   }
-
-  // Sucesso
-  return {
-    sucesso: true,
-    resultado: resultadoVision,
-    erro: null,
-    tempo_ms: new Date().getTime() - startTime
-  };
 }
 
+
 /**
- * Wrapper com retry automático em caso de falha.
- * @param {Object} contextoAtivo - Contexto
- * @param {Object} options - { pastaId, callbacks, maxTentativas, delayMs }
- * @return {Object} Resultado do processamento
+ * Wrapper com retry automático.
  */
 function chamarVisionComRetry_(contextoAtivo, options = {}) {
+
   const maxTentativas = options.maxTentativas || 3;
   const delayMs = options.delayMs || 1000;
 
@@ -123,38 +118,24 @@ function chamarVisionComRetry_(contextoAtivo, options = {}) {
   let resultado = null;
 
   while (tentativa <= maxTentativas) {
-    console.log(`📊 Tentativa ${tentativa}/${maxTentativas}...`);
 
-    // Callback: início tentativa
-    if (options.callbacks?.onTentativa) {
-      options.callbacks.onTentativa({ tentativa, total: maxTentativas });
-    }
-
-    // Chamar vision
-    resultado = chamarVisionBatch_(contextoAtivo, {
-      ...options,
-      callbacks: {
-        ...options.callbacks,
-        onErro: (erro) => {
-          // Não chamar callback onErro aqui se for retry
-          console.warn(`❌ Tentativa ${tentativa} falhou:`, erro.mensagem);
-        }
-      }
+    options.callbacks?.onTentativa?.({
+      tentativa,
+      total: maxTentativas
     });
 
+    resultado = chamarVisionBatch_(contextoAtivo, options);
+
     if (resultado.sucesso) {
-      console.log('✅ Sucesso na tentativa', tentativa);
       return resultado;
     }
 
-    // Se foi última tentativa, chamar onErro agora
-    if (tentativa === maxTentativas && options.callbacks?.onErro) {
-      options.callbacks.onErro(resultado.erro);
+    if (tentativa === maxTentativas) {
+      options.callbacks?.onErro?.(resultado.erro);
     }
 
-    // Aguardar antes de retentar
     if (tentativa < maxTentativas) {
-      Utilities.sleep(delayMs * tentativa); // Backoff exponencial
+      Utilities.sleep(delayMs * tentativa);
     }
 
     tentativa++;
@@ -163,14 +144,12 @@ function chamarVisionComRetry_(contextoAtivo, options = {}) {
   return resultado;
 }
 
+
 /**
- * Processa pasta com logging estruturado.
- * Retorna resumo executivo.
- * @param {Object} contextoAtivo - Contexto
- * @param {Object} options - Opções
- * @return {Object} Resumo { sucesso, tempo_ms, detalhes }
+ * Processa pasta com resumo estruturado.
  */
 function processarPastaComVision_(contextoAtivo, options = {}) {
+
   const resultado = chamarVisionComRetry_(contextoAtivo, {
     maxTentativas: options.maxTentativas || 3,
     delayMs: options.delayMs || 1000,
@@ -178,31 +157,14 @@ function processarPastaComVision_(contextoAtivo, options = {}) {
     callbacks: options.callbacks
   });
 
-  // Resumo
   return {
     sucesso: resultado.sucesso,
     tempo_ms: resultado.tempo_ms,
     mensagem: resultado.sucesso
       ? '✅ Pasta processada com sucesso!'
-      : `❌ Falha ao processar: ${resultado.erro.mensagem}`,
-    detalhes: resultado.sucesso ? resultado.resultado : resultado.erro
+      : `❌ Falha ao processar: ${resultado.erro?.mensagem || 'Erro desconhecido'}`,
+    detalhes: resultado.sucesso
+      ? resultado.resultado
+      : resultado.erro
   };
-}
-
-/**
- * TESTE: Simula processamento com callbacks.
- */
-function teste_chamarVisionBatch() {
-  const contexto = obterContextoAtivo_();
-
-  const resultado = chamarVisionBatch_(contexto, {
-    callbacks: {
-      onInicio: (info) => console.log('🚀 Iniciou:', JSON.stringify(info)),
-      onSucesso: (info) => console.log('✅ Sucesso:', JSON.stringify(info)),
-      onErro: (erro) => console.error('❌ Erro:', JSON.stringify(erro))
-    }
-  });
-
-  console.log('Resultado final:', JSON.stringify(resultado, null, 2));
-  return resultado;
 }
