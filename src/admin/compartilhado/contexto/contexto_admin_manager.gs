@@ -188,3 +188,40 @@ function contextoAdminRegistrado_() {
     typeof c.pastaLocalidadesId === 'string'
   );
 }
+
+/**
+ * ============================================================
+ * ATUALIZA PARCIALMENTE O CONTEXTO ADMIN (PATCH)
+ * ============================================================
+ * - Mantém campos obrigatórios intactos
+ * - Atualiza apenas campos informados
+ * - Revalida antes de salvar
+ */
+
+function atualizarContextoAdmin_(patch) {
+
+  if (!patch || typeof patch !== 'object') {
+    throw new Error('atualizarContextoAdmin_: patch inválido.');
+  }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error('Planilha ativa inexistente.');
+  }
+
+  const contextoAtual = obterContextoAtivo_();
+
+  if (!contextoAtual || !contextoAtual.planilhaAdminId) {
+    throw new Error('Nenhum contexto ativo para atualizar.');
+  }
+
+  const contextoAtualizado = {
+    ...contextoAtual,
+    ...patch,
+    ultimaAtualizacao: new Date().toISOString()
+  };
+
+  salvarContextoAdmin_(ss.getId(), contextoAtualizado);
+
+  return contextoAtualizado;
+}

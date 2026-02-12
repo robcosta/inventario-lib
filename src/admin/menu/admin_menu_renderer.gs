@@ -81,14 +81,16 @@ function adminRenderMenu_() {
     )
     .addSeparator()
 
-    // Pastas
+  // Área de Fotos
+  menu
     .addSubMenu(
-      ui.createMenu('🗂️ Pastas de Trabalho')
-        .addItem('📂 Abrir pasta de trabalho', 'abrirPastasTrabalho')
-        .addItem('🔁 Escolher pasta', 'escolherPastaTrabalho')
-        .addItem('➕ Criar pasta', 'criarPastaTrabalho')
+      ui.createMenu('📂 Área de Fotos')
+        .addItem('📂 Abrir Pasta Atual', 'abrirPastaFotosAtual')
+        .addItem('🔁 Trocar Pasta', 'trocarPastaFotos')
+        .addItem('➕ Criar Nova Pasta', 'criarNovaPastaFotos')
     )
     .addSeparator()
+
 
     // Vision
     .addItem('🖼️ Processar Imagem', 'processarImagem')

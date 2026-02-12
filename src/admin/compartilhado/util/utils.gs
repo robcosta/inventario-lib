@@ -50,49 +50,6 @@ function obterOuCriarSubpasta_(pai, nome) {
 
 /**
  * ============================================================
- * ABRIR PLANILHA NO NAVEGADOR (NOVA ABA)
- * ============================================================
- */
-
-function abrirPlanilhaNoNavegador_(spreadsheetId) {
-
-  const url =
-    'https://docs.google.com/spreadsheets/d/' + spreadsheetId;
-
-  const html = `
-    <script>
-      window.open('${url}', '_blank');
-      google.script.host.close();
-    </script>
-  `;
-
-  const dialog = HtmlService
-    .createHtmlOutput(html)
-    .setWidth(10)
-    .setHeight(10);
-
-  SpreadsheetApp
-    .getUi()
-    .showModalDialog(dialog, 'Abrindo planilha...');
-}
-
-/**
- * ============================================================
- * UI — TOAST
- * ============================================================
- */
-
-function toast_(mensagem, titulo, tempo) {
-  const ss = SpreadsheetApp.getActive();
-  ss.toast(
-    mensagem,
-    titulo || 'Inventário',
-    tempo || 5
-  );
-}
-
-/**
- * ============================================================
  * DRIVE — SUBPASTA (OBTER OU CRIAR)
  * ============================================================
  * Retorna uma subpasta existente ou cria se não existir.

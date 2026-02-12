@@ -42,18 +42,18 @@ function gerenciarAcessosCliente() {
 }
 
 /* ============================================================
- * PASTAS DE TRABALHO (IMAGENS)
+ * ÁREA DE FOTOS (IMAGENS)
  * ============================================================ */
-function criarPastaTrabalho() {
-  criarPastaTrabalho_();
+function criarNovaPastaFotos() {
+  criarNovaPastaFotos_();
 }
 
-function escolherPastaTrabalho() {
-  escolherPastaTrabalho_();
+function trocarPastaFotos() {
+  trocarPastaFotos_();
 }
 
-function abrirPastasTrabalho() {
-  abrirPastasTrabalho_();
+function abrirPastaFotosAtual() {
+  abrirPastaFotosAtual_();
 }
 
 /* ============================================================
