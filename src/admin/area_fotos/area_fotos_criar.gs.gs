@@ -11,12 +11,30 @@
  */
 
 function criarNovaPastaFotos_() {
-
   const ui = SpreadsheetApp.getUi();
   const contexto = obterContextoAtivo_();
 
+  //Verfifica se atingiu o número máximo de pastas
+  const pastaLocalidades = DriveApp.getFolderById(contexto.pastaLocalidadesId);
+  const totalPastas = pastaLocalidades.getFolders();
+
+  let contador = 0;
+  while (totalPastas.hasNext()) {
+    totalPastas.next();
+    contador++;
+  }
+
+  if (contador >= CORES_DESTAQUE_LISTA.length) {
+    SpreadsheetApp.getUi().alert(
+      "⚠️ Limite de Pastas Atingido",
+      "Este contexto já possui 8 pastas.\n\nCada contexto permite no máximo 8 localidades, pois cada uma possui uma cor exclusiva.",
+      SpreadsheetApp.getUi().ButtonSet.OK,
+    );
+    return;
+  }
+
   if (!contexto || !contexto.pastaLocalidadesId) {
-    ui.alert('❌ Nenhum contexto válido encontrado.');
+    ui.alert("❌ Nenhum contexto válido encontrado.");
     return;
   }
 
@@ -32,39 +50,39 @@ function criarNovaPastaFotos_() {
 
   nomesExistentes.sort();
 
-  let mensagem = '';
+  let mensagem = "";
 
   if (contexto.localidadeAtivaNome) {
     mensagem += `Pasta ativa: ${contexto.localidadeAtivaNome}\n\n`;
   }
 
   if (nomesExistentes.length > 0) {
-    mensagem += 'Pastas existentes:\n';
-    mensagem += nomesExistentes.map(n => '• ' + n).join('\n');
-    mensagem += '\n\n';
+    mensagem += "Pastas existentes:\n";
+    mensagem += nomesExistentes.map((n) => "• " + n).join("\n");
+    mensagem += "\n\n";
   } else {
-    mensagem += 'Nenhuma pasta criada ainda.\n\n';
+    mensagem += "Nenhuma pasta criada ainda.\n\n";
   }
 
-  mensagem += 'Digite o nome da nova pasta:';
+  mensagem += "Digite o nome da nova pasta:";
 
   const resp = ui.prompt(
-    'Criar Nova Pasta de Fotos',
+    "Criar Nova Pasta de Fotos",
     mensagem,
-    ui.ButtonSet.OK_CANCEL
+    ui.ButtonSet.OK_CANCEL,
   );
 
   if (resp.getSelectedButton() !== ui.Button.OK) return;
 
-  const nome = (resp.getResponseText() || '').trim().toUpperCase();
+  const nome = (resp.getResponseText() || "").trim().toUpperCase();
 
   if (!nome) {
-    ui.alert('❌ Nome inválido.');
+    ui.alert("❌ Nome inválido.");
     return;
   }
 
   if (nomesExistentes.includes(nome)) {
-    ui.alert('❌ Já existe uma pasta com esse nome.');
+    ui.alert("❌ Já existe uma pasta com esse nome.");
     return;
   }
 
@@ -72,13 +90,18 @@ function criarNovaPastaFotos_() {
 
   atualizarContextoAdmin_({
     localidadeAtivaId: novaPasta.getId(),
-    localidadeAtivaNome: nome
+    localidadeAtivaNome: nome,
   });
 
   const abrir = ui.alert(
     `✅ Pasta criada e definida como ativa:\n\n${nome}\n\nDeseja abrir a pasta agora?`,
-    ui.ButtonSet.YES_NO
+    ui.ButtonSet.YES_NO,
   );
+
+  // ✨ NOVIDADE: Reconstrói a legenda após a criação do contexto
+  if (contexto) {
+    atualizarLegendasPlanilhaAdmin_(contexto);
+  }
 
   if (abrir === ui.Button.YES) {
     abrirPastaNoNavegador_(novaPasta.getId());

@@ -96,7 +96,7 @@ function formatarPlanilha_(spreadsheetId) {
 
   // ✨ NOVIDADE: Reconstrói a legenda após toda a formatação pesada
   if (contexto) {
-    atualizarLegendasPlanilhaContexto_(contexto);
+    atualizarLegendasPlanilhaAdmin_(contexto);
   }
 
   ss.toast('Formatação concluída com sucesso', '✅ Concluído', 6);

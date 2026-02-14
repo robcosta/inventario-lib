@@ -13,6 +13,7 @@ function processarImagem() {
 
   // ===== PASSO 1: OBTER CONTEXTO =====
   let contextoAtivo = obterContextoAtivo_();
+  contextoAtivo = sincronizarLocalidadeAtiva_(contextoAtivo);
 
   // Fallback: tentar buscar propriedades individuais
   if (!contextoAtivo?.pastaTrabalhoId) {

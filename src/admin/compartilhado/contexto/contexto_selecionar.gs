@@ -114,37 +114,48 @@ function montarMensagemSelecaoContexto_(contextoAtual, contextos) {
 
 function obterPastasVivas_(contexto) {
 
-  const pastaLocalidades = DriveApp.getFolderById(contexto.pastaLocalidadesId);
-  const it = pastaLocalidades.getFolders();
+  console.log('=== 📂 DEBUG PASTAS VIVAS ===');
+
+  if (!contexto?.pastaLocalidadesId) {
+    console.warn('pastaLocalidadesId ausente no contexto.');
+    return [];
+  }
+
+  const pastaRaiz = DriveApp.getFolderById(contexto.pastaLocalidadesId);
+  const it = pastaRaiz.getFolders();
 
   const lista = [];
 
   while (it.hasNext()) {
-
     const pasta = it.next();
-
-    if (pasta.isTrashed()) continue;
-
-    // 🔥 Verificar se ainda pertence à pasta LOCALIDADES
-    const pertence = pasta.getParents();
-    let valido = false;
-
-    while (pertence.hasNext()) {
-      const parent = pertence.next();
-      if (parent.getId() === contexto.pastaLocalidadesId) {
-        valido = true;
-        break;
-      }
-    }
-
-    if (!valido) continue;
 
     lista.push({
       id: pasta.getId(),
-      nome: pasta.getName(),
-      cor: obterCorDestaquePorId_(pasta.getId())
+      nome: pasta.getName()
     });
   }
 
-  return lista.sort((a, b) => a.nome.localeCompare(b.nome));
+  console.log('Total pastas encontradas:', lista.length);
+
+  if (!lista.length) {
+    return [];
+  }
+
+  // 🔥 AQUI É O PONTO CRÍTICO
+  const mapaCores = obterMapaCoresPorContexto_(lista);
+
+  // Aplicar cor em cada pasta
+  lista.forEach(p => {
+    p.cor = mapaCores[p.id];
+
+    console.log('Pasta encontrada:');
+    console.log('Nome:', p.nome);
+    console.log('ID:', p.id);
+    console.log('Cor atribuída:', p.cor);
+    console.log('-------------------');
+  });
+
+  console.log('==============================');
+
+  return lista;
 }

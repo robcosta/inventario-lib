@@ -234,7 +234,7 @@
 | Alerta não aparece | Pasta foi completamente removido (não apenas lixeira) | Mesmo efeito esperado |
 | Pasta deletada ainda aparece na lista | Cache do DriveApp | Recarregar página |
 | Contexto não atualiza | Props não sincronizadas | Verificar obterContextoAtivo_() |
-| Legenda não atualiza | Função atualizarLegendasPlanilhaContexto_ falhou | Checar permissões |
+| Legenda não atualiza | Função atualizarLegendasPlanilhaAdmin_ falhou | Checar permissões |
 
 ---
 

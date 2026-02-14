@@ -5,12 +5,12 @@
  */
 
 function trocarPastaFotos_() {
-
   const ui = SpreadsheetApp.getUi();
-  const contexto = obterContextoAtivo_();
+  let contexto = obterContextoAtivo_();
+  contexto = sincronizarLocalidadeAtiva_(contexto);
 
   if (!contexto || !contexto.pastaLocalidadesId) {
-    ui.alert('❌ Nenhum contexto válido encontrado.');
+    ui.alert("❌ Nenhum contexto válido encontrado.");
     return;
   }
 
@@ -23,40 +23,40 @@ function trocarPastaFotos_() {
     const p = it.next();
     pastas.push({
       id: p.getId(),
-      nome: p.getName()
+      nome: p.getName(),
     });
   }
 
   if (pastas.length === 0) {
     ui.alert(
-      '⚠️ Nenhuma pasta de fotos foi criada ainda.\n\n' +
-      'Use "Criar Nova Pasta" primeiro.'
+      "⚠️ Nenhuma pasta de fotos foi criada ainda.\n\n" +
+        'Use "Criar Nova Pasta" primeiro.',
     );
     return;
   }
 
   // Ordenação alfabética
   pastas.sort((a, b) =>
-    a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' })
+    a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" }),
   );
 
   const pastaAtivaId = contexto.localidadeAtivaId;
 
   // Remover pasta ativa da listagem
-  const pastasDisponiveis = pastas.filter(p => p.id !== pastaAtivaId);
+  const pastasDisponiveis = pastas.filter((p) => p.id !== pastaAtivaId);
 
   if (pastasDisponiveis.length === 0) {
-    ui.alert('⚠️ Não há outra pasta disponível para troca.');
+    ui.alert("⚠️ Não há outra pasta disponível para troca.");
     return;
   }
 
-  let mensagem = '';
+  let mensagem = "";
 
   if (contexto.localidadeAtivaNome) {
     mensagem += `Pasta ativa: ${contexto.localidadeAtivaNome}\n\n`;
   }
 
-  mensagem += 'Escolha a nova pasta:\n\n';
+  mensagem += "Escolha a nova pasta:\n\n";
 
   const mapa = {};
   pastasDisponiveis.forEach((p, i) => {
@@ -66,9 +66,9 @@ function trocarPastaFotos_() {
   });
 
   const resp = ui.prompt(
-    'Trocar Pasta de Fotos',
+    "Trocar Pasta de Fotos",
     mensagem,
-    ui.ButtonSet.OK_CANCEL
+    ui.ButtonSet.OK_CANCEL,
   );
 
   if (resp.getSelectedButton() !== ui.Button.OK) return;
@@ -77,18 +77,23 @@ function trocarPastaFotos_() {
   const escolhida = mapa[numero];
 
   if (!escolhida) {
-    ui.alert('❌ Opção inválida.');
+    ui.alert("❌ Opção inválida.");
     return;
   }
 
   atualizarContextoAdmin_({
     localidadeAtivaId: escolhida.id,
-    localidadeAtivaNome: escolhida.nome
+    localidadeAtivaNome: escolhida.nome,
   });
+
+  // ✨ NOVIDADE: Reconstrói a legenda após a criação do contexto
+  if (contexto) {
+    atualizarLegendasPlanilhaAdmin_(contexto);
+  }
 
   const abrir = ui.alert(
     `✅ Pasta ativa definida:\n\n${escolhida.nome}\n\nDeseja abrir a pasta agora?`,
-    ui.ButtonSet.YES_NO
+    ui.ButtonSet.YES_NO,
   );
 
   if (abrir === ui.Button.YES) {
@@ -112,7 +117,6 @@ function trocarPastaFotos_() {
  * @return {Object} contexto atualizado
  */
 function sincronizarLocalidadesContexto_(contexto) {
-
   if (!contexto || !contexto.pastaLocalidadesId) {
     return contexto || {};
   }
@@ -127,7 +131,7 @@ function sincronizarLocalidadesContexto_(contexto) {
     const pasta = it.next();
     const obj = {
       id: pasta.getId(),
-      nome: pasta.getName()
+      nome: pasta.getName(),
     };
     pastasDrive.push(obj);
     mapaDrive[obj.id] = obj;
@@ -138,7 +142,7 @@ function sincronizarLocalidadesContexto_(contexto) {
     : [];
 
   const mapaContexto = {};
-  localidadesContexto.forEach(loc => {
+  localidadesContexto.forEach((loc) => {
     if (loc && loc.id) {
       mapaContexto[loc.id] = loc;
     }
@@ -147,27 +151,27 @@ function sincronizarLocalidadesContexto_(contexto) {
   const localidadesAtualizadas = [];
 
   // 1️⃣ Manter somente as que ainda existem no Drive
-  localidadesContexto.forEach(loc => {
+  localidadesContexto.forEach((loc) => {
     if (mapaDrive[loc.id]) {
       localidadesAtualizadas.push(loc);
     }
   });
 
   // 2️⃣ Adicionar novas que não existem no contexto
-  pastasDrive.forEach(pasta => {
+  pastasDrive.forEach((pasta) => {
     if (!mapaContexto[pasta.id]) {
       localidadesAtualizadas.push({
         id: pasta.id,
         nome: pasta.nome,
-        criadaEm: new Date().toISOString()
+        criadaEm: new Date().toISOString(),
       });
     }
   });
 
   // 3️⃣ Se nada mudou, retorna direto
   const mudou =
-    JSON.stringify(localidadesAtualizadas.map(l => l.id).sort()) !==
-    JSON.stringify(localidadesContexto.map(l => l.id).sort());
+    JSON.stringify(localidadesAtualizadas.map((l) => l.id).sort()) !==
+    JSON.stringify(localidadesContexto.map((l) => l.id).sort());
 
   if (!mudou) {
     return contexto;
@@ -175,7 +179,7 @@ function sincronizarLocalidadesContexto_(contexto) {
 
   // 4️⃣ Persistir atualização
   atualizarContextoAdmin_({
-    localidades: localidadesAtualizadas
+    localidades: localidadesAtualizadas,
   });
 
   return obterContextoAtivo_();

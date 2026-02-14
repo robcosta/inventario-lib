@@ -10,7 +10,7 @@ Exception: O serviço Planilhas apresentou falha ao acessar o documento com o c�
 
 ### Causa Raiz
 
-A função `atualizarLegendasPlanilhaContexto_()` estava tentando acessar a planilha operacional sem validações adequadas:
+A função `atualizarLegendasPlanilhaAdmin_()` estava tentando acessar a planilha operacional sem validações adequadas:
 
 1. ❌ Não validava se `planilhaOperacionalId` existia ou era válido
 2. ❌ Não tratava exceções de forma granular
@@ -22,18 +22,18 @@ A função `atualizarLegendasPlanilhaContexto_()` estava tentando acessar a plan
 
 ## ✅ Solução Implementada
 
-### 1. **Validações Robustas em `atualizarLegendasPlanilhaContexto_()`**
+### 1. **Validações Robustas em `atualizarLegendasPlanilhaAdmin_()`**
 
 ```javascript
 // ✅ VALIDAÇÃO 1: Contexto não nulo
 if (!contexto) {
-  console.warn('atualizarLegendasPlanilhaContexto_: contexto nulo');
+  console.warn('atualizarLegendasPlanilhaAdmin_: contexto nulo');
   return;
 }
 
 // ✅ VALIDAÇÃO 2: planilhaOperacionalId válido
 if (!contexto.planilhaOperacionalId || contexto.planilhaOperacionalId.trim() === '') {
-  console.warn('atualizarLegendasPlanilhaContexto_: planilhaOperacionalId vazio');
+  console.warn('atualizarLegendasPlanilhaAdmin_: planilhaOperacionalId vazio');
   return;
 }
 
@@ -41,7 +41,7 @@ if (!contexto.planilhaOperacionalId || contexto.planilhaOperacionalId.trim() ===
 try {
   listaPastas = obterPastasVivas_(contexto);
 } catch (e) {
-  console.error('atualizarLegendasPlanilhaContexto_: Erro ao obter pastas vivas:', e.message);
+  console.error('atualizarLegendasPlanilhaAdmin_: Erro ao obter pastas vivas:', e.message);
   return;
 }
 ```
@@ -88,7 +88,7 @@ abas.forEach(sheet => {
 try {
   const contextoNovo = obterContextoAtivo_();
   if (contextoNovo && contextoNovo.planilhaOperacionalId) {
-    atualizarLegendasPlanilhaContexto_(contextoNovo);
+    atualizarLegendasPlanilhaAdmin_(contextoNovo);
   }
 } catch (e) {
   console.error('criarPastaTrabalho_: Erro ao atualizar legendas:', e.message);
@@ -119,7 +119,7 @@ criarPastaTrabalho_()
   ↓
 definirPastaTrabalho_()
   ↓
-atualizarLegendasPlanilhaContexto_()
+atualizarLegendasPlanilhaAdmin_()
   ├─ Tenta acessar planilha pelo ID
   ├─ SEM validação do ID
   ├─ Sem tratamento de erro específico
@@ -134,7 +134,7 @@ try {
   ├─ definirPastaTrabalho_() ✅
   ├─ obterContextoAtivo_() ✅
   ├─ Validar planilhaOperacionalId ✅
-  └─ atualizarLegendasPlanilhaContexto_()
+  └─ atualizarLegendasPlanilhaAdmin_()
       ├─ Validação 1: contexto não nulo ✅
       ├─ Validação 2: ID válido e não vazio ✅
       ├─ Validação 3: obterPastasVivas_ com try/catch ✅
@@ -183,9 +183,9 @@ try {
 
 | Arquivo | Função | Mudança |
 |---------|--------|---------|
-| `contexto_legenda.gs` | `atualizarLegendasPlanilhaContexto_()` | ✏️ Adicionadas 6 validações + tratamento robusto |
+| `contexto_legenda.gs` | `atualizarLegendasPlanilhaAdmin_()` | ✏️ Adicionadas 6 validações + tratamento robusto |
 | `contexto_legenda.gs` | `limparLegendasAntigas_()` | ✏️ Adicionado try/catch em cada nível |
-| `pasta_criar.gs` | `criarPastaTrabalho_()` | ✏️ Adicionado try/catch ao chamar atualizarLegendasPlanilhaContexto_ |
+| `pasta_criar.gs` | `criarPastaTrabalho_()` | ✏️ Adicionado try/catch ao chamar atualizarLegendasPlanilhaAdmin_ |
 
 ---
 
@@ -219,13 +219,13 @@ Para rastrear problemas futuros, verifique o console (Apps Script > Execução):
 
 ```
 ✅ Logs informativos:
-- atualizarLegendasPlanilhaContexto_: contexto nulo
-- atualizarLegendasPlanilhaContexto_: planilhaOperacionalId vazio
-- atualizarLegendasPlanilhaContexto_: Contexto corrigido com planilha ativa
+- atualizarLegendasPlanilhaAdmin_: contexto nulo
+- atualizarLegendasPlanilhaAdmin_: planilhaOperacionalId vazio
+- atualizarLegendasPlanilhaAdmin_: Contexto corrigido com planilha ativa
 - Erro ao deletar linha com legenda em [SHEET]: [MENSAGEM]
 
 ❌ Logs de erro:
-- atualizarLegendasPlanilhaContexto_: Falha ao acessar planilha
+- atualizarLegendasPlanilhaAdmin_: Falha ao acessar planilha
 - criarPastaTrabalho_: Erro ao atualizar legendas
 ```
 

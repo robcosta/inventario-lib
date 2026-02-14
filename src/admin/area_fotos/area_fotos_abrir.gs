@@ -8,19 +8,19 @@
  */
 
 function abrirPastaFotosAtual_() {
-
   const ui = SpreadsheetApp.getUi();
-  const contexto = obterContextoAtivo_();
+  let contexto = obterContextoAtivo_();
+  contexto = sincronizarLocalidadeAtiva_(contexto);
 
   if (!contexto || !contexto.pastaLocalidadesId) {
-    ui.alert('❌ Nenhum contexto válido encontrado.');
+    ui.alert("❌ Nenhum contexto válido encontrado.");
     return;
   }
 
   if (!contexto.localidadeAtivaId) {
     ui.alert(
-      '⚠️ Nenhuma pasta ativa.\n\n' +
-      'Use "Trocar Pasta" ou "Criar Nova Pasta" primeiro.'
+      "⚠️ Nenhuma pasta ativa.\n\n" +
+        'Use "Trocar Pasta" ou "Criar Nova Pasta" primeiro.',
     );
     return;
   }
@@ -30,12 +30,16 @@ function abrirPastaFotosAtual_() {
     DriveApp.getFolderById(contexto.localidadeAtivaId);
   } catch (e) {
     ui.alert(
-      '❌ A pasta ativa não foi encontrada no Drive.\n\n' +
-      'Selecione outra pasta.'
+      "❌ A pasta ativa não foi encontrada no Drive.\n\n" +
+        "Selecione outra pasta.",
     );
     return;
   }
 
+  // ✨ NOVIDADE: Reconstrói a legenda após a criação do contexto
+  if (contexto) {
+    atualizarLegendasPlanilhaAdmin_(contexto);
+  }
   // 🔥 Agora chama a versão nova que mostra o nome
   abrirPastaNoNavegador_(contexto.localidadeAtivaId);
 }

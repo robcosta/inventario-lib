@@ -36,7 +36,7 @@
 
 **Arquivo: `src/admin/planilhas/contexto/contexto_legenda.gs`**
 
-- [ ] Função `atualizarLegendasPlanilhaContexto_()` refatorada
+- [ ] Função `atualizarLegendasPlanilhaAdmin_()` refatorada
   - [ ] VALIDAÇÃO 1: contexto não nulo
   - [ ] VALIDAÇÃO 2: planilhaOperacionalId válido
   - [ ] VALIDAÇÃO 3: obterPastasVivas_ com try/catch
@@ -58,7 +58,7 @@
 **Arquivo: `src/admin/pasta_trabalho/pasta_criar.gs`**
 
 - [ ] Função `criarPastaTrabalho_()` melhorada
-  - [ ] Try/catch ao chamar atualizarLegendasPlanilhaContexto_
+  - [ ] Try/catch ao chamar atualizarLegendasPlanilhaAdmin_
   - [ ] Alerta informativo se legenda falhar
   - [ ] Pasta criada mesmo se legenda falhar
   - [ ] Sugestão de ação para usuario
@@ -184,7 +184,7 @@
 
 | Métrica | Antes | Depois | Melhoria |
 |---------|-------|--------|----------|
-| Validações em atualizarLegendasPlanilhaContexto_ | 0 | 6 | ✅ |
+| Validações em atualizarLegendasPlanilhaAdmin_ | 0 | 6 | ✅ |
 | Tratamento de erro por aba | 0 | 100% | ✅ |
 | Fallback automático | ❌ | ✅ | ✅ |
 | Pasta criada mesmo com erro | ❌ | ✅ | ✅ |

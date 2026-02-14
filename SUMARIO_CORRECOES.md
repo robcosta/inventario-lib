@@ -19,7 +19,7 @@
 **Problema:** Ao criar pasta de contexto, recebia erro "O serviço Planilhas apresentou falha ao acessar o documento".
 
 **Solução:**
-- ✅ 6 validações em `atualizarLegendasPlanilhaContexto_()`
+- ✅ 6 validações em `atualizarLegendasPlanilhaAdmin_()`
 - ✅ Múltiplas tentativas de acesso à planilha
 - ✅ Fallback automático para planilha ativa
 - ✅ Try/catch granular por aba
@@ -49,7 +49,7 @@ inventario-lib/
 │   │   └── planilhas/
 │   │       └── contexto/
 │   │           └── contexto_legenda.gs
-│   │               ├── ✏️ atualizarLegendasPlanilhaContexto_() [refatorado]
+│   │               ├── ✏️ atualizarLegendasPlanilhaAdmin_() [refatorado]
 │   │               └── ✏️ limparLegendasAntigas_() [melhorado]
 └── Documentação/
     ├── CORRECAO_PASTA_DELETADA.md [novo]
