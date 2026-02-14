@@ -225,3 +225,15 @@ function limparLegendasAntigas_(planilhaId) {
     console.error('limparLegendasAntigas_: Erro geral:', e.message);
   }
 }
+
+function obterCorDestaquePorId_(id) {
+
+  let hash = 0;
+
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  const index = Math.abs(hash) % CORES_DESTAQUE.length;
+  return CORES_DESTAQUE[index];
+}

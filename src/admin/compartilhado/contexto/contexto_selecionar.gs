@@ -111,3 +111,40 @@ function montarMensagemSelecaoContexto_(contextoAtual, contextos) {
     outrosContextos
   };
 }
+
+function obterPastasVivas_(contexto) {
+
+  const pastaLocalidades = DriveApp.getFolderById(contexto.pastaLocalidadesId);
+  const it = pastaLocalidades.getFolders();
+
+  const lista = [];
+
+  while (it.hasNext()) {
+
+    const pasta = it.next();
+
+    if (pasta.isTrashed()) continue;
+
+    // 🔥 Verificar se ainda pertence à pasta LOCALIDADES
+    const pertence = pasta.getParents();
+    let valido = false;
+
+    while (pertence.hasNext()) {
+      const parent = pertence.next();
+      if (parent.getId() === contexto.pastaLocalidadesId) {
+        valido = true;
+        break;
+      }
+    }
+
+    if (!valido) continue;
+
+    lista.push({
+      id: pasta.getId(),
+      nome: pasta.getName(),
+      cor: obterCorDestaquePorId_(pasta.getId())
+    });
+  }
+
+  return lista.sort((a, b) => a.nome.localeCompare(b.nome));
+}

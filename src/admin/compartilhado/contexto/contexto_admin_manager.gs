@@ -129,40 +129,30 @@ function limparContextoAtivo_() {
 /* ============================================================
  * LISTAGEM (AUTO-CLEAN)
  * ============================================================ */
-
 function listarContextos_() {
+
   const props = PropertiesService.getScriptProperties().getProperties();
   const lista = [];
 
   Object.keys(props).forEach(chave => {
+
     if (!chave.startsWith(CONTEXTO_KEYS.PREFIXO)) return;
 
     try {
+
       const c = JSON.parse(props[chave]);
 
-      const obrigatorios = [
-        'planilhaAdminId',
-        'pastaContextoId',
-        'pastaPlanilhasId',
-        'pastaCSVAdminId',
-        'pastaLocalidadesId'
-      ];
-
-      obrigatorios.forEach(k => {
-        if (!c[k]) throw new Error('Contexto incompleto');
-      });
-
-      DriveApp.getFileById(c.planilhaAdminId);
-      DriveApp.getFolderById(c.pastaContextoId);
+      if (!validarEstruturaContexto_(c)) {
+        throw new Error('Estrutura inválida');
+      }
 
       lista.push(c);
 
     } catch (e) {
-      PropertiesService
-        .getScriptProperties()
-        .deleteProperty(chave);
 
-      Logger.log('[CONTEXTO] Removido automaticamente: ' + chave);
+      // 🔥 AUTO-LIMPEZA DE ÓRFÃO
+      PropertiesService.getScriptProperties().deleteProperty(chave);
+      Logger.log('[AUTO-CLEAN] Contexto removido automaticamente: ' + chave);
     }
   });
 
