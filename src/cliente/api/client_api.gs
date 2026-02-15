@@ -44,7 +44,7 @@ function clientCriarPastaTrabalho() {
 
 /** PROCESSAMENTO */
 function clientProcessarImagens() {
-  processarImagem();
+  processarImagens();
 }
 
 /** PLANILHAS */

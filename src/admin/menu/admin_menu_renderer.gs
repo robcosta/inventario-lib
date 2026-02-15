@@ -93,7 +93,7 @@ function adminRenderMenu_() {
 
 
     // Vision
-    .addItem('🖼️ Processar Imagem', 'processarImagem')
+    .addItem('🖼️ Processar Imagem', 'processarImagens')
     .addSeparator()
 
     // Planilha Geral

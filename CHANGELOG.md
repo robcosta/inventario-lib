@@ -232,7 +232,7 @@ TURQUESA: #ECFAF9 (era #D9F2F2)
 ### 🔄 Modificado
 
 #### `src/admin/api/vision_admin_api.gs`
-- Refatoração completa de `processarImagem()`
+- Refatoração completa de `processarImagens()`
 - Adicionado validação via `validador_vision`
 - Adicionado retry automático (máx 3 tentativas)
 - Feedback agora mostra taxa de sucesso, erros específicos, tempo

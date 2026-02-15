@@ -67,8 +67,8 @@ function abrirPastaFotosAtual() {
 /* ============================================================
  * PROXIES — PROCESSAMENTO DE IMAGENS (VISION)
  * ============================================================ */
-function processarImagem() {
-  inventario.processarImagem(); // teste/manual
+function processarImagens() {
+  inventario.processarImagens(); // teste/manual
 }
 
 function processarImagensDaPasta() {

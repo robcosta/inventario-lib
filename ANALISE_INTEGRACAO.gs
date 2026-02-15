@@ -35,7 +35,7 @@ patrimonio-lib (Cliente)
        ↓
   vision_admin_api.gs
        ↓
-processarImagem()
+processarImagens()
        ↓
 Valida contexto
        ↓
@@ -108,7 +108,7 @@ Processa imagens
    └─ Garantir todos os campos necessários
 
 3. FEEDBACK EM TEMPO REAL
-   Melhorar: vision_admin_api.gs → processarImagem()
+   Melhorar: vision_admin_api.gs → processarImagens()
    ├─ Status de progresso (usando toast)
    ├─ Logs persistidos em CONTROLE
    └─ Relatório final estruturado

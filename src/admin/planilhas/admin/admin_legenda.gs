@@ -13,21 +13,18 @@
 function atualizarLegendasPlanilhaAdmin_(contexto) {
 
   if (!contexto?.planilhaAdminId) {
-    console.warn('[LEGENDA] Contexto inválido.');
     return;
   }
 
-  // 🔹 Obter pastas vivas
   let pastas;
   try {
     pastas = obterPastasVivas_(contexto);
   } catch (e) {
-    console.error('[LEGENDA] Erro ao obter pastas:', e.message);
     return;
   }
 
-  // 🔹 Resolver Spreadsheet (bound-safe)
   let ss;
+
   try {
     const ssAtiva = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -37,39 +34,26 @@ function atualizarLegendasPlanilhaAdmin_(contexto) {
       ss = SpreadsheetApp.openById(contexto.planilhaAdminId);
     }
   } catch (e) {
-    console.error('[LEGENDA] Falha ao acessar planilha ADMIN:', e.message);
     return;
   }
 
-  if (!ss) {
-    console.error('[LEGENDA] Spreadsheet não resolvido.');
-    return;
-  }
+  if (!ss) return;
 
-  // 🔹 Se não houver pastas → apenas limpar
   if (!pastas || pastas.length === 0) {
     limparLegendasAntigas_(ss);
     return;
   }
 
-  // 🔹 Ordenação determinística
+  // Ordenação única (já aplicada implicitamente no mapa,
+  // mas garantimos visualmente também)
   pastas.sort((a, b) => a.nome.localeCompare(b.nome));
 
   if (pastas.length > 8) {
-    console.error('[LEGENDA] Limite máximo de 8 pastas excedido.');
     return;
   }
 
-  // 🔹 Mapa determinístico de cores
-  const cores = Object.values(CORES_DESTAQUE);
-  const mapaCores = {};
-
-  pastas.forEach((p, index) => {
-    mapaCores[p.id] = cores[index];
-  });
-
-  // 🔹 Construir RichText uma única vez
   let richTextFinal;
+
   try {
 
     const builder = SpreadsheetApp.newRichTextValue();
@@ -86,10 +70,9 @@ function atualizarLegendasPlanilhaAdmin_(contexto) {
     pastas.forEach(p => {
 
       const bloco = ` ■ ${p.nome}    `;
-      const cor = mapaCores[p.id];
 
       const estiloIcone = SpreadsheetApp.newTextStyle()
-        .setForegroundColor(cor)
+        .setForegroundColor(p.cor) // 🔥 agora usa p.cor
         .setBold(true)
         .setFontSize(14)
         .build();
@@ -109,64 +92,35 @@ function atualizarLegendasPlanilhaAdmin_(contexto) {
     richTextFinal = builder.build();
 
   } catch (e) {
-    console.error('[LEGENDA] Erro ao montar RichText:', e.message);
     return;
   }
 
-  // 🔹 Aplicar legenda aba por aba (isolado)
-  let abas;
-
-  try {
-    abas = ss.getSheets();
-  } catch (e) {
-    console.error('[LEGENDA] Falha ao obter abas:', e.message);
-    return;
-  }
-
-  if (!abas || abas.length === 0) {
-    console.warn('[LEGENDA] Nenhuma aba encontrada.');
-    return;
-  }
+  const abas = ss.getSheets();
 
   abas.forEach(sheet => {
 
-    try {
-
-      if (!sheet || sheet.getName() === '__CONTROLE_PROCESSAMENTO__') {
-        return;
-      }
-
-      removerLegendaAntiga_(sheet);
-
-      const ultimaLinha = sheet.getLastRow();
-      const linhaDestino = ultimaLinha < 5 ? 10 : ultimaLinha + 2;
-
-      const totalColunas = Math.max(sheet.getLastColumn(), 1);
-
-      const range = sheet.getRange(linhaDestino, 1, 1, totalColunas);
-
-      // Evitar erro de merge já existente
-      try {
-        range.breakApart();
-      } catch (_) {}
-
-      range
-        .merge()
-        .setBackground('#ffffff')
-        .setRichTextValue(richTextFinal)
-        .setHorizontalAlignment('left')
-        .setVerticalAlignment('middle');
-
-    } catch (sheetError) {
-      console.warn(`[LEGENDA] Erro ao atualizar aba ${sheet ? sheet.getName() : 'desconhecida'}:`,
-        sheetError.message);
-      // Continua nas próximas abas
+    if (!sheet || sheet.getName() === '__CONTROLE_PROCESSAMENTO__') {
+      return;
     }
 
+    removerLegendaAntiga_(sheet);
+
+    const ultimaLinha = sheet.getLastRow();
+    const linhaDestino = ultimaLinha < 5 ? 10 : ultimaLinha + 2;
+    const totalColunas = Math.max(sheet.getLastColumn(), 1);
+
+    const range = sheet.getRange(linhaDestino, 1, 1, totalColunas);
+
+    try { range.breakApart(); } catch (_) {}
+
+    range
+      .merge()
+      .setBackground('#ffffff')
+      .setRichTextValue(richTextFinal)
+      .setHorizontalAlignment('left')
+      .setVerticalAlignment('middle');
   });
-
 }
-
 
 /**
  * Remove legenda antiga com isolamento por aba

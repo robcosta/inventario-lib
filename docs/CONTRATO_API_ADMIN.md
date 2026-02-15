@@ -112,7 +112,7 @@ Abre no navegador as pastas vinculadas ao contexto.
 
 ## 🔷 PROCESSAMENTO DE IMAGENS (VISION)
 
-### `processarImagem()`
+### `processarImagens()`
 
 Processa manualmente uma imagem (uso técnico/teste).
 

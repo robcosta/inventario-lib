@@ -59,12 +59,8 @@ function abrirPastaFotosAtual() {
 /* ============================================================
  * PROCESSAMENTO DE IMAGENS (VISION)
  * ============================================================ */
-function processarImagem() {
-  processarImagem_(); // teste/manual
-}
-
-function processarImagensDaPasta() {
-  processarImagensDaPasta_(); // futuro (lote)
+function processarImagens() {
+  processarImagens_(); // teste/manual
 }
 
 /* ============================================================

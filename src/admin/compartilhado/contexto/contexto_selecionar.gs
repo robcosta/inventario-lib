@@ -114,10 +114,7 @@ function montarMensagemSelecaoContexto_(contextoAtual, contextos) {
 
 function obterPastasVivas_(contexto) {
 
-  console.log('=== 📂 DEBUG PASTAS VIVAS ===');
-
   if (!contexto?.pastaLocalidadesId) {
-    console.warn('pastaLocalidadesId ausente no contexto.');
     return [];
   }
 
@@ -135,27 +132,16 @@ function obterPastasVivas_(contexto) {
     });
   }
 
-  console.log('Total pastas encontradas:', lista.length);
-
   if (!lista.length) {
     return [];
   }
 
-  // 🔥 AQUI É O PONTO CRÍTICO
+  // 🔹 ÚNICO ponto onde a cor é definida
   const mapaCores = obterMapaCoresPorContexto_(lista);
 
-  // Aplicar cor em cada pasta
   lista.forEach(p => {
     p.cor = mapaCores[p.id];
-
-    console.log('Pasta encontrada:');
-    console.log('Nome:', p.nome);
-    console.log('ID:', p.id);
-    console.log('Cor atribuída:', p.cor);
-    console.log('-------------------');
   });
-
-  console.log('==============================');
 
   return lista;
 }
