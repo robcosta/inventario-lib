@@ -98,7 +98,7 @@ function popularPlanilhaContexto() {
 }
 
 function formatarPlanilhaContexto() {
-  formatarPlanilhaContexto_();
+  formatarPlanilhaAdmin_();
 }
 
 /* ============================================================

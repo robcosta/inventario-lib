@@ -1,12 +1,12 @@
 /**
  * ============================================================
- * LEGENDA DINÂMICA — PLANILHA ADMIN
+ * LEGENDA DINÂMICA — PLANILHA ADMIN (ENTERPRISE RESILIENTE)
  * ============================================================
- * - Cores únicas por contexto
- * - Ordem alfabética
- * - Máximo 8 pastas
- * - Sem hash
- * - Sem correção automática de contexto
+ * ✔ Compatível com execução bound e externa
+ * ✔ Não reabre planilha se já ativa
+ * ✔ Não derruba execução por erro em aba específica
+ * ✔ Limite máximo de 8 pastas
+ * ✔ Tolerante a falhas internas do Spreadsheet
  * ============================================================
  */
 
@@ -17,8 +17,8 @@ function atualizarLegendasPlanilhaAdmin_(contexto) {
     return;
   }
 
+  // 🔹 Obter pastas vivas
   let pastas;
-
   try {
     pastas = obterPastasVivas_(contexto);
   } catch (e) {
@@ -26,23 +26,41 @@ function atualizarLegendasPlanilhaAdmin_(contexto) {
     return;
   }
 
-  const ss = SpreadsheetApp.openById(contexto.planilhaAdminId);
+  // 🔹 Resolver Spreadsheet (bound-safe)
+  let ss;
+  try {
+    const ssAtiva = SpreadsheetApp.getActiveSpreadsheet();
 
-  if (!pastas.length) {
-    limparLegendasAntigas_(contexto.planilhaAdminId);
+    if (ssAtiva && ssAtiva.getId() === contexto.planilhaAdminId) {
+      ss = ssAtiva;
+    } else {
+      ss = SpreadsheetApp.openById(contexto.planilhaAdminId);
+    }
+  } catch (e) {
+    console.error('[LEGENDA] Falha ao acessar planilha ADMIN:', e.message);
     return;
   }
 
-  // 🔹 Ordenação alfabética
+  if (!ss) {
+    console.error('[LEGENDA] Spreadsheet não resolvido.');
+    return;
+  }
+
+  // 🔹 Se não houver pastas → apenas limpar
+  if (!pastas || pastas.length === 0) {
+    limparLegendasAntigas_(ss);
+    return;
+  }
+
+  // 🔹 Ordenação determinística
   pastas.sort((a, b) => a.nome.localeCompare(b.nome));
 
-  // 🔹 Limite de 8
   if (pastas.length > 8) {
-    console.error('[LEGENDA] Mais de 8 pastas no contexto.');
+    console.error('[LEGENDA] Limite máximo de 8 pastas excedido.');
     return;
   }
 
-  // 🔹 Gerar mapa determinístico
+  // 🔹 Mapa determinístico de cores
   const cores = Object.values(CORES_DESTAQUE);
   const mapaCores = {};
 
@@ -50,28 +68,20 @@ function atualizarLegendasPlanilhaAdmin_(contexto) {
     mapaCores[p.id] = cores[index];
   });
 
-  console.log('=== 🎨 MAPA DE CORES DO CONTEXTO ===');
-  pastas.forEach(p => {
-    console.log(`${p.nome} → ${mapaCores[p.id]}`);
-  });
-  console.log('====================================');
-
-  ss.getSheets().forEach(sheet => {
-
-    if (sheet.getName() === '__CONTROLE_PROCESSAMENTO__') return;
-
-    removerLegendaAntiga_(sheet);
+  // 🔹 Construir RichText uma única vez
+  let richTextFinal;
+  try {
 
     const builder = SpreadsheetApp.newRichTextValue();
 
     let texto = '';
-    let pos = 0;
-
     pastas.forEach(p => {
       texto += ` ■ ${p.nome}    `;
     });
 
     builder.setText(texto);
+
+    let pos = 0;
 
     pastas.forEach(p => {
 
@@ -96,51 +106,121 @@ function atualizarLegendasPlanilhaAdmin_(contexto) {
       pos += bloco.length;
     });
 
-    const rich = builder.build();
+    richTextFinal = builder.build();
 
-    const linha = sheet.getLastRow() < 5
-      ? 10
-      : sheet.getLastRow() + 2;
+  } catch (e) {
+    console.error('[LEGENDA] Erro ao montar RichText:', e.message);
+    return;
+  }
 
-    sheet.getRange(linha, 1, 1, 9)
-      .merge()
-      .setBackground('#ffffff')
-      .setRichTextValue(rich)
-      .setHorizontalAlignment('left')
-      .setVerticalAlignment('middle');
+  // 🔹 Aplicar legenda aba por aba (isolado)
+  let abas;
+
+  try {
+    abas = ss.getSheets();
+  } catch (e) {
+    console.error('[LEGENDA] Falha ao obter abas:', e.message);
+    return;
+  }
+
+  if (!abas || abas.length === 0) {
+    console.warn('[LEGENDA] Nenhuma aba encontrada.');
+    return;
+  }
+
+  abas.forEach(sheet => {
+
+    try {
+
+      if (!sheet || sheet.getName() === '__CONTROLE_PROCESSAMENTO__') {
+        return;
+      }
+
+      removerLegendaAntiga_(sheet);
+
+      const ultimaLinha = sheet.getLastRow();
+      const linhaDestino = ultimaLinha < 5 ? 10 : ultimaLinha + 2;
+
+      const totalColunas = Math.max(sheet.getLastColumn(), 1);
+
+      const range = sheet.getRange(linhaDestino, 1, 1, totalColunas);
+
+      // Evitar erro de merge já existente
+      try {
+        range.breakApart();
+      } catch (_) {}
+
+      range
+        .merge()
+        .setBackground('#ffffff')
+        .setRichTextValue(richTextFinal)
+        .setHorizontalAlignment('left')
+        .setVerticalAlignment('middle');
+
+    } catch (sheetError) {
+      console.warn(`[LEGENDA] Erro ao atualizar aba ${sheet ? sheet.getName() : 'desconhecida'}:`,
+        sheetError.message);
+      // Continua nas próximas abas
+    }
+
   });
+
 }
 
 
 /**
- * Remove legenda antiga de uma aba
+ * Remove legenda antiga com isolamento por aba
  */
 function removerLegendaAntiga_(sheet) {
 
-  const lastRow = sheet.getLastRow();
-  if (!lastRow) return;
+  try {
 
-  const data = sheet.getRange(1, 1, lastRow, 1).getValues();
+    const lastRow = sheet.getLastRow();
+    if (!lastRow) return;
 
-  for (let i = data.length - 1; i >= 0; i--) {
-    if (String(data[i][0]).includes('■')) {
-      sheet.getRange(i + 1, 1, 1, sheet.getLastColumn()).breakApart();
-      sheet.deleteRow(i + 1);
+    const lastColumn = Math.max(sheet.getLastColumn(), 1);
+
+    const data = sheet.getRange(1, 1, lastRow, 1).getValues();
+
+    for (let i = data.length - 1; i >= 0; i--) {
+
+      if (String(data[i][0]).includes('■')) {
+
+        try {
+          sheet.getRange(i + 1, 1, 1, lastColumn).breakApart();
+        } catch (_) {}
+
+        try {
+          sheet.deleteRow(i + 1);
+        } catch (_) {}
+      }
     }
+
+  } catch (e) {
+    console.warn('[LEGENDA] Erro ao remover legenda antiga:', e.message);
   }
 }
 
 
 /**
- * Limpa legenda antiga em todas as abas
+ * Limpa legendas em todas as abas (seguro)
  */
-function limparLegendasAntigas_(planilhaId) {
+function limparLegendasAntigas_(ss) {
 
-  if (!planilhaId) return;
+  if (!ss) return;
 
-  const ss = SpreadsheetApp.openById(planilhaId);
+  let abas;
 
-  ss.getSheets().forEach(sheet => {
-    removerLegendaAntiga_(sheet);
+  try {
+    abas = ss.getSheets();
+  } catch (e) {
+    console.warn('[LEGENDA] Não foi possível obter abas para limpeza:', e.message);
+    return;
+  }
+
+  abas.forEach(sheet => {
+    try {
+      removerLegendaAntiga_(sheet);
+    } catch (_) {}
   });
 }

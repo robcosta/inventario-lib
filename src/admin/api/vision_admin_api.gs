@@ -77,7 +77,7 @@ function processarImagem() {
     // Formatar apenas as planilhas que precisam
     try {
       if (!contextoFormatado) {
-        formatarPlanilhaContexto_();
+        formatarPlanilhaAdmin_();
       }
       if (!geralFormatado) {
         formatarPlanilhaGeral_();

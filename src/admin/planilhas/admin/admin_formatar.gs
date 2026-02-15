@@ -10,7 +10,7 @@
  * Bridge chamada pelo menu.
  * Resolve o ID a partir do contexto ativo.
  */
-function formatarPlanilhaContexto_() {
+function formatarPlanilhaAdmin_() {
   const contexto = obterContextoAtivo_();
 
   if (!contexto || !contexto.planilhaAdminId) {
@@ -19,14 +19,14 @@ function formatarPlanilhaContexto_() {
     );
   }
 
-  formatarPlanilhaContextoPorId_(contexto.planilhaAdminId);
+  formatarPlanilhaAdminPorId_(contexto.planilhaAdminId);
 }
 
 /**
  * Função real (ID-based).
  * Pode ser chamada em testes e automações.
  */
-function formatarPlanilhaContextoPorId_(spreadsheetId) {
+function formatarPlanilhaAdminPorId_(spreadsheetId) {
   if (!spreadsheetId || typeof spreadsheetId !== 'string') {
     throw new Error('spreadsheetId inválido para formatação da Planilha Contexto.');
   }

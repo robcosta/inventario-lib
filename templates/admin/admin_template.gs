@@ -1,94 +1,153 @@
 /**
  * ============================================================
- * ÁREA DE FOTOS — TROCAR PASTA ATIVA (ORDENADO)
+ * TEMPLATE ADMIN — INVENTÁRIO PATRIMONIAL
  * ============================================================
- * - Lista pastas do Drive
- * - Remove pasta ativa da listagem
- * - Ordena alfabeticamente (A → Z)
- * - Atualiza contexto ID-based
+ * Responsabilidades:
+ * - Inicializar menu ADMIN
+ * - Encaminhar comandos para a biblioteca inventario
+ *
+ * ❌ Não contém lógica de negócio
+ * ❌ Não contém regras
+ * ❌ Não acessa Drive / Sheets diretamente
+ * ============================================================
  */
 
-function trocarPastaFotos_() {
-
-  const ui = SpreadsheetApp.getUi();
-  const contexto = obterContextoAtivo_();
-
-  if (!contexto || !contexto.pastaLocalidadesId) {
-    ui.alert('❌ Nenhum contexto válido encontrado.');
-    return;
-  }
-
-  const pastaRaiz = DriveApp.getFolderById(contexto.pastaLocalidadesId);
-  const it = pastaRaiz.getFolders();
-
-  const pastaAtivaId = contexto.localidadeAtivaId || null;
-  const pastaAtivaNome = contexto.localidadeAtivaNome || 'NENHUMA';
-
-  const pastas = [];
-
-  // 1️⃣ Coletar pastas ignorando a ativa
-  while (it.hasNext()) {
-    const pasta = it.next();
-
-    if (pasta.getId() === pastaAtivaId) continue;
-
-    pastas.push({
-      id: pasta.getId(),
-      nome: pasta.getName()
-    });
-  }
-
-  if (pastas.length === 0) {
-    ui.alert(
-      '⚠️ Nenhuma outra pasta disponível para troca.\n\n' +
-      'A pasta atual já é a única existente.'
+/* ============================================================
+ * onOpen — ENTRADA DO ADMIN
+ * ============================================================ */
+function onOpen() {
+  try {
+    inventario.adminRenderMenu(); // API pública da biblioteca
+  } catch (e) {
+    Logger.log('[ADMIN][ONOPEN][ERRO]');
+    Logger.log(e);
+    SpreadsheetApp.getUi().alert(
+      'Erro ao inicializar o menu de Administração.\n\n' + e.message
     );
-    return;
   }
+}
 
-  // 2️⃣ Ordenar alfabeticamente (case-insensitive)
-  pastas.sort((a, b) =>
-    a.nome.toUpperCase().localeCompare(b.nome.toUpperCase())
-  );
+/* ============================================================
+ * PROXIES — CONTEXTO
+ * ============================================================ */
+function criarContextoTrabalho() {
+  inventario.criarContextoTrabalho();
+}
 
-  // 3️⃣ Montar mapa indexado
-  const mapa = {};
-  const lista = [];
+function repararContextoAdmin() {
+  inventario.repararContextoAdmin();
+}
 
-  pastas.forEach((pasta, i) => {
-    const index = i + 1;
-    lista.push(`${index} - ${pasta.nome}`);
-    mapa[index] = pasta;
-  });
+function selecionarContextoTrabalho() {
+  inventario.selecionarContextoTrabalho();
+}
 
-  const mensagem =
-    'Pasta ativa: ' + pastaAtivaNome +
-    '\n\nEscolha a nova pasta:\n\n' +
-    lista.join('\n');
+/* ============================================================
+ * PROXIES — ACESSOS
+ * ============================================================ */
+function gerenciarAcessosContexto() {
+  inventario.gerenciarAcessosContexto();
+}
 
-  const resp = ui.prompt(
-    'Trocar Pasta de Fotos',
-    mensagem,
-    ui.ButtonSet.OK_CANCEL
-  );
+/* ============================================================
+ * PROXIES — ÁREA DE FOTOS
+ * ============================================================ */
+function criarNovaPastaFotos() {
+  inventario.criarNovaPastaFotos();
+}
 
-  if (resp.getSelectedButton() !== ui.Button.OK) return;
+function trocarPastaFotos() {
+  inventario.trocarPastaFotos();
+}
 
-  const numero = Number(resp.getResponseText());
-  const pastaEscolhida = mapa[numero];
+function abrirPastaFotosAtual() {
+  inventario.abrirPastaFotosAtual();
+}
 
-  if (!pastaEscolhida) {
-    ui.alert('❌ Opção inválida.');
-    return;
+/* ============================================================
+ * PROXIES — PROCESSAMENTO DE IMAGENS (VISION)
+ * ============================================================ */
+function processarImagem() {
+  inventario.processarImagem(); // teste/manual
+}
+
+function processarImagensDaPasta() {
+  inventario.processarImagensDaPasta(); // lote (quando ativar)
+}
+
+/* ============================================================
+ * PROXIES — PLANILHA GERAL
+ * ============================================================ */
+function abrirPlanilhaGeral() {
+  inventario.abrirPlanilhaGeral();
+}
+
+function importarCSVGeral() {
+  inventario.importarCSVGeral();
+}
+
+function formatarPlanilhaGeral() {
+  inventario.formatarPlanilhaGeral();
+}
+
+function criarOuRecriarPlanilhaGeral() {
+  inventario.criarOuRecriarPlanilhaGeral();
+}
+
+/* ============================================================
+ * PROXIES — PLANILHA CONTEXTO
+ * ============================================================ */
+function importarCSVContexto() {
+  inventario.importarCSVContexto();
+}
+
+function popularPlanilhaContexto() {
+  inventario.popularPlanilhaContexto();
+}
+
+function formatarPlanilhaContexto() {
+  inventario.formatarPlanilhaContexto();
+}
+
+/* ============================================================
+ * PROXIES — CLIENTE / SUPORTE
+ * ============================================================ */
+function formatarPlanilhaCliente() {
+  inventario.formatarPlanilhaCliente();
+}
+
+function executarDiagnostico() {
+  inventario.executarDiagnostico();
+}
+
+function mostrarVersaoSistema() {
+   inventario.mostrarVersaoSistema();  
+}
+/* ============================================================
+ * CSV — ENTRYPOINT (HTML)
+ * ============================================================ */
+function receberCSV(tipo, nomeArquivo, dataUrl) {
+  return inventario.receberCSV(tipo, nomeArquivo, dataUrl);
+}
+
+function verContextoScript() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const planilhaId = ss.getId();
+  const chave = 'CONTEXTO_ADMIN_' + planilhaId;
+  const props = PropertiesService.getScriptProperties();
+  const contexto = props.getProperty(chave);
+  
+  if (contexto) {
+    const obj = JSON.parse(contexto);
+    Logger.log('Contexto encontrado: ' + Object.keys(obj).join(', '));
+    SpreadsheetApp.getUi().alert('Contexto OK! IDs:\n' + 
+      'pastaPlanilhas: ' + obj.pastaPlanilhasId + '\n' +
+      'pastaLocalidades: ' + obj.pastaLocalidadesId);
+  } else {
+    SpreadsheetApp.getUi().alert('Contexto não encontrado! Chave: ' + chave);
   }
+}
 
-  atualizarContextoAdmin_({
-    localidadeAtivaId: pastaEscolhida.id,
-    localidadeAtivaNome: pastaEscolhida.nome
-  });
-
-  ui.alert(
-    '✅ Pasta ativa definida:\n\n' +
-    pastaEscolhida.nome
-  );
+function runTestsPlanilhaGeral() {
+  inventario.runTestsPlanilhaGeral();
 }

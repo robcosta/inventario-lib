@@ -1,3 +1,5 @@
+/*
+
 function aplicarLegendaRodape_(sheet, pastaTrabalho) {
 
   const nomeAba = sheet.getName();
@@ -32,4 +34,4 @@ function aplicarLegendasPlanilhaContexto_() {
     aplicarLegendaRodape_(sheet, pasta);
   });
 }
-
+*/
