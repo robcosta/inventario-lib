@@ -1,16 +1,20 @@
 /**
  * ============================================================
- * MENU CLIENT — RENDERIZAÇÃO
+ * MENU CLIENT — ID-BASED (PADRÃO OFICIAL)
  * ============================================================
  */
 
 function renderMenuClient(contextoOverride) {
+
   const ui = SpreadsheetApp.getUi();
-  const contexto = contextoOverride || _client_obterContexto();
+  const contexto = contextoOverride || obterContextoCliente_();
   const temContexto = !!contexto;
 
   const menu = ui.createMenu('📦 Inventário Patrimonial');
 
+  // ==========================================================
+  // SEM CONTEXTO
+  // ==========================================================
   if (!temContexto) {
     menu
       .addItem('ℹ️ Atualizar Informações', 'clientAtualizarInformacoes')
@@ -18,19 +22,34 @@ function renderMenuClient(contextoOverride) {
     return;
   }
 
+  // ==========================================================
+  // COM CONTEXTO
+  // ==========================================================
   menu
     .addItem('🔄 Atualizar Informações', 'clientAtualizarInformacoes')
     .addSeparator()
+
+    // 📸 ÁREA DE FOTOS (igual ADMIN)
     .addSubMenu(
-      ui.createMenu('🗂️ Pastas de Trabalho')
-        .addItem('📂 Abrir pasta de trabalho', 'clientAbrirPastaTrabalho')
-        .addItem('🔁 Escolher pasta', 'clientEscolherPastaTrabalho')
-        .addItem('➕ Criar pasta', 'clientCriarPastaTrabalho')
+      ui.createMenu('📂 Área de Fotos')
+        .addItem('📂 Abrir Pasta Atual', 'clientAbrirPastaFotos')
+        .addItem('➕ Criar Nova Pasta', 'clientCriarSubpastaFotos')
     )
     .addSeparator()
+
+    // 🖼️ PROCESSAMENTO
     .addItem('🖼️ Processar Imagens', 'clientProcessarImagens')
     .addSeparator()
-    .addItem('📘 Abrir Planilha Geral', 'clientAbrirPlanilhaGeral')
-    .addItem('📗 Abrir Planilha Contexto', 'clientAbrirPlanilhaContexto')
+
+    // 📖 PLANILHAS
+    .addSubMenu(
+      ui.createMenu('📖 Planilhas')
+        .addItem('📕 Abrir Planilha Admin', 'clientAbrirPlanilhaAdmin')
+        .addItem('📘 Abrir Planilha Geral', 'clientAbrirPlanilhaGeral')
+    )
+    .addSeparator()
+
+    .addItem('ℹ️ Versão', 'mostrarVersaoSistema')
+
     .addToUi();
 }

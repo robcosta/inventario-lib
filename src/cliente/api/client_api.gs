@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * API PÚBLICA — CLIENT (INVENTÁRIO)
+ * API PÚBLICA — CLIENT (ID-BASED)
  * ============================================================
  */
 
@@ -15,7 +15,7 @@ function clientRenderMenuComContexto(contexto) {
 
 /** INFORMAÇÕES */
 function clientAtualizarInformacoes() {
-  const contexto = _client_obterContexto();
+  const contexto = obterContextoCliente_();
   if (contexto) {
     cliente_montarInformacoes_(contexto);
   }
@@ -24,56 +24,88 @@ function clientAtualizarInformacoes() {
 function clientAtualizarInformacoesComContexto(contexto) {
   if (contexto) {
     cliente_montarInformacoes_(contexto);
+  }
+}
+
+/** ÁREA DE FOTOS */
+
+function clientAbrirPastaFotos() {
+
+  const contexto = obterContextoCliente_();
+
+  if (!contexto?.pastaLocalidadeAtivaId) {
+    SpreadsheetApp.getUi().alert('❌ Nenhuma pasta ativa.');
     return;
   }
-  clientAtualizarInformacoes();
+
+  abrirPastaNoNavegador_(contexto.pastaLocalidadeAtivaId);
 }
 
-/** PASTA */
-function clientAbrirPastaTrabalho() {
-  abrirPastasTrabalho();
-}
+function clientCriarSubpastaFotos() {
 
-function clientEscolherPastaTrabalho() {
-  escolherPastaTrabalho();
-}
+  const ui = SpreadsheetApp.getUi();
+  const contexto = obterContextoCliente_();
 
-function clientCriarPastaTrabalho() {
-  criarPastaTrabalho();
+  if (!contexto?.pastaLocalidadeAtivaId) {
+    ui.alert('❌ Nenhuma localidade ativa.');
+    return;
+  }
+
+  const resp = ui.prompt(
+    'Criar Nova Pasta de Fotos',
+    'Digite o nome da nova subpasta:',
+    ui.ButtonSet.OK_CANCEL
+  );
+
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+
+  const nome = (resp.getResponseText() || '').trim();
+  if (!nome) {
+    ui.alert('❌ Nome inválido.');
+    return;
+  }
+
+  const pasta = DriveApp.getFolderById(contexto.pastaLocalidadeAtivaId);
+  const nova = pasta.createFolder(nome);
+
+  ui.alert('✅ Pasta criada com sucesso.');
+
+  abrirPastaNoNavegador_(nova.getId());
 }
 
 /** PROCESSAMENTO */
+
 function clientProcessarImagens() {
-  processarImagens();
+
+  const contexto = obterContextoCliente_();
+
+  if (!contexto?.pastaLocalidadeAtivaId) {
+    SpreadsheetApp.getUi().alert('❌ Nenhuma pasta ativa.');
+    return;
+  }
+
+  const contextoVision = montarContextoVisionParaCliente_(contexto);
+
+  vision.batchProcessarPastaCompleta(
+    contexto.pastaLocalidadeAtivaId,
+    contextoVision
+  );
 }
 
 /** PLANILHAS */
+
+function clientAbrirPlanilhaAdmin() {
+
+  const contexto = obterContextoCliente_();
+
+  if (!contexto?.planilhaAdminId) {
+    SpreadsheetApp.getUi().alert('❌ Planilha Admin não configurada.');
+    return;
+  }
+
+  abrirPlanilhaNoNavegador_(contexto.planilhaAdminId);
+}
+
 function clientAbrirPlanilhaGeral() {
   abrirPlanilhaGeral();
 }
-
-function clientAbrirPlanilhaContexto() {
-  const contexto = _client_obterContexto();
-  
-  if (!contexto) {
-    SpreadsheetApp.getUi().alert('❌ Contexto não encontrado.');
-    return;
-  }
-  
-  if (!contexto.planilhaAdminId) {
-    SpreadsheetApp.getUi().alert('❌ Contexto incompleto. Não foi possível obter o ID da Planilha Contexto.');
-    return;
-  }
-  
-  try {
-    // Abrir a planilha contexto
-    const url = 'https://docs.google.com/spreadsheets/d/' + contexto.planilhaAdminId + '/edit';
-    SpreadsheetApp.getUi().showModelessDialog(
-      HtmlService.createHtmlOutput('<script>window.location.href="' + url + '";</script>'),
-      'Abrindo...'
-    );
-  } catch (e) {
-    SpreadsheetApp.getUi().alert('❌ Erro ao abrir Planilha Contexto: ' + e.message);
-  }
-}
-

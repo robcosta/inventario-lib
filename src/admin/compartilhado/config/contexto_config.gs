@@ -31,14 +31,6 @@ const CONTEXTO_CONFIG = {
   },
 
   // ============================================================
-  // 🔑 CHAVES DE PROPERTIES
-  // ============================================================
-  PROPERTIES: {
-    contextoTrabalho: 'CONTEXTO_TRABALHO',
-    adminContextoAtivo: 'ADMIN_CONTEXTO_ATIVO'
-  },
-
-  // ============================================================
   // ⏱️ DURAÇÕES DE TOAST (em segundos)
   // ============================================================
   TOAST: {
