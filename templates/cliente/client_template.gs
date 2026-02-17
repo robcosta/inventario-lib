@@ -57,14 +57,23 @@ function processarImagens() {
   inventario.processarImagens(); // teste/manual
 }
 
+/* ============================================================
+ * PROXIES — ARIR PLANILHA ADMIN
+ * ============================================================ */
 function clientAbrirPlanilhaAdmin() {
   inventario.clientAbrirPlanilhaAdmin();
 }
 
+/* ============================================================
+ * PROXIES — ARIR PLANILHA GERAL
+ * ============================================================ */
 function clientAbrirPlanilhaGeral() {
-  inventario.clientAbrirPlanilhaGeral();
+  inventario.abrirPlanilhaGeral();
 }
 
+/* ============================================================
+ * PROXIES — MOSTRAR VERSÃO
+ * ============================================================ */
 function mostrarVersaoSistema() {
   inventario.mostrarVersaoSistema();
 }

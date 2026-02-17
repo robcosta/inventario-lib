@@ -26,15 +26,15 @@ function obterContextoCliente_() {
   const raw = docProps.getProperty('CONTEXTO_CLIENTE');
 
   if (raw) {
+
     try {
+
       const contexto = JSON.parse(raw);
 
       if (contextoClienteValido_(contexto)) {
-        Logger.log("Mostrando contexto:" + JSON.stringify(contexto) + "\n Significa que está válido");
         return contexto;
       }
 
-      // 🔥 Se inválido, remove e força reconstrução
       docProps.deleteProperty('CONTEXTO_CLIENTE');
 
     } catch (e) {
@@ -58,9 +58,8 @@ function obterContextoCliente_() {
  */
 function salvarContextoCliente_(contexto) {
 
-  if (!contexto) {
-    throw new Error('Contexto cliente inválido.');
-  }
+  Logger.log('[CLIENTE] Persistindo CONTEXTO_CLIENTE...');
+  Logger.log('[CLIENTE] Dados persistidos: ' + JSON.stringify(contexto));
 
   PropertiesService
     .getDocumentProperties()
@@ -68,7 +67,10 @@ function salvarContextoCliente_(contexto) {
       'CONTEXTO_CLIENTE',
       JSON.stringify(contexto)
     );
+
+  Logger.log('[CLIENTE] CONTEXTO_CLIENTE salvo com sucesso.');
 }
+
 
 
 /**
@@ -97,7 +99,6 @@ function contextoClienteValido_(contexto) {
     contexto.nome &&
     contexto.pastaLocalidadesId &&
     contexto.planilhaAdminId &&
-    contexto.planilhaGeralId &&
     contexto.planilhaClienteId
   );
 }
@@ -110,7 +111,12 @@ function contextoClienteValido_(contexto) {
  */
 function atualizarContextoCliente_(atualizacoes) {
 
+  Logger.log('[CLIENTE] Atualizando contexto cliente...');
+  Logger.log('[CLIENTE] Atualizações recebidas: ' + JSON.stringify(atualizacoes));
+
   const contextoAtual = obterContextoCliente_();
+
+  Logger.log('[CLIENTE] Contexto antes da atualização: ' + JSON.stringify(contextoAtual));
 
   if (!contextoAtual) {
     throw new Error('Nenhum contexto cliente ativo para atualizar.');
@@ -123,6 +129,9 @@ function atualizarContextoCliente_(atualizacoes) {
 
   salvarContextoCliente_(contextoAtualizado);
 
+  Logger.log('[CLIENTE] Contexto salvo: ' + JSON.stringify(contextoAtualizado));
+
   return contextoAtualizado;
 }
+
 

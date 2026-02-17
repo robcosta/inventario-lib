@@ -1,27 +1,33 @@
 function persistirContextoAtual_(atualizacoes) {
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const id = ss.getId();
+  Logger.log('[CTX] Iniciando persistência unificada...');
+  Logger.log('[CTX] Atualizações recebidas: ' + JSON.stringify(atualizacoes));
 
-  // 🔹 Se for ADMIN
-  const rawAdmin = PropertiesService
-    .getScriptProperties()
-    .getProperty(CONTEXTO_KEYS.PREFIXO + id);
+  if (!atualizacoes || typeof atualizacoes !== 'object') {
+    throw new Error('persistirContextoAtual_: atualizações inválidas.');
+  }
 
-  if (rawAdmin) {
+  // 🔵 ADMIN
+  if (contextoAdminRegistrado_()) {
+    Logger.log('[CTX] Detectado modo ADMIN.');
     atualizarContextoAdmin_(atualizacoes);
+    Logger.log('[CTX] Atualização ADMIN concluída.');
     return;
   }
 
-  // 🔹 Se for CLIENTE
-  const rawCliente = PropertiesService
-    .getDocumentProperties()
-    .getProperty('CONTEXTO_CLIENTE');
+  // 🟢 CLIENTE
+  const contextoCliente = obterContextoCliente_();
+  if (contextoCliente && contextoClienteValido_(contextoCliente)) {
+    Logger.log('[CTX] Detectado modo CLIENTE.');
+    Logger.log('[CTX] Contexto atual CLIENTE antes do patch: ' + JSON.stringify(contextoCliente));
 
-  if (rawCliente) {
-    atualizarContextoCliente_(atualizacoes);
+    const atualizado = atualizarContextoCliente_(atualizacoes);
+
+    Logger.log('[CTX] Contexto CLIENTE após patch: ' + JSON.stringify(atualizado));
+    Logger.log('[CTX] Atualização CLIENTE concluída.');
     return;
   }
 
+  Logger.log('[CTX] Nenhum contexto válido detectado.');
   throw new Error('Nenhum contexto ativo para atualizar.');
 }

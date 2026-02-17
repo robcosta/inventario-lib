@@ -57,7 +57,7 @@ function sincronizarLocalidadeAtiva_(contexto) {
     };
 
     // 🔥 Persistência inteligente
-    persistirContextoAtual_(contexto, atualizacao);
+    persistirContextoAtual_(atualizacao);
 
     return {
       ...contexto,

@@ -13,22 +13,17 @@ function obterSistemaGlobal_() {
   const props = PropertiesService.getScriptProperties();
   
   return {
-    // Pastas
     pastaRaizId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_RAIZ_ID),
     pastaContextoId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_CONTEXTO_ID),
-    
-    // Pastas — Planilha Geral
+
     pastaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_GERAL_ID),
     pastaCSVGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_CSV_GERAL_ID),
-    
-    // Planilha Geral
-    planilhaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID),
-    
-    // Configurações
+
+    planilhaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID),    
     visionApiKey: props.getProperty(PROPRIEDADES_GLOBAL.VISION_API_KEY),
-    ambienteAtivo: props.getProperty(PROPRIEDADES_GLOBAL.AMBIENTE_ATIVO) || 'DEV',
     
-    // CSVs Gerais
+    ambienteAtivo: props.getProperty(PROPRIEDADES_GLOBAL.AMBIENTE_ATIVO) || 'DEV',
+
     csvGeralRegistro: obterCSVGeralRegistro_()
   };
 }

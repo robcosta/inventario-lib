@@ -3,8 +3,7 @@
  * PLANILHA GERAL — ABRIR
  * ============================================================
  */
-
-function abrirPlanilhaGeral_() {
+/*function abrirPlanilhaGeral_() {
 
   const ui = SpreadsheetApp.getUi();
   const planilha = obterPlanilhaGeral_();
@@ -16,3 +15,20 @@ function abrirPlanilhaGeral_() {
 
   abrirPlanilhaNoNavegador_(planilha.getId());
 }
+*/
+function abrirPlanilhaGeral_() {
+
+  const ui = SpreadsheetApp.getUi();
+
+  let id;
+
+  try {
+    id = resolverPlanilhaGeralId_();
+  } catch (e) {
+    ui.alert('❌ ' + e.message);
+    return;
+  }
+
+  abrirPlanilhaNoNavegador_(id);
+}
+

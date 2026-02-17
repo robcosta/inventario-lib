@@ -10,7 +10,7 @@
  * - Fallback: busca na pasta GERAL e sincroniza o ID
  *
  * @return {GoogleAppsScript.Spreadsheet.Spreadsheet|null}
- */
+
 function obterPlanilhaGeral_() {
 
   // 1️⃣ Tenta via ScriptProperties
@@ -76,7 +76,7 @@ function obterPlanilhaGeral_() {
  * - Prioridade: ScriptProperties (ID)
  * - Fallback: busca por estrutura e sincroniza IDs
  * @return {GoogleAppsScript.Drive.Folder|null}
- */
+ 
 function obterPastaGeral_() {
   // 1️⃣ Tenta via ScriptProperties (ID)
   const sistemaGlobal = obterSistemaGlobal_();
@@ -109,7 +109,7 @@ function obterPastaGeral_() {
  * - Prioridade: ScriptProperties (ID)
  * - Fallback: busca por estrutura e sincroniza ID
  * @return {GoogleAppsScript.Drive.Folder|null}
- */
+ 
 function obterPastaCSVGeral_() {
   // 1️⃣ Sempre parte da raiz do projeto
   const sistemaGlobal = obterSistemaGlobal_();
@@ -138,3 +138,4 @@ function obterPastaCSVGeral_() {
   Logger.log('[CSV_GERAL] ✅ Pasta CSV_GERAL sincronizada: ' + idPastaCSV);
   return pastaCSV;
 }
+*/

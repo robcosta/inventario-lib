@@ -1,12 +1,26 @@
 function formatarPlanilhaGeral_() {
 
-  toast_('Localizando Planilha Geral...', 'Formatação');
+  const ui = SpreadsheetApp.getUi();
+  toast_('Validando contexto...', 'Formatação');
 
-  const planilha = obterPlanilhaGeral_();
-  if (!planilha) {
-    SpreadsheetApp.getUi().alert(
-      'Planilha Geral não encontrada na pasta GERAL.'
-    );
+  const contexto = resolverContextoAtual_();
+
+  if (!contexto) {
+    ui.alert('❌ Nenhum contexto ativo.');
+    return;
+  }
+
+  if (!contexto.planilhaGeralId) {
+    ui.alert('❌ Planilha Geral não definida no contexto.');
+    return;
+  }
+
+  let planilha;
+
+  try {
+    planilha = SpreadsheetApp.openById(contexto.planilhaGeralId);
+  } catch (e) {
+    ui.alert('❌ Não foi possível acessar a Planilha Geral.\n\n' + e.message);
     return;
   }
 
@@ -15,7 +29,7 @@ function formatarPlanilhaGeral_() {
     'Formatação'
   );
 
-  formatarPlanilha_(planilha.getId());
+  formatarPlanilha_(contexto.planilhaGeralId);
 
   toast_('Formatação da Planilha Geral concluída.', 'Concluído', 6);
 }
