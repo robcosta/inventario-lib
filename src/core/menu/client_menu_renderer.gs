@@ -1,14 +1,22 @@
 /**
  * ============================================================
- * MENU CLIENT — ID-BASED (PADRÃO OFICIAL)
+ * MENU CLIENT — RENDERIZAÇÃO (ID-BASED / ESTÁVEL)
  * ============================================================
  */
 
-function renderMenuClient(contextoOverride) {
+function renderMenuClient_(contextoOverride) {
 
   const ui = SpreadsheetApp.getUi();
-  const contexto = contextoOverride || obterContextoCliente_();
-  const temContexto = !!contexto;
+
+  const contexto =
+    contextoOverride ||
+    obterContextoCliente_();
+
+  const temContexto =
+    !!contexto &&
+    !!contexto.planilhaAdminId &&
+    !!contexto.planilhaGeralId &&
+    !!contexto.pastaLocalidadesId;
 
   const menu = ui.createMenu('📦 Inventário Patrimonial');
 
@@ -17,31 +25,33 @@ function renderMenuClient(contextoOverride) {
   // ==========================================================
   if (!temContexto) {
     menu
-      .addItem('ℹ️ Atualizar Informações', 'clientAtualizarInformacoes')
+      .addItem('🔄 Atualizar Informações', 'clientAtualizarInformacoes')
       .addToUi();
     return;
   }
 
   // ==========================================================
-  // COM CONTEXTO
+  // MENU COMPLETO
   // ==========================================================
   menu
     .addItem('🔄 Atualizar Informações', 'clientAtualizarInformacoes')
     .addSeparator()
 
-    // 📸 ÁREA DE FOTOS (igual ADMIN)
+    // Área de Fotos
+  menu
     .addSubMenu(
       ui.createMenu('📂 Área de Fotos')
-        .addItem('📂 Abrir Pasta Atual', 'clientAbrirPastaFotos')
-        .addItem('➕ Criar Nova Pasta', 'clientCriarSubpastaFotos')
+        .addItem('📂 Abrir Pasta Atual', 'abrirPastaFotosAtual')
+        .addItem('🔁 Trocar Pasta', 'trocarPastaFotos')
+        .addItem('➕ Criar Nova Pasta', 'criarNovaPastaFotos')
     )
     .addSeparator()
 
-    // 🖼️ PROCESSAMENTO
+    // Vision
     .addItem('🖼️ Processar Imagens', 'clientProcessarImagens')
     .addSeparator()
 
-    // 📖 PLANILHAS
+    // Planilhas
     .addSubMenu(
       ui.createMenu('📖 Planilhas')
         .addItem('📕 Abrir Planilha Admin', 'clientAbrirPlanilhaAdmin')
@@ -50,6 +60,5 @@ function renderMenuClient(contextoOverride) {
     .addSeparator()
 
     .addItem('ℹ️ Versão', 'mostrarVersaoSistema')
-
     .addToUi();
 }

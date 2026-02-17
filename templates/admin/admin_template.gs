@@ -129,7 +129,7 @@ function mostrarVersaoSistema() {
 function receberCSV(tipo, nomeArquivo, dataUrl) {
   return inventario.receberCSV(tipo, nomeArquivo, dataUrl);
 }
-
+/*
 function verContextoScript() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const planilhaId = ss.getId();
@@ -147,7 +147,7 @@ function verContextoScript() {
     SpreadsheetApp.getUi().alert('Contexto não encontrado! Chave: ' + chave);
   }
 }
-
+*/
 function runTestsPlanilhaGeral() {
   inventario.runTestsPlanilhaGeral();
 }

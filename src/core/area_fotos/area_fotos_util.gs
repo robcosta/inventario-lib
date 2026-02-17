@@ -51,18 +51,19 @@ function sincronizarLocalidadeAtiva_(contexto) {
 
     console.warn('⚠️ Localidade ativa inválida. Removendo do contexto.');
 
-    const novoContexto = {
-      ...contexto,
+    const atualizacao = {
       localidadeAtivaId: null,
       localidadeAtivaNome: null
     };
 
-    atualizarContextoAdmin_({
-      localidadeAtivaId: null,
-      localidadeAtivaNome: null
-    });
+    // 🔥 Persistência inteligente
+    persistirContextoAtual_(contexto, atualizacao);
 
-    return novoContexto;
+    return {
+      ...contexto,
+      ...atualizacao
+    };
   }
 }
+
 

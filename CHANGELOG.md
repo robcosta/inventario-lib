@@ -62,8 +62,8 @@ Versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 #### Arquivo Cliente Obsoleto
 - **Arquivo DELETADO:** `cliente_info.gs` (80 linhas)
-- ❌ Continha: `cliente_montarInformacoes__()` (não usada)  
-- ✅ Versão ativa: `cliente_montarInformacoes.gs` - `cliente_montarInformacoes_()` (usada em 3 lugares)
+- ❌ Continha: `clienteMontarInformacoes__()` (não usada)  
+- ✅ Versão ativa: `cliente_montarInformacoes.gs` - `clienteMontarInformacoes_()` (usada em 3 lugares)
 
 ### ✨ Novo - Ferramentas de Diagnóstico
 

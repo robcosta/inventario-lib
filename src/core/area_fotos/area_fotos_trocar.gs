@@ -6,8 +6,13 @@
 
 function trocarPastaFotos_() {
   const ui = SpreadsheetApp.getUi();
-  let contexto = obterContextoAtivo_();
+  let contexto = resolverContextoAtual_();
   contexto = sincronizarLocalidadeAtiva_(contexto);
+
+  // 🔥 GARANTIA: Se a ativa foi removida, limpar nome também
+  if (!contexto.localidadeAtivaId) {
+    contexto.localidadeAtivaNome = null;
+  }
 
   if (!contexto || !contexto.pastaLocalidadesId) {
     ui.alert("❌ Nenhum contexto válido encontrado.");
@@ -81,7 +86,7 @@ function trocarPastaFotos_() {
     return;
   }
 
-  atualizarContextoAdmin_({
+  persistirContextoAtual_({
     localidadeAtivaId: escolhida.id,
     localidadeAtivaNome: escolhida.nome,
   });

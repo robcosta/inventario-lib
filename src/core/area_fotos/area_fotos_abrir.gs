@@ -9,7 +9,7 @@
 
 function abrirPastaFotosAtual_() {
   const ui = SpreadsheetApp.getUi();
-  let contexto = obterContextoAtivo_();
+  let contexto = resolverContextoAtual_();
   contexto = sincronizarLocalidadeAtiva_(contexto);
 
   if (!contexto || !contexto.pastaLocalidadesId) {

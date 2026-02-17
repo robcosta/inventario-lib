@@ -9,7 +9,7 @@ function abrirDialogImportacaoCSV_(tipo) {
   }
 
   const template = HtmlService.createTemplateFromFile(
-    'admin/compartilhado/csv/csv_upload'
+    'core/compartilhado/csv/csv_upload'
   );
 
   template.tipoDestino = tipo;

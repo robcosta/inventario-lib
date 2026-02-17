@@ -13,7 +13,7 @@
  * - Bloco B4:E16 da aba INFORMAÇÕES protegido
  * - Célula B2 da aba MANUAL protegida
  */
-function cliente_montarInformacoes_(contexto) {
+function clienteMontarInformacoes_(contexto) {
   if (!contexto || !contexto.planilhaClienteId) return;
 
   // ============================================================

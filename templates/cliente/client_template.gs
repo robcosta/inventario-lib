@@ -14,20 +14,8 @@
  */
 function onOpen(e) {
   try {
-
-    // Novo padrão: CONTEXTO_CLIENTE
-    const raw = PropertiesService
-      .getDocumentProperties()
-      .getProperty('CONTEXTO_CLIENTE');
-
-    const contexto = raw ? JSON.parse(raw) : null;
-
-    inventario.clientRenderMenuComContexto(contexto);
-
-    if (contexto) {
-      inventario.clientAtualizarInformacoesComContexto(contexto);
-    }
-
+    inventario.clientRenderMenu();
+    inventario.clientAtualizarInformacoes();
   } catch (err) {
     Logger.log('[CLIENT][ONOPEN][ERRO]');
     Logger.log(err);
@@ -35,35 +23,37 @@ function onOpen(e) {
 }
 
 /* ============================================================
- * PROXIES DE MENU — CLIENT
- * ============================================================
- */
+ * PROXIES — CLIENT
+ * ============================================================ */
 
-/** MENU */
 function clientRenderMenu() {
   inventario.clientRenderMenu();
 }
 
-/** INFORMAÇÕES */
 function clientAtualizarInformacoes() {
   inventario.clientAtualizarInformacoes();
 }
 
-/** ÁREA DE FOTOS */
-function clientAbrirPastaFotos() {
-  inventario.clientAbrirPastaFotos();
+/* ============================================================
+ * PROXIES — ÁREA DE FOTOS
+ * ============================================================ */
+function criarNovaPastaFotos() {
+  inventario.criarNovaPastaFotos();
 }
 
-function clientCriarSubpastaFotos() {
-  inventario.clientCriarSubpastaFotos();
+function trocarPastaFotos() {
+  inventario.trocarPastaFotos();
 }
 
-/** PROCESSAMENTO */
+function abrirPastaFotosAtual() {
+  inventario.abrirPastaFotosAtual();
+}
+
+
 function clientProcessarImagens() {
   inventario.clientProcessarImagens();
 }
 
-/** PLANILHAS */
 function clientAbrirPlanilhaAdmin() {
   inventario.clientAbrirPlanilhaAdmin();
 }
@@ -72,7 +62,6 @@ function clientAbrirPlanilhaGeral() {
   inventario.clientAbrirPlanilhaGeral();
 }
 
-/** VERSÃO */
 function mostrarVersaoSistema() {
   inventario.mostrarVersaoSistema();
 }
