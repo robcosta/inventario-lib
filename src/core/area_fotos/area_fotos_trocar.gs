@@ -92,9 +92,9 @@ function trocarPastaFotos_() {
   });
 
   // ✨ NOVIDADE: Reconstrói a legenda após a criação do contexto
-  if (contexto) {
-    atualizarLegendasPlanilhaAdmin_(contexto);
-  }
+  //if (contexto) {
+  //  atualizarLegendasPlanilhaAdmin_(contexto);
+  //}
 
   const abrir = ui.alert(
     `✅ Pasta ativa definida:\n\n${escolhida.nome}\n\nDeseja abrir a pasta agora?`,

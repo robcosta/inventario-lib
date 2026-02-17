@@ -37,8 +37,8 @@ function abrirPastaFotosAtual_() {
   }
 
   // ✨ NOVIDADE: Reconstrói a legenda após a criação do contexto
-  if (contexto) {
-    atualizarLegendasPlanilhaAdmin_(contexto);
+  //if (contexto) {
+  //  atualizarLegendasPlanilhaAdmin_(contexto);
   }
   // 🔥 Agora chama a versão nova que mostra o nome
   abrirPastaNoNavegador_(contexto.localidadeAtivaId);
