@@ -42,34 +42,8 @@ function gerenciarAcessosCliente() {
 }
 
 /* ============================================================
- * ÁREA DE FOTOS (IMAGENS)
- * ============================================================ */
-function criarNovaPastaFotos() {
-  criarNovaPastaFotos_();
-}
-
-function trocarPastaFotos() {
-  trocarPastaFotos_();
-}
-
-function abrirPastaFotosAtual() {
-  abrirPastaFotosAtual_();
-}
-
-/* ============================================================
- * PROCESSAMENTO DE IMAGENS (VISION)
- * ============================================================ */
-function processarImagens() {
-  processarImagens_(); // teste/manual
-}
-
-/* ============================================================
  * PLANILHA GERAL
  * ============================================================ */
-function abrirPlanilhaGeral() {
-  abrirPlanilhaGeral_();
-}
-
 function importarCSVGeral() {
   importarCSVGeral_();
 }
@@ -109,10 +83,6 @@ function formatarPlanilhaCliente() {
  * ============================================================ */
 function executarDiagnostico() {
   executarDiagnostico_();
-}
-
-function mostrarVersaoSistema() {
-   mostrarVersaoSistema_();  
 }
 
 function debugContextoPlanilhaAtual() {

@@ -48,7 +48,7 @@ function renderMenuClient_(contextoOverride) {
     .addSeparator()
 
     // Vision
-    .addItem('🖼️ Processar Imagens', 'clientProcessarImagens')
+    .addItem('🖼️ Processar Imagem', 'processarImagens')
     .addSeparator()
 
     // Planilhas

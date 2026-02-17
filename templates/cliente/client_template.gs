@@ -50,8 +50,11 @@ function abrirPastaFotosAtual() {
 }
 
 
-function clientProcessarImagens() {
-  inventario.clientProcessarImagens();
+/* ============================================================
+ * PROXIES — PROCESSAMENTO DE IMAGENS (VISION)
+ * ============================================================ */
+function processarImagens() {
+  inventario.processarImagens(); // teste/manual
 }
 
 function clientAbrirPlanilhaAdmin() {

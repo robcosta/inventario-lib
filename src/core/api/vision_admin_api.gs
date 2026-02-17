@@ -13,10 +13,11 @@
 function processarImagens_() {
 
   const ui = SpreadsheetApp.getUi();
-  const contexto = obterContextoAtivo_();
+  let contexto = resolverContextoAtual_();
+  contexto = sincronizarLocalidadeAtiva_(contexto);
 
-  if (!contexto) {
-    ui.alert('❌ Contexto não encontrado.');
+  if (!contexto || !contexto.pastaLocalidadesId) {
+    ui.alert("❌ Nenhum contexto válido encontrado.");
     return;
   }
 

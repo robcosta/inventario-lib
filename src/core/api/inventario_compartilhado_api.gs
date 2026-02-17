@@ -1,52 +1,46 @@
 /**
  * ============================================================
- * API PÚBLICA — CLIENT (INVENTÁRIO)
+ * API PÚBLICA — COMPARTILHADO (INVENTÁRIO)
  * ============================================================
  *
- * ❗ ÚNICO ponto de entrada do menu CLIENT
+ * ❗ Funções compartilhadas entre ADMIN e CLIENT
+ * ❗ ÚNICO ponto de entrada do menu ADMIN
  * ❗ NÃO contém lógica de negócio
  * ❗ Apenas delega chamadas para funções internas (_)
- * ❗ Totalmente ID-based (CONTEXTO_CLIENTE)
- * ============================================================
  */
-
 
 /* ============================================================
- * MENU
+ * ÁREA DE FOTOS (IMAGENS)
  * ============================================================ */
-
-/**
- * Renderiza menu CLIENT
- */
-function clientRenderMenu() {
-  renderMenuClient_();
+function criarNovaPastaFotos() {
+  criarNovaPastaFotos_();
 }
 
+function trocarPastaFotos() {
+  trocarPastaFotos_();
+}
 
-/* ============================================================
- * INFORMAÇÕES
- * ============================================================ */
-
-/**
- * Atualiza bloco de informações da planilha CLIENTE
- */
-function clientAtualizarInformacoes() {
-  clientAtualizarInformacoes_();
+function abrirPastaFotosAtual() {
+  abrirPastaFotosAtual_();
 }
 
 /* ============================================================
- * PLANILHAS
+ * PROCESSAMENTO DE IMAGENS (VISION)
  * ============================================================ */
-
-/**
- * Abre Planilha ADMIN (somente leitura)
- */
-function clientAbrirPlanilhaAdmin() {
-  clientAbrirPlanilhaAdmin_();
+function processarImagens() {
+  processarImagens_(); // teste/manual
 }
 
 /* ============================================================
- * DIAGNÓSTICO / SUPORTE
+ * PLANILHA GERAL
  * ============================================================ */
+function abrirPlanilhaGeral() {
+  abrirPlanilhaGeral_();
+}
 
-
+/* ============================================================
+ * VERSÃO DO SISTEMA
+ * ============================================================ */
+function mostrarVersaoSistema() {
+  mostrarVersaoSistema_();
+}

@@ -28,7 +28,7 @@ function abrirPlanilhaNoNavegador_(spreadsheetId) {
     return;
   }
 
-  const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+  const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/view`;
 
   const html = HtmlService.createHtmlOutput(`
     <script>

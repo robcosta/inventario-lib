@@ -91,7 +91,6 @@ function adminRenderMenu_() {
     )
     .addSeparator()
 
-
     // Vision
     .addItem('🖼️ Processar Imagem', 'processarImagens')
     .addSeparator()
