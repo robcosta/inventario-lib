@@ -9,7 +9,7 @@
 /**
  * Bridge chamada pelo menu.
  */
-function importarCSVContexto_() {
+function importarCSVAdmin_() {
   const contexto = obterContextoAtivo_();
 
   if (!contexto || !contexto.planilhaAdminId) {

@@ -39,6 +39,45 @@ function abrirPlanilhaGeral() {
 }
 
 /* ============================================================
+ * FORMATAÇÃO PLANILHA CLIENTE
+ * ============================================================ */
+function formatarPlanilhaCliente() {
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const idAtivo = ss.getId();
+
+  const contexto = resolverContextoAtual_();
+  if (!contexto) return;
+
+  let spreadsheetId;
+
+  // 🔵 Se estiver na ADMIN
+  if (contextoAdminRegistrado_()) {
+    spreadsheetId = contexto.planilhaClienteId;
+    formatarPlanilhaCliente_(spreadsheetId, null);
+    return;
+  }
+  
+  // 🟢 Se estiver na CLIENTE
+  else {
+    spreadsheetId = idAtivo;
+  }
+
+  if (!spreadsheetId) return;
+
+  formatarPlanilhaCliente_(spreadsheetId, contexto);
+}
+
+
+function clientAtualizarInformacoesComContexto(contexto) {
+  if (contexto) {
+    cliente_montarInformacoes_(contexto);
+    return;
+  }
+  clientAtualizarInformacoes();
+}
+
+/* ============================================================
  * VERSÃO DO SISTEMA
  * ============================================================ */
 function mostrarVersaoSistema() {

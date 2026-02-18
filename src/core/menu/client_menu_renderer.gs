@@ -33,11 +33,7 @@ function renderMenuClient_(contextoOverride) {
   // ==========================================================
   // MENU COMPLETO
   // ==========================================================
-  menu
-    .addItem('🔄 Atualizar Informações', 'clientAtualizarInformacoes')
-    .addSeparator()
-
-    // Área de Fotos
+  // Área de Fotos
   menu
     .addSubMenu(
       ui.createMenu('📂 Área de Fotos')
@@ -58,6 +54,11 @@ function renderMenuClient_(contextoOverride) {
         .addItem('📘 Abrir Planilha Geral', 'clientAbrirPlanilhaGeral')
     )
     .addSeparator()
+
+    // Informações
+    .addItem('🔄 Atualizar Informações', 'clientAtualizarInformacoes')
+    .addSeparator()
+
 
     // Diagnóstico
     .addItem('🔎 Diagnóstico', 'clientExecutarDiagnostico')

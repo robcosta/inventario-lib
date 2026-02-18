@@ -57,26 +57,20 @@ function criarOuRecriarPlanilhaGeral() {
 }
 
 /* ============================================================
- * PLANILHA CONTEXTO
+ * PLANILHA ADMIN
  * ============================================================ */
-function importarCSVContexto() {
-  importarCSVContexto_();
+function importarCSVAdmin() {
+  importarCSVAdmin_();
 }
 
-function popularPlanilhaContexto() {
-  popularPlanilhaContexto_();
+function popularPlanilhaAdmin() {
+  popularPlanilhaAdmin_();
 }
 
-function formatarPlanilhaContexto() {
+function formatarPlanilhaAdmin() {
   formatarPlanilhaAdmin_();
 }
 
-/* ============================================================
- * CLIENTE
- * ============================================================ */
-function formatarPlanilhaCliente() {
-  formatarPlanilhaCliente_();
-}
 
 /* ============================================================
  * DIAGNÓSTICO

@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * ÁREA DE FOTOS — TROCAR PASTA ATIVA (VERSÃO DEFINITIVA)
+ * ÁREA DE FOTOS — TROCAR PASTA ATIVA (VERSÃO CLIENT SAFE)
  * ============================================================
  */
 
@@ -9,7 +9,6 @@ function trocarPastaFotos_() {
   let contexto = resolverContextoAtual_();
   contexto = sincronizarLocalidadeAtiva_(contexto);
 
-  // 🔥 GARANTIA: Se a ativa foi removida, limpar nome também
   if (!contexto.localidadeAtivaId) {
     contexto.localidadeAtivaNome = null;
   }
@@ -34,20 +33,16 @@ function trocarPastaFotos_() {
 
   if (pastas.length === 0) {
     ui.alert(
-      "⚠️ Nenhuma pasta de fotos foi criada ainda.\n\n" +
-        'Use "Criar Nova Pasta" primeiro.',
+      '⚠️ Nenhuma pasta de fotos foi criada ainda.\n\nUse "Criar Nova Pasta" primeiro.',
     );
     return;
   }
 
-  // Ordenação alfabética
   pastas.sort((a, b) =>
     a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" }),
   );
 
   const pastaAtivaId = contexto.localidadeAtivaId;
-
-  // Remover pasta ativa da listagem
   const pastasDisponiveis = pastas.filter((p) => p.id !== pastaAtivaId);
 
   if (pastasDisponiveis.length === 0) {
@@ -86,10 +81,23 @@ function trocarPastaFotos_() {
     return;
   }
 
+  // 🔥 PERSISTE NOVA PASTA
   persistirContextoAtual_({
     localidadeAtivaId: escolhida.id,
     localidadeAtivaNome: escolhida.nome,
   });
+
+  // 🔄 Atualizar informações se estiver no CLIENTE
+  try {
+    const contextoAtualizado = resolverContextoAtual_();
+
+    if (contextoAtualizado.planilhaClienteId) {
+      clienteMontarInformacoes_(contextoAtualizado, true);
+    }
+  } catch (e) {
+    Logger.log("[CLIENTE] Erro ao atualizar informações após troca de pasta.");
+    Logger.log(e);
+  }
 
   const abrir = ui.alert(
     `✅ Pasta ativa definida:\n\n${escolhida.nome}\n\nDeseja abrir a pasta agora?`,

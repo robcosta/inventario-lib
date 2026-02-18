@@ -91,18 +91,18 @@ function criarOuRecriarPlanilhaGeral() {
 }
 
 /* ============================================================
- * PROXIES — PLANILHA CONTEXTO
+ * PROXIES — PLANILHA ADMIN
  * ============================================================ */
-function importarCSVContexto() {
-  inventario.importarCSVContexto();
+function importarCSVAdmin() {
+  inventario.importarCSVAdmin();
 }
 
-function popularPlanilhaContexto() {
-  inventario.popularPlanilhaContexto();
+function popularPlanilhaAdmin() {
+  inventario.popularPlanilhaAdmin();
 }
 
-function formatarPlanilhaContexto() {
-  inventario.formatarPlanilhaContexto();
+function formatarPlanilhaAdmin() {
+  inventario.formatarPlanilhaAdmin();
 }
 
 /* ============================================================

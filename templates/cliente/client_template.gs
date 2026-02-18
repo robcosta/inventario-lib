@@ -15,7 +15,7 @@
 function onOpen(e) {
   try {
     inventario.clientRenderMenu();
-    inventario.clientAtualizarInformacoes();
+    inventario.clientAtualizarInformacoesLeve();
   } catch (err) {
     Logger.log('[CLIENT][ONOPEN][ERRO]');
     Logger.log(err);
@@ -28,10 +28,6 @@ function onOpen(e) {
 
 function clientRenderMenu() {
   inventario.clientRenderMenu();
-}
-
-function clientAtualizarInformacoes() {
-  inventario.clientAtualizarInformacoes();
 }
 
 /* ============================================================
@@ -79,9 +75,17 @@ function clientExecutarDiagnostico() {
 }
 
 /* ============================================================
+ * PROXIES — ATUALIZAR INFORMAÇÕES
+ * ============================================================ */
+function clientAtualizarInformacoes() {
+  inventario.clientAtualizarInformacoes();
+}
+
+/* ============================================================
  * PROXIES — MOSTRAR VERSÃO
  * ============================================================ */
 function mostrarVersaoSistema() {
   inventario.mostrarVersaoSistema();
 }
+
 

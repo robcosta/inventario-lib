@@ -30,9 +30,18 @@ function clientRenderMenu() {
 /**
  * Atualiza bloco de informações da planilha CLIENTE
  */
-function clientAtualizarInformacoes() {
-  clientAtualizarInformacoes_();
+//Via onOpen (leve)
+function clientAtualizarInformacoesLeve() {
+  const contexto = obterContextoCliente_();
+  clienteMontarInformacoes_(contexto, false);
 }
+
+//Via menu (completo) 
+function clientAtualizarInformacoes() {
+  const contexto = obterContextoCliente_();
+  clienteMontarInformacoes_(contexto, true);
+}
+
 
 /* ============================================================
  * PLANILHAS

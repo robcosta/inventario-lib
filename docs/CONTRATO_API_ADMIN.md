@@ -166,7 +166,7 @@ Abre a Planilha de Contexto ativa no navegador.
 
 ---
 
-### `importarCSVContexto()`
+### `importarCSVAdmin()`
 
 Importa CSVs específicos para a Planilha de Contexto.
 
@@ -176,7 +176,7 @@ Importa CSVs específicos para a Planilha de Contexto.
 
 ---
 
-### `popularPlanilhaContexto()`
+### `popularPlanilhaAdmin()`
 
 Popula a Planilha de Contexto com dados derivados da Planilha Geral.
 
@@ -186,7 +186,7 @@ Popula a Planilha de Contexto com dados derivados da Planilha Geral.
 
 ---
 
-### `formatarPlanilhaContexto()`
+### `formatarPlanilhaAdmin()`
 
 Aplica layout, estilos e estrutura visual à Planilha de Contexto.
 

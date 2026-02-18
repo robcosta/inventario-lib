@@ -108,9 +108,9 @@ function adminRenderMenu_() {
     // Planilha ADMIN
     .addSubMenu(
       ui.createMenu('📕 Planilha ADMIN')
-        .addItem('📤 Importar CSV', 'importarCSVContexto')
-        .addItem('📊 Popular', 'popularPlanilhaContexto')
-        .addItem('🎨 Formatar', 'formatarPlanilhaContexto')
+        .addItem('📤 Importar CSV', 'importarCSVAdmin')
+        .addItem('📊 Popular', 'popularPlanilhaAdmin')
+        .addItem('🎨 Formatar', 'formatarPlanilhaAdmin')
     )
     .addSeparator()
 

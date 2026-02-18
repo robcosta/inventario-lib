@@ -13,7 +13,7 @@
  * Bridge chamada pelo menu.
  * Resolve IDs a partir do contexto ativo.
  */
-function popularPlanilhaContexto_() {
+function popularPlanilhaAdmin_() {
   const contexto = obterContextoAtivo_();
 
   if (!contexto || !contexto.planilhaAdminId) {
@@ -28,7 +28,7 @@ function popularPlanilhaContexto_() {
     );
   }
 
-  const resultado = popularPlanilhaContextoPorId_(
+  const resultado = popularPlanilhaAdminPorId_(
     contexto.planilhaAdminId,
     contexto.pastaCSVAdminId
   );
@@ -46,7 +46,7 @@ function popularPlanilhaContexto_() {
  * ============================================================
  * Não depende de UI nem de planilha ativa.
  */
-function popularPlanilhaContextoPorId_(spreadsheetId, pastaCsvAdminId) {
+function popularPlanilhaAdminPorId_(spreadsheetId, pastaCsvAdminId) {
 
   if (!spreadsheetId || typeof spreadsheetId !== 'string') {
     throw new Error('spreadsheetId inválido ao popular Planilha Contexto.');

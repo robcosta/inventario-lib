@@ -1,120 +1,165 @@
 /**
  * ============================================================
- * MONTA AS INFORMAÇÕES DINÂMICAS DA PLANILHA CLIENTE
- * + AJUSTES DE PROTEÇÃO E FORMATAÇÃO
+ * CLIENTE — MONTAR INFORMAÇÕES (VERSÃO DEFINITIVA ESTÁVEL)
  * ============================================================
- * Regras:
- * - Contexto em E8
- * - Link da pasta em E9 (texto: "Clique aqui")
- * - Dados dinâmicos iniciam em E11
- * - Proprietário → Editores → Leitores
- * - Fonte: Arial, 13
- * - E-mails SEM negrito
- * - Bloco B4:E16 da aba INFORMAÇÕES protegido
- * - Célula B2 da aba MANUAL protegida
+ *
+ * Responsabilidade:
+ * - Atualizar dinamicamente a aba "INFORMAÇÕES"
+ * - Exibir:
+ *     • Nome do contexto
+ *     • Pasta ativa
+ *     • Proprietário
+ *     • Editores
+ *     • Leitores
+ * - Calcular dinamicamente a última linha real usada
+ * - Reconstruir o rodapé corretamente
+ *
+ * @param {Object} contexto - CONTEXTO_CLIENTE ativo
+ * @param {boolean} modoCompleto - Se true, consulta permissões reais
  */
-function clienteMontarInformacoes_(contexto) {
+function clienteMontarInformacoes_(contexto, modoCompleto = false) {
+
   if (!contexto || !contexto.planilhaClienteId) return;
 
-  // ============================================================
-  // ABRE A PLANILHA CLIENTE
-  // ============================================================
   const ss = SpreadsheetApp.openById(contexto.planilhaClienteId);
-  const infoSheet = ss.getSheetByName('INFORMAÇÕES');
-  if (!infoSheet) return;
+  const sheet = ss.getSheetByName('INFORMAÇÕES');
+  if (!sheet) return;
+
+  const maxRows = sheet.getMaxRows();
 
   // ============================================================
-  // CONTEXTO (E8)
+  // LIMPA SOMENTE CONTEÚDO DINÂMICO (colunas C:E a partir da linha 11)
   // ============================================================
-  infoSheet.getRange('E8')
+  sheet.getRange(11, 3, maxRows - 10, 3).clearContent();
+
+  // ============================================================
+  // CONTEXTO
+  // ============================================================
+  sheet.getRange('E8')
     .setValue(contexto.nome || '')
     .setFontFamily('Arial')
-    .setFontSize(13)
-    .setFontWeight('bold');
+    .setFontSize(12)
+    .setFontWeight('bold')
+    .setHorizontalAlignment('left');
 
   // ============================================================
-  // LINK DA PASTA (E9) → TEXTO FIXO "Clique aqui"
+  // PASTA ATIVA
   // ============================================================
-  if (contexto.pastaLocalidadesId) {
-    const pasta = DriveApp.getFolderById(contexto.pastaLocalidadesId);
-    const richLink = SpreadsheetApp.newRichTextValue()
-      .setText('Clique aqui')
-      .setLinkUrl(0, 'Clique aqui'.length, pasta.getUrl())
-      .build();
+  sheet.getRange('E9')
+    .setValue(contexto.localidadeAtivaNome || '')
+    .setFontFamily('Arial')
+    .setFontSize(12)
+    .setFontWeight('bold')
+    .setHorizontalAlignment('left');
 
-    infoSheet.getRange('E9')
-      .setRichTextValue(richLink)
-      .setFontFamily('Arial')
-      .setFontSize(13);
-  } else {
-    infoSheet.getRange('E9').clearContent();
+  if (!modoCompleto) {
+    const ultimaLinha = obterUltimaLinhaColunaE_(sheet);
+    rodape_(sheet, ultimaLinha);
+    return;
   }
 
-  // ============================================================
-  // LIMPA ÁREA DINÂMICA (A PARTIR DA LINHA 11)
-  // ============================================================
-  infoSheet.getRange('E11:E200').clearContent();
+  const arquivo = DriveApp.getFileById(contexto.planilhaClienteId);
+
+  const proprietario = arquivo.getOwner();
+  const editores = arquivo.getEditors();
+  const leitores = arquivo.getViewers();
 
   let linha = 11;
 
-  // ============================================================
-  // ARQUIVO DA PLANILHA (PERMISSÕES REAIS)
-  // ============================================================
-  const arquivo = DriveApp.getFileById(contexto.planilhaClienteId);
+  const aplicarLabel = (range) => {
+    range
+      .setFontFamily('Arial')
+      .setFontSize(12)
+      .setFontWeight('bold')
+      .setHorizontalAlignment('left');
+  };
+
+  const aplicarEmail = (range) => {
+    range
+      .setFontFamily('Arial')
+      .setFontSize(12)
+      .setFontWeight('normal')
+      .setHorizontalAlignment('left');
+  };
 
   // ============================================================
   // PROPRIETÁRIO
   // ============================================================
-  const proprietario = arquivo.getOwner();
   if (proprietario) {
-    infoSheet.getRange(`E${linha}`)
-      .setValue(proprietario.getEmail())
-      .setFontFamily('Arial')
-      .setFontSize(13)
-      .setFontWeight('normal');
-    linha++;
+
+    const label = sheet.getRange(`C${linha}`);
+    label.setValue('        PROPRIETÁRIO:');
+    aplicarLabel(label);
+
+    const email = sheet.getRange(`E${linha}`);
+    email.setValue(proprietario.getEmail());
+    aplicarEmail(email);
+
+    linha += 2; // linha em branco após bloco
   }
 
   // ============================================================
   // EDITORES
   // ============================================================
-  const editores = arquivo.getEditors().map(u => u.getEmail());
-  editores.forEach(email => {
-    infoSheet.getRange(`E${linha}`)
-      .setValue(email)
-      .setFontFamily('Arial')
-      .setFontSize(13)
-      .setFontWeight('normal');
-    linha++;
-  });
+  if (editores.length > 0) {
+
+    const label = sheet.getRange(`C${linha}`);
+    label.setValue('        EDITOR:');
+    aplicarLabel(label);
+
+    editores.forEach((user, i) => {
+      const email = sheet.getRange(`E${linha + i}`);
+      email.setValue(user.getEmail());
+      aplicarEmail(email);
+    });
+
+    linha += editores.length + 1;
+  }
 
   // ============================================================
   // LEITORES
   // ============================================================
-  const leitores = arquivo.getViewers().map(u => u.getEmail());
-  leitores.forEach(email => {
-    infoSheet.getRange(`E${linha}`)
-      .setValue(email)
-      .setFontFamily('Arial')
-      .setFontSize(13)
-      .setFontWeight('normal');
-    linha++;
-  });
+  if (leitores.length > 0) {
 
-  // ============================================================
-  // PROTEÇÃO DE EDIÇÃO — ABA INFORMAÇÕES
-  // ============================================================
-  const protecaoInfo = infoSheet.getRange('B4:E16').protect();
-  protecaoInfo.setDescription('Bloco protegido - Informações');
-  protecaoInfo.removeEditors(protecaoInfo.getEditors());
+    const label = sheet.getRange(`C${linha}`);
+    label.setValue('        LEITOR:');
+    aplicarLabel(label);
 
-  // ============================================================
-  // PROTEÇÃO DE EDIÇÃO — ABA MANUAL (B2)
-  // ============================================================
-  const manualSheet = ss.getSheetByName('MANUAL');
-  if (manualSheet) {
-    const protecaoManual = manualSheet.getRange('B2').protect();
-    protecaoManual.setDescription('Manual protegido');
-    protecaoManual.removeEditors(protecaoManual.getEditors());
+    leitores.forEach((user, i) => {
+      const email = sheet.getRange(`E${linha + i}`);
+      email.setValue(user.getEmail());
+      aplicarEmail(email);
+    });
+
+    linha += leitores.length + 1;
   }
+
+  // ============================================================
+  // CALCULAR ÚLTIMA LINHA REAL DA COLUNA E
+  // ============================================================
+  const ultimaLinhaReal = obterUltimaLinhaColunaE_(sheet);
+
+  // ============================================================
+  // CRIAR RODAPÉ
+  // ============================================================
+  rodape_(sheet, ultimaLinhaReal);
+}
+
+/**
+ * Retorna a última linha realmente preenchida na coluna E
+ */
+function obterUltimaLinhaColunaE_(sheet) {
+
+  const colE = sheet
+    .getRange(1, 5, sheet.getMaxRows(), 1)
+    .getValues()
+    .flat();
+
+  for (let i = colE.length - 1; i >= 0; i--) {
+    if (String(colE[i]).trim() !== '') {
+      return i + 1;
+    }
+  }
+
+  return 11; // fallback mínimo
 }
