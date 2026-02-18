@@ -72,8 +72,16 @@ function clientAbrirPlanilhaGeral() {
 }
 
 /* ============================================================
+ * PROXIES — DIAGNÓSTICO
+ * ============================================================ */
+function clientExecutarDiagnostico() {
+  inventario.clientExecutarDiagnostico();
+}
+
+/* ============================================================
  * PROXIES — MOSTRAR VERSÃO
  * ============================================================ */
 function mostrarVersaoSistema() {
   inventario.mostrarVersaoSistema();
 }
+

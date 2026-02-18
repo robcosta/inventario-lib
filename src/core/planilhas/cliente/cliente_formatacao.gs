@@ -75,18 +75,18 @@ function cliente_formatarPlanilhaInterface_(spreadsheetId, contexto) {
   // ======================================================
   const labels = [
     ['C8', 'CONTEXTO DE TRABALHO :'],
-    ['C9', 'PASTA DE TRABALHO:'],
+    ['C9', 'PASTA DE FOTOS ......:'],
     ['C10', 'ACESSOS:'],
     ['C11', '        PROPRIETÁRIO:'],
-    ['C12', '        EDITOR:'],
-    ['C13', '        LEITOR:']
+    ['C12', '        EDITOR .....:'],
+    ['C13', '        LEITOR .....:']
   ];
 
   labels.forEach(([cell, text]) => {
     sheet.getRange(cell)
       .setValue(text)
       .setFontFamily('Arial')
-      .setFontSize(13)
+      .setFontSize(12)
       .setFontWeight('bold')
       .setHorizontalAlignment('left')
       .setVerticalAlignment('middle');

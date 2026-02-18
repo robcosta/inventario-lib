@@ -59,6 +59,10 @@ function renderMenuClient_(contextoOverride) {
     )
     .addSeparator()
 
+    // Diagnóstico
+    .addItem('🔎 Diagnóstico', 'clientExecutarDiagnostico')
+
+    // Versão
     .addItem('ℹ️ Versão', 'mostrarVersaoSistema')
     .addToUi();
 }

@@ -48,5 +48,7 @@ function clientAbrirPlanilhaAdmin() {
 /* ============================================================
  * DIAGNÓSTICO / SUPORTE
  * ============================================================ */
-
+function clientExecutarDiagnostico() {
+  executarDiagnosticoCliente_();
+}
 
