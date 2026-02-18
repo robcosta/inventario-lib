@@ -88,7 +88,7 @@ function clienteMontarInformacoes_(contexto, modoCompleto = false) {
   if (proprietario) {
 
     const label = sheet.getRange(`C${linha}`);
-    label.setValue('        PROPRIETÁRIO:');
+    label.setValue('        PROPRIETÁRIO .......... :');
     aplicarLabel(label);
 
     const email = sheet.getRange(`E${linha}`);
@@ -104,7 +104,7 @@ function clienteMontarInformacoes_(contexto, modoCompleto = false) {
   if (editores.length > 0) {
 
     const label = sheet.getRange(`C${linha}`);
-    label.setValue('        EDITOR:');
+    label.setValue('        EDITOR ....................... :');
     aplicarLabel(label);
 
     editores.forEach((user, i) => {
@@ -122,7 +122,7 @@ function clienteMontarInformacoes_(contexto, modoCompleto = false) {
   if (leitores.length > 0) {
 
     const label = sheet.getRange(`C${linha}`);
-    label.setValue('        LEITOR:');
+    label.setValue('        LEITOR ....................... :');
     aplicarLabel(label);
 
     leitores.forEach((user, i) => {
