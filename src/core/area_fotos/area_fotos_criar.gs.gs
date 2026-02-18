@@ -117,14 +117,19 @@ function criarNovaPastaFotos_() {
 
     atualizarLegendasPlanilhaAdmin_(contexto);
 
-  } else if (planilhaAtualId === contexto.planilhaClienteId) {
+  } 
+  else if (planilhaAtualId === contexto.planilhaClienteId) {
 
     atualizarContextoCliente_({
       localidadeAtivaId: novaPasta.getId(),
       localidadeAtivaNome: nome
     });
 
-  } else {
+    // 🔥 Atualiza imediatamente a UI da cliente
+    const contextoAtualizado = resolverContextoAtual_();
+    clienteMontarInformacoes_(contextoAtualizado, true);
+  } 
+  else {
 
     ui.alert("⚠️ Não foi possível determinar o tipo da planilha atual.");
     return;
@@ -143,3 +148,4 @@ function criarNovaPastaFotos_() {
     abrirPastaNoNavegador_(novaPasta.getId());
   }
 }
+

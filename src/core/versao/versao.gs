@@ -9,7 +9,7 @@
  * Versão semântica (definida SOMENTE quando houver tag Git)
  * Ex: v1.0.0, v1.2.3
  */
-const SISTEMA_VERSAO = 'v0.16.0';
+const SISTEMA_VERSAO = 'v0.17.0';
 const SISTEMA_BUILD = 'refatoracao-contexto-admin';
 const SISTEMA_DATA = '2026-02-08';
 
