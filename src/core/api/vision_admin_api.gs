@@ -1,28 +1,37 @@
 /**
  * ============================================================
- * PROCESSAR IMAGENS — INVENTÁRIO
+ * PROCESSAR IMAGENS — INVENTÁRIO (TIPADO)
  * ============================================================
- * Responsabilidade:
- * - Validar contexto
- * - Validar pasta ativa
- * - Validar formatação das planilhas
- * - Adaptar contrato para Vision
- * - Delegar processamento
- * ============================================================
+ *
+ * Fluxo:
+ * 1️⃣ Resolver contexto (ADMIN ou CLIENTE)
+ * 2️⃣ Validar pasta ativa
+ * 3️⃣ Validar planilhas (ADMIN + GERAL)
+ * 4️⃣ Confirmar com usuário
+ * 5️⃣ Montar contrato Vision
+ * 6️⃣ Delegar processamento
  */
-
 function processarImagens_() {
 
   const ui = SpreadsheetApp.getUi();
 
   // ============================================================
-  // 1️⃣ Resolver Contexto
+  // 1️⃣ Resolver Contexto (TIPADO)
   // ============================================================
-  let contexto = resolverContextoAtual_();
+  const ctx = resolverContextoAtual_();
+
+  if (!ctx) {
+    ui.alert("❌ Nenhum contexto válido encontrado.");
+    return;
+  }
+
+  let contexto = ctx.dados;
+
+  // 🔄 Sincroniza localidade ativa
   contexto = sincronizarLocalidadeAtiva_(contexto);
 
-  if (!contexto || !contexto.pastaLocalidadesId) {
-    ui.alert("❌ Nenhum contexto válido encontrado.");
+  if (!contexto.pastaLocalidadesId) {
+    ui.alert("❌ Contexto inválido.");
     return;
   }
 
@@ -33,14 +42,14 @@ function processarImagens_() {
   const pastaNome = contexto.localidadeAtivaNome;
 
   if (!pastaId) {
-    ui.alert('⚠️ Nenhuma pasta de fotos selecionada.');
+    ui.alert("⚠️ Nenhuma pasta de fotos selecionada.");
     return;
   }
 
   try {
     DriveApp.getFolderById(pastaId);
   } catch (e) {
-    ui.alert('⚠️ A pasta selecionada não existe ou está inacessível.');
+    ui.alert("⚠️ A pasta selecionada não existe ou está inacessível.");
     return;
   }
 
@@ -49,10 +58,10 @@ function processarImagens_() {
   // ============================================================
 
   const planilhaAdminId = contexto.planilhaAdminId;
-  const planilhaGeralId = obterPlanilhaGeralId_(); // 🔥 sempre global
+  const planilhaGeralId = obterPlanilhaGeralId_(); // 🔥 Sempre global
 
   if (!planilhaAdminId || !planilhaGeralId) {
-    ui.alert('❌ Planilhas obrigatórias não configuradas.');
+    ui.alert("❌ Planilhas obrigatórias não configuradas.");
     return;
   }
 
@@ -61,19 +70,19 @@ function processarImagens_() {
 
   if (!adminFormatada || !geralFormatada) {
 
-    let mensagem = '⚠️ Antes de processar imagens, formate:\n\n';
+    let mensagem = "⚠️ Antes de processar imagens, formate:\n\n";
 
     if (!adminFormatada) {
-      mensagem += '• Planilha ADMIN\n';
+      mensagem += "• Planilha ADMIN\n";
     }
 
     if (!geralFormatada) {
-      mensagem += '• Planilha GERAL\n';
+      mensagem += "• Planilha GERAL\n";
     }
 
-    mensagem += '\nUse o menu correspondente para formatar.';
+    mensagem += "\nUse o menu correspondente para formatar.";
 
-    ui.alert('Formatação Necessária', mensagem, ui.ButtonSet.OK);
+    ui.alert("Formatação Necessária", mensagem, ui.ButtonSet.OK);
     return;
   }
 
@@ -81,7 +90,7 @@ function processarImagens_() {
   // 4️⃣ Confirmação do Usuário
   // ============================================================
   const confirmar = ui.alert(
-    '🚀 Processar Fotos',
+    "🚀 Processar Fotos",
     `Processar imagens da pasta:\n"${pastaNome}"?`,
     ui.ButtonSet.YES_NO
   );
@@ -89,7 +98,7 @@ function processarImagens_() {
   if (confirmar !== ui.Button.YES) return;
 
   // ============================================================
-  // 5️⃣ Montar Contexto Vision
+  // 5️⃣ Montar Contexto Vision (Contrato Oficial)
   // ============================================================
   let contextoVision;
 
@@ -97,19 +106,20 @@ function processarImagens_() {
 
     contextoVision = montarContextoVision_({
       ...contexto,
-      planilhaGeralId: planilhaGeralId // 🔥 FORÇA uso global
+      planilhaGeralId: planilhaGeralId // 🔥 Força uso do ID global
     });
 
-    Logger.log('================ CONTEXTO VISION =================');
-    Logger.log('planilhaContextoId: ' + contextoVision.planilhaContextoId);
-    Logger.log('planilhaGeralId: ' + contextoVision.planilhaGeralId);
-    Logger.log('pastaTrabalhoId: ' + contextoVision.pastaTrabalhoId);
-    Logger.log('pastaTrabalhoNome: ' + contextoVision.pastaTrabalhoNome);
-    Logger.log('corDestaque: ' + contextoVision.corDestaque);
-    Logger.log('===================================================');
+    Logger.log("=============== CONTEXTO VISION ===============");
+    Logger.log("Tipo Contexto: " + ctx.tipo);
+    Logger.log("planilhaContextoId: " + contextoVision.planilhaContextoId);
+    Logger.log("planilhaGeralId: " + contextoVision.planilhaGeralId);
+    Logger.log("pastaTrabalhoId: " + contextoVision.pastaTrabalhoId);
+    Logger.log("pastaTrabalhoNome: " + contextoVision.pastaTrabalhoNome);
+    Logger.log("corDestaque: " + contextoVision.corDestaque);
+    Logger.log("================================================");
 
   } catch (e) {
-    ui.alert('❌ Erro de configuração:\n\n' + e.message);
+    ui.alert("❌ Erro de configuração:\n\n" + e.message);
     return;
   }
 
@@ -123,11 +133,11 @@ function processarImagens_() {
       contextoVision
     );
 
-    Logger.log('[INVENTARIO] Processamento concluído.');
-    Logger.log('[INVENTARIO] Resultado: ' + JSON.stringify(resultado));
+    Logger.log("[INVENTARIO] Processamento concluído.");
+    Logger.log("[INVENTARIO] Resultado: " + JSON.stringify(resultado));
 
     ui.alert(
-      '🏁 Processamento Finalizado',
+      "🏁 Processamento Finalizado",
       `Total: ${resultado.total}\n` +
       `✅ Sucesso: ${resultado.sucesso}\n` +
       `❌ Erros: ${resultado.erro}`,
@@ -137,7 +147,7 @@ function processarImagens_() {
   } catch (e) {
 
     ui.alert(
-      '❌ Erro no Processamento',
+      "❌ Erro no Processamento",
       e.message,
       ui.ButtonSet.OK
     );
