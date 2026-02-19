@@ -1,23 +1,25 @@
 /**
  * ============================================================
- * ÁREA DE FOTOS — TROCAR PASTA ATIVA (VERSÃO CLIENT SAFE)
+ * ÁREA DE FOTOS — TROCAR PASTA ATIVA (TIPADO + DOMÍNIO CENTRAL)
  * ============================================================
  */
 
 function trocarPastaFotos_() {
 
   const ui = SpreadsheetApp.getUi();
-  const idAtual = SpreadsheetApp.getActiveSpreadsheet().getId();
+  const ctx = resolverContextoAtual_();
 
-  let contexto = resolverContextoAtual_();
-  contexto = sincronizarLocalidadeAtiva_(contexto);
-
-  if (!contexto.localidadeAtivaId) {
-    contexto.localidadeAtivaNome = null;
+  if (!ctx) {
+    ui.alert("❌ Nenhum contexto válido encontrado.");
+    return;
   }
 
-  if (!contexto || !contexto.pastaLocalidadesId) {
-    ui.alert("❌ Nenhum contexto válido encontrado.");
+  const { dados: contextoOriginal } = ctx;
+
+  const contexto = sincronizarLocalidadeAtiva_(contextoOriginal);
+
+  if (!contexto.pastaLocalidadesId) {
+    ui.alert("❌ Contexto inválido.");
     return;
   }
 
@@ -30,7 +32,7 @@ function trocarPastaFotos_() {
     const p = it.next();
     pastas.push({
       id: p.getId(),
-      nome: p.getName(),
+      nome: p.getName()
     });
   }
 
@@ -46,12 +48,16 @@ function trocarPastaFotos_() {
   );
 
   const pastaAtivaId = contexto.localidadeAtivaId;
-  const pastasDisponiveis = pastas.filter((p) => p.id !== pastaAtivaId);
+  const pastasDisponiveis = pastas.filter(p => p.id !== pastaAtivaId);
 
   if (pastasDisponiveis.length === 0) {
     ui.alert("⚠️ Não há outra pasta disponível para troca.");
     return;
   }
+
+  // ============================================================
+  // UI
+  // ============================================================
 
   let mensagem = "";
 
@@ -84,28 +90,12 @@ function trocarPastaFotos_() {
     return;
   }
 
-  // ============================================================
-  // 🔥 PERSISTE NOVA PASTA
-  // ============================================================
-
-  persistirContextoAtual_({
-    localidadeAtivaId: escolhida.id,
-    localidadeAtivaNome: escolhida.nome,
-  });
+  // 🔥 REGRA CENTRAL
+  aplicarLocalidadeAtiva_(ctx, escolhida);
 
   // ============================================================
-  // 🔄 Atualizar UI SOMENTE se estivermos na CLIENTE
+  // Abrir?
   // ============================================================
-
-  if (idAtual === contexto.planilhaClienteId) {
-    try {
-      const contextoAtualizado = resolverContextoAtual_();
-      clienteMontarInformacoes_(contextoAtualizado, true);
-    } catch (e) {
-      Logger.log("[CLIENTE] Erro ao atualizar informações após troca de pasta.");
-      Logger.log(e);
-    }
-  }
 
   const abrir = ui.alert(
     `✅ Pasta ativa definida:\n\n${escolhida.nome}\n\nDeseja abrir a pasta agora?`,

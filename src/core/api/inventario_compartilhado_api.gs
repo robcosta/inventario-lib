@@ -4,9 +4,9 @@
  * ============================================================
  *
  * ❗ Funções compartilhadas entre ADMIN e CLIENT
- * ❗ ÚNICO ponto de entrada do menu ADMIN
- * ❗ NÃO contém lógica de negócio
- * ❗ Apenas delega chamadas para funções internas (_)
+ * ❗ Apenas delegação
+ * ❗ Decisão baseada em contexto tipado
+ * ============================================================
  */
 
 /* ============================================================
@@ -28,7 +28,7 @@ function abrirPastaFotosAtual() {
  * PROCESSAMENTO DE IMAGENS (VISION)
  * ============================================================ */
 function processarImagens() {
-  processarImagens_(); // teste/manual
+  processarImagens_();
 }
 
 /* ============================================================
@@ -42,20 +42,28 @@ function abrirPlanilhaGeral() {
  * FORMATAÇÃO PLANILHA CLIENTE
  * ============================================================ */
 function formatarPlanilhaCliente() {
-  const ctx = resolverContextoAtual_();
-  if (!ctx) return;
-  const spreadsheetId = ctx.dados.planilhaClienteId;
-  const contexto = ctx.dados;
 
-  // 🟢 Caso a função seja chamada a partir da planilha ADMIN.
-  if (ctx.tipo === "ADMIN") {
-    formatarPlanilhaCliente_(spreadsheetId);
+  const ctx = resolverContextoAtual_();
+
+  if (!ctx) {
+    SpreadsheetApp.getUi().alert("❌ Nenhum contexto ativo.");
     return;
   }
 
-  // 🟢 Caso a função seja chamada a partir da planilha CLIENTE
-  formatarPlanilhaCliente_(spreadsheetId);
-  clienteMontarInformacoes_(contexto, (modoCompleto = true));
+  const { tipo, dados: contexto } = ctx;
+
+  if (!contexto.planilhaClienteId) {
+    SpreadsheetApp.getUi().alert("❌ Planilha CLIENTE não configurada.");
+    return;
+  }
+
+  // Sempre formata a planilha cliente correta
+  formatarPlanilhaCliente_(contexto.planilhaClienteId);
+
+  // Se chamado a partir da CLIENTE → re-renderiza informações
+  if (tipo === 'CLIENTE') {
+    clienteMontarInformacoes_(contexto, true);
+  }
 }
 
 /* ============================================================

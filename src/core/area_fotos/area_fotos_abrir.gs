@@ -1,26 +1,38 @@
 /**
  * ============================================================
- * ÁREA DE FOTOS — ABRIR PASTA ATUAL
+ * ÁREA DE FOTOS — ABRIR PASTA ATUAL (TIPADO)
  * ============================================================
  *
- * Abre a pasta ativa do contexto em nova aba.
- * Exibe o nome da pasta no modal.
+ * ✔ Compatível com ADMIN e CLIENTE
+ * ✔ Baseado em resolverContextoAtual_() tipado
+ * ✔ Não usa heurística por ID ativo
+ * ✔ Apenas valida e delega abertura
  */
 
 function abrirPastaFotosAtual_() {
-  const ui = SpreadsheetApp.getUi();
-  let contexto = resolverContextoAtual_();
-  contexto = sincronizarLocalidadeAtiva_(contexto);
 
-  if (!contexto || !contexto.pastaLocalidadesId) {
+  const ui = SpreadsheetApp.getUi();
+  const ctx = resolverContextoAtual_();
+
+  if (!ctx) {
     ui.alert("❌ Nenhum contexto válido encontrado.");
+    return;
+  }
+
+  const { dados: contextoOriginal } = ctx;
+
+  // 🔄 Sincroniza domínio
+  const contexto = sincronizarLocalidadeAtiva_(contextoOriginal);
+
+  if (!contexto.pastaLocalidadesId) {
+    ui.alert("❌ Contexto inválido.");
     return;
   }
 
   if (!contexto.localidadeAtivaId) {
     ui.alert(
       "⚠️ Nenhuma pasta ativa.\n\n" +
-        'Use "Trocar Pasta" ou "Criar Nova Pasta" primeiro.',
+      'Use "Trocar Pasta" ou "Criar Nova Pasta" primeiro.'
     );
     return;
   }
@@ -31,11 +43,11 @@ function abrirPastaFotosAtual_() {
   } catch (e) {
     ui.alert(
       "❌ A pasta ativa não foi encontrada no Drive.\n\n" +
-        "Selecione outra pasta.",
+      "Selecione outra pasta."
     );
     return;
   }
 
-  // 🔥 Agora chama a versão nova que mostra o nome
+  // 🚀 Delegação final
   abrirPastaNoNavegador_(contexto.localidadeAtivaId);
 }
