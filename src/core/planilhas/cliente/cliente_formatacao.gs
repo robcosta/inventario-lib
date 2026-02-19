@@ -1,4 +1,4 @@
-function formatarPlanilhaCliente_(spreadsheetId, contexto) {
+function formatarPlanilhaCliente_(spreadsheetId) {
  
   const ss = SpreadsheetApp.openById(spreadsheetId);
 

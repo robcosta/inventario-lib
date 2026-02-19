@@ -114,9 +114,11 @@ function adminRenderMenu_() {
     )
     .addSeparator()
 
-    // Cliente / Diagnóstico
+    // Cliente 
     .addItem('🎨 Formatar Planilha Cliente', 'formatarPlanilhaCliente')
     .addSeparator()
+
+    // Diagnóstico
     .addSubMenu(
       ui.createMenu('🧪 Diagnóstico')
         .addItem('📊 Executar Diagnóstico', 'executarDiagnostico')

@@ -68,6 +68,13 @@ function clientAbrirPlanilhaGeral() {
 }
 
 /* ============================================================
+ * PROXIES — CLIENTE FORMATAÇÃO
+ * ============================================================ */
+function formatarPlanilhaCliente() {
+  inventario.formatarPlanilhaCliente();
+}
+
+/* ============================================================
  * PROXIES — DIAGNÓSTICO
  * ============================================================ */
 function clientExecutarDiagnostico() {

@@ -57,7 +57,8 @@ function renderMenuClient_(contextoOverride) {
       ui.createMenu('📖 Planilhas')
         .addItem('📕 Abrir Planilha Admin', 'clientAbrirPlanilhaAdmin')
         .addItem('📘 Abrir Planilha Geral', 'clientAbrirPlanilhaGeral')
-    )
+        .addItem('🎨 Formatar Planilha Cliente', 'formatarPlanilhaCliente')
+    )    
     .addSeparator()
 
     // Diagnóstico

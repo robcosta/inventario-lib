@@ -42,39 +42,20 @@ function abrirPlanilhaGeral() {
  * FORMATAÇÃO PLANILHA CLIENTE
  * ============================================================ */
 function formatarPlanilhaCliente() {
+  const ctx = resolverContextoAtual_();
+  if (!ctx) return;
+  const spreadsheetId = ctx.dados.planilhaClienteId;
+  const contexto = ctx.dados;
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const idAtivo = ss.getId();
-
-  const contexto = resolverContextoAtual_();
-  if (!contexto) return;
-
-  let spreadsheetId;
-
-  // 🔵 Se estiver na ADMIN
-  if (contextoAdminRegistrado_()) {
-    spreadsheetId = contexto.planilhaClienteId;
-    formatarPlanilhaCliente_(spreadsheetId, null);
+  // 🟢 Caso a função seja chamada a partir da planilha ADMIN.
+  if (ctx.tipo === "ADMIN") {
+    formatarPlanilhaCliente_(spreadsheetId);
     return;
   }
-  
-  // 🟢 Se estiver na CLIENTE
-  else {
-    spreadsheetId = idAtivo;
-  }
 
-  if (!spreadsheetId) return;
-
-  formatarPlanilhaCliente_(spreadsheetId, contexto);
-}
-
-
-function clientAtualizarInformacoesComContexto(contexto) {
-  if (contexto) {
-    cliente_montarInformacoes_(contexto);
-    return;
-  }
-  clientAtualizarInformacoes();
+  // 🟢 Caso a função seja chamada a partir da planilha CLIENTE
+  formatarPlanilhaCliente_(spreadsheetId);
+  clienteMontarInformacoes_(contexto, (modoCompleto = true));
 }
 
 /* ============================================================
