@@ -1,0 +1,24 @@
+{
+  "name": "inventario",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:docs": "node scripts/build-manual.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robcosta/inventario-lib.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/robcosta/inventario-lib/issues"
+  },
+  "homepage": "https://github.com/robcosta/inventario-lib#readme",
+  "description": ""
+}

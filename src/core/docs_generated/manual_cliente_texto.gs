@@ -1,13 +1,9 @@
-/**
- * ============================================================
- * CLIENTE — TEXTO DO MANUAL
- * ============================================================
- * Fonte única do texto do manual da planilha cliente.
- * Separado da lógica para facilitar manutenção e versionamento.
- */
-function obterTextoManualCliente_() {
 
-  return `
+/**
+ * ⚠️ ARQUIVO GERADO AUTOMATICAMENTE
+ */
+const MANUAL_CLIENTE_MD = `
+
 # 📘 MAUAL DO USUÁRIO 
 (Planilha do Inventário Patrimonial (CLIENTE))
 
@@ -131,7 +127,7 @@ Ela consolida todas as informações do inventário.
 Exibe um relatório técnico simplificado com:
 
 * status do contexto
-* IDs das planilhas
+* ID's das planilhas
 * validação da formatação
 * lista de localidades
 * indicação da localidade ativa
@@ -181,4 +177,7 @@ Mostra a versão atual do sistema instalada na planilha.
 * Use 🔎 Diagnóstico em caso de dúvida
 * Nunca edite a planilha manualmente
 `;
+
+function obterTexto_manual_cliente() {
+  return MANUAL_CLIENTE_MD;
 }
