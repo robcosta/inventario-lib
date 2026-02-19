@@ -1,21 +1,7 @@
 /**
  * ============================================================
- * CLIENTE — MONTAR INFORMAÇÕES (VERSÃO DEFINITIVA ESTÁVEL)
+ * CLIENTE — MONTAR INFORMAÇÕES (ARQUITETURA MODULAR)
  * ============================================================
- *
- * Responsabilidade:
- * - Atualizar dinamicamente a aba "INFORMAÇÕES"
- * - Exibir:
- *     • Nome do contexto
- *     • Pasta ativa
- *     • Proprietário
- *     • Editores
- *     • Leitores
- * - Calcular dinamicamente a última linha real usada
- * - Reconstruir o rodapé corretamente
- *
- * @param {Object} contexto - CONTEXTO_CLIENTE ativo
- * @param {boolean} modoCompleto - Se true, consulta permissões reais
  */
 function clienteMontarInformacoes_(contexto, modoCompleto = false) {
 
@@ -25,16 +11,24 @@ function clienteMontarInformacoes_(contexto, modoCompleto = false) {
   const sheet = ss.getSheetByName('INFORMAÇÕES');
   if (!sheet) return;
 
+  clienteLimparAreaDinamica_(sheet);
+
+  clienteRenderContextoBasico_(sheet, contexto);
+
+  if (modoCompleto) {
+    clienteRenderPermissoes_(sheet, contexto);
+  }
+
+  clienteRenderRodape_(sheet);
+}
+
+function clienteLimparAreaDinamica_(sheet) {
   const maxRows = sheet.getMaxRows();
-
-  // ============================================================
-  // LIMPA SOMENTE CONTEÚDO DINÂMICO (colunas C:E a partir da linha 11)
-  // ============================================================
   sheet.getRange(11, 3, maxRows - 10, 3).clearContent();
+}
 
-  // ============================================================
-  // CONTEXTO
-  // ============================================================
+function clienteRenderContextoBasico_(sheet, contexto) {
+
   sheet.getRange('E8')
     .setValue(contexto.nome || '')
     .setFontFamily('Arial')
@@ -42,21 +36,15 @@ function clienteMontarInformacoes_(contexto, modoCompleto = false) {
     .setFontWeight('bold')
     .setHorizontalAlignment('left');
 
-  // ============================================================
-  // PASTA ATIVA
-  // ============================================================
   sheet.getRange('E9')
     .setValue(contexto.localidadeAtivaNome || '')
     .setFontFamily('Arial')
     .setFontSize(12)
     .setFontWeight('bold')
     .setHorizontalAlignment('left');
+}
 
-  if (!modoCompleto) {
-    const ultimaLinha = obterUltimaLinhaColunaE_(sheet);
-    rodape_(sheet, ultimaLinha);
-    return;
-  }
+function clienteRenderPermissoes_(sheet, contexto) {
 
   const arquivo = DriveApp.getFileById(contexto.planilhaClienteId);
 
@@ -82,9 +70,6 @@ function clienteMontarInformacoes_(contexto, modoCompleto = false) {
       .setHorizontalAlignment('left');
   };
 
-  // ============================================================
-  // PROPRIETÁRIO
-  // ============================================================
   if (proprietario) {
 
     const label = sheet.getRange(`C${linha}`);
@@ -95,12 +80,9 @@ function clienteMontarInformacoes_(contexto, modoCompleto = false) {
     email.setValue(proprietario.getEmail());
     aplicarEmail(email);
 
-    linha += 2; // linha em branco após bloco
+    linha += 2;
   }
 
-  // ============================================================
-  // EDITORES
-  // ============================================================
   if (editores.length > 0) {
 
     const label = sheet.getRange(`C${linha}`);
@@ -116,9 +98,6 @@ function clienteMontarInformacoes_(contexto, modoCompleto = false) {
     linha += editores.length + 1;
   }
 
-  // ============================================================
-  // LEITORES
-  // ============================================================
   if (leitores.length > 0) {
 
     const label = sheet.getRange(`C${linha}`);
@@ -133,20 +112,19 @@ function clienteMontarInformacoes_(contexto, modoCompleto = false) {
 
     linha += leitores.length + 1;
   }
+}
 
-  // ============================================================
-  // CALCULAR ÚLTIMA LINHA REAL DA COLUNA E
-  // ============================================================
+function clienteRenderRodape_(sheet) {
+
   const ultimaLinhaReal = obterUltimaLinhaColunaE_(sheet);
 
-  // ============================================================
-  // CRIAR RODAPÉ
-  // ============================================================
   rodape_(sheet, ultimaLinhaReal);
 }
 
 /**
- * Retorna a última linha realmente preenchida na coluna E
+ * ============================================================
+ * CLIENTE — UTIL: ÚLTIMA LINHA REAL DA COLUNA E
+ * ============================================================
  */
 function obterUltimaLinhaColunaE_(sheet) {
 
@@ -163,3 +141,4 @@ function obterUltimaLinhaColunaE_(sheet) {
 
   return 11; // fallback mínimo
 }
+
