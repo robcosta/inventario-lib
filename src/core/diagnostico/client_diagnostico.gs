@@ -17,7 +17,7 @@ function executarDiagnosticoCliente_() {
 function coletarDiagnosticoCliente_() {
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const contexto = obterContextoCliente_();
+  const contexto = obterContextoDominio_();
   const sistemaGlobal = obterSistemaGlobal_();
 
   const resultado = {

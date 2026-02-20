@@ -32,13 +32,13 @@ function clientRenderMenu() {
  */
 //Via onOpen (leve)
 function clientAtualizarInformacoesLeve() {
-  const contexto = obterContextoCliente_();
+  const contexto = obterContextoDominio_();
   clienteMontarInformacoes_(contexto, false);
 }
 
 //Via menu (completo) 
 function clientAtualizarInformacoes() {
-  const contexto = obterContextoCliente_();
+  const contexto = obterContextoDominio_();
   clienteMontarInformacoes_(contexto, true);
 }
 
@@ -50,8 +50,8 @@ function clientAtualizarInformacoes() {
 /**
  * Abre Planilha ADMIN (somente leitura)
  */
-function clientAbrirPlanilhaAdmin() {
-  clientAbrirPlanilhaAdmin_();
+function adminAbrirPlanilha() {
+  adminAbrirPlanilha_();
 }
 
 /* ============================================================

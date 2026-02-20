@@ -71,6 +71,12 @@ function formatarPlanilhaAdmin() {
   formatarPlanilhaAdmin_();
 }
 
+/* ============================================================
+ * PLANILHA CLIENTE
+ * ============================================================ */
+function abrirPlanilhaCliente() {
+  abrirPlanilhaCliente_();
+}
 
 /* ============================================================
  * DIAGNÓSTICO

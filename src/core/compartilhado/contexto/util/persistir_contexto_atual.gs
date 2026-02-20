@@ -16,7 +16,7 @@ function persistirContextoAtual_(atualizacoes) {
   }
 
   // 🟢 CLIENTE
-  const contextoCliente = obterContextoCliente_();
+  const contextoCliente = obterContextoDominio_();
   if (contextoCliente && contextoClienteValido_(contextoCliente)) {
     Logger.log('[CTX] Detectado modo CLIENTE.');
     Logger.log('[CTX] Contexto atual CLIENTE antes do patch: ' + JSON.stringify(contextoCliente));

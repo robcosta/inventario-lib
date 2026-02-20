@@ -3,7 +3,7 @@ function clientAtualizarInformacoes_() {
   const ui = SpreadsheetApp.getUi();
 
   // 1️⃣ Revalidar contexto
-  let contexto = obterContextoCliente_();
+  let contexto = obterContextoDominio_();
 
   if (!contexto || !contextoClienteValido_(contexto)) {
 

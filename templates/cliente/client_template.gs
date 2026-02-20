@@ -15,7 +15,8 @@
 function onOpen(e) {
   try {
     inventario.clientRenderMenu();
-    inventario.clientAtualizarInformacoesLeve();
+    SpreadsheetApp.getActiveSpreadsheet()
+      .toast("🔄 Atualize as informações para sincronizar o contexto.", "📦 Inventário Patrimonial", 7);
   } catch (err) {
     Logger.log('[CLIENT][ONOPEN][ERRO]');
     Logger.log(err);
@@ -56,8 +57,8 @@ function processarImagens() {
 /* ============================================================
  * PROXIES — ARIR PLANILHA ADMIN
  * ============================================================ */
-function clientAbrirPlanilhaAdmin() {
-  inventario.clientAbrirPlanilhaAdmin();
+function adminAbrirPlanilha() {
+  inventario.adminAbrirPlanilha();
 }
 
 /* ============================================================

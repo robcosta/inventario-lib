@@ -22,8 +22,11 @@ function formatarPlanilhaCliente_(spreadsheetId) {
   sheet.clear();
   sheet.clearFormats();
   sheet.setHiddenGridlines(true);
+  
 
   clienteConstruirLayoutBase_(sheet);
 
   cliente_formatarAbaManual_(ss.getId());
 }
+
+

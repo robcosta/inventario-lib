@@ -10,7 +10,7 @@ function renderMenuClient_(contextoOverride) {
 
   const contexto =
     contextoOverride ||
-    obterContextoCliente_();
+    obterContextoDominio_();
 
   const temContexto =
     !!contexto &&
@@ -55,7 +55,7 @@ function renderMenuClient_(contextoOverride) {
     // Planilhas
     .addSubMenu(
       ui.createMenu('📖 Planilhas')
-        .addItem('📕 Abrir Planilha Admin', 'clientAbrirPlanilhaAdmin')
+        .addItem('📕 Abrir Planilha Admin', 'adminAbrirPlanilha')
         .addItem('📘 Abrir Planilha Geral', 'clientAbrirPlanilhaGeral')
         .addItem('🎨 Formatar Planilha Cliente', 'formatarPlanilhaCliente')
     )    
@@ -67,4 +67,6 @@ function renderMenuClient_(contextoOverride) {
     // Versão
     .addItem('ℹ️ Versão', 'mostrarVersaoSistema')
     .addToUi();
+
+    
 }

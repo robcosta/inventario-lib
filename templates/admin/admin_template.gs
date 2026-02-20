@@ -2,6 +2,7 @@
  * ============================================================
  * TEMPLATE ADMIN — INVENTÁRIO PATRIMONIAL
  * ============================================================
+ *
  * Responsabilidades:
  * - Inicializar menu ADMIN
  * - Encaminhar comandos para a biblioteca inventario
@@ -12,12 +13,13 @@
  * ============================================================
  */
 
+
 /* ============================================================
  * onOpen — ENTRADA DO ADMIN
  * ============================================================ */
 function onOpen() {
   try {
-    inventario.adminRenderMenu(); // API pública da biblioteca
+    inventario.adminRenderMenu();
   } catch (e) {
     Logger.log('[ADMIN][ONOPEN][ERRO]');
     Logger.log(e);
@@ -26,6 +28,7 @@ function onOpen() {
     );
   }
 }
+
 
 /* ============================================================
  * PROXIES — CONTEXTO
@@ -42,12 +45,14 @@ function selecionarContextoTrabalho() {
   inventario.selecionarContextoTrabalho();
 }
 
+
 /* ============================================================
  * PROXIES — ACESSOS
  * ============================================================ */
 function gerenciarAcessosContexto() {
   inventario.gerenciarAcessosContexto();
 }
+
 
 /* ============================================================
  * PROXIES — ÁREA DE FOTOS
@@ -64,12 +69,42 @@ function abrirPastaFotosAtual() {
   inventario.abrirPastaFotosAtual();
 }
 
+
 /* ============================================================
  * PROXIES — PROCESSAMENTO DE IMAGENS (VISION)
  * ============================================================ */
 function processarImagens() {
   inventario.processarImagens();
 }
+
+
+/* ============================================================
+ * PROXIES — PLANILHA ADMIN
+ * ============================================================ */
+function importarCSVAdmin() {
+  inventario.importarCSVAdmin();
+}
+
+function popularPlanilhaAdmin() {
+  inventario.popularPlanilhaAdmin();
+}
+
+function formatarPlanilhaAdmin() {
+  inventario.formatarPlanilhaAdmin();
+}
+
+
+/* ============================================================
+ * PROXIES — PLANILHA CLIENTE
+ * ============================================================ */
+function abrirPlanilhaCliente() {
+  inventario.abrirPlanilhaCliente();
+}
+
+function formatarPlanilhaCliente() {
+  inventario.formatarPlanilhaCliente();
+}
+
 
 /* ============================================================
  * PROXIES — PLANILHA GERAL
@@ -90,60 +125,26 @@ function criarOuRecriarPlanilhaGeral() {
   inventario.criarOuRecriarPlanilhaGeral();
 }
 
-/* ============================================================
- * PROXIES — PLANILHA ADMIN
- * ============================================================ */
-function importarCSVAdmin() {
-  inventario.importarCSVAdmin();
-}
-
-function popularPlanilhaAdmin() {
-  inventario.popularPlanilhaAdmin();
-}
-
-function formatarPlanilhaAdmin() {
-  inventario.formatarPlanilhaAdmin();
-}
 
 /* ============================================================
- * PROXIES — CLIENTE / SUPORTE
+ * PROXIES — DIAGNÓSTICO / SUPORTE
  * ============================================================ */
-function formatarPlanilhaCliente() {
-  inventario.formatarPlanilhaCliente();
-}
-
 function executarDiagnostico() {
   inventario.executarDiagnostico();
 }
 
-function mostrarVersaoSistema() {
-   inventario.mostrarVersaoSistema();  
+function runTestsPlanilhaGeral() {
+  inventario.runTestsPlanilhaGeral();
 }
+
+function mostrarVersaoSistema() {
+  inventario.mostrarVersaoSistema();
+}
+
+
 /* ============================================================
  * CSV — ENTRYPOINT (HTML)
  * ============================================================ */
 function receberCSV(tipo, nomeArquivo, dataUrl) {
   return inventario.receberCSV(tipo, nomeArquivo, dataUrl);
-}
-/*
-function verContextoScript() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const planilhaId = ss.getId();
-  const chave = 'CONTEXTO_ADMIN_' + planilhaId;
-  const props = PropertiesService.getScriptProperties();
-  const contexto = props.getProperty(chave);
-  
-  if (contexto) {
-    const obj = JSON.parse(contexto);
-    Logger.log('Contexto encontrado: ' + Object.keys(obj).join(', '));
-    SpreadsheetApp.getUi().alert('Contexto OK! IDs:\n' + 
-      'pastaPlanilhas: ' + obj.pastaPlanilhasId + '\n' +
-      'pastaLocalidades: ' + obj.pastaLocalidadesId);
-  } else {
-    SpreadsheetApp.getUi().alert('Contexto não encontrado! Chave: ' + chave);
-  }
-}
-*/
-function runTestsPlanilhaGeral() {
-  inventario.runTestsPlanilhaGeral();
 }

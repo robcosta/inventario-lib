@@ -39,7 +39,7 @@ function abrirPlanilhaGeral() {
 }
 
 /* ============================================================
- * FORMATAÇÃO PLANILHA CLIENTE
+ * PLANILHA CLIENTE - FORMATAÇÃO
  * ============================================================ */
 function formatarPlanilhaCliente() {
 

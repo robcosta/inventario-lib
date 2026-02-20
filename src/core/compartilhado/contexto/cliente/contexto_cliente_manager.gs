@@ -15,39 +15,79 @@
  * ============================================================
  */
 
-
 /**
- * Obtém contexto cliente válido.
- * Se não existir → executa auto-discovery.
+ * ============================================================
+ * CONTEXTO DOMÍNIO — RESOLUÇÃO ÚNICA E NORMALIZAÇÃO
+ * ============================================================
+ *
+ * Resolve o contexto ativo (ADMIN ou CLIENTE)
+ * e retorna o contrato normalizado do sistema.
+ *
+ * Esta é a única porta de entrada para contexto.
  */
-function obterContextoCliente_() {
+function obterContextoDominio_() {
 
-  const docProps = PropertiesService.getDocumentProperties();
-  const raw = docProps.getProperty('CONTEXTO_CLIENTE');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const id = ss.getId();
 
-  if (raw) {
+  // ============================================================
+  // 1️⃣ ADMIN (ScriptProperties)
+  // ============================================================
 
-    try {
+  const rawAdmin = PropertiesService
+    .getScriptProperties()
+    .getProperty(CONTEXTO_KEYS.PREFIXO + id);
 
-      const contexto = JSON.parse(raw);
+  if (rawAdmin) {
 
-      if (contextoClienteValido_(contexto)) {
-        return contexto;
-      }
+    const dados = JSON.parse(rawAdmin);
 
-      docProps.deleteProperty('CONTEXTO_CLIENTE');
+    return {
+      tipo: 'ADMIN',
+      origem: 'SCRIPT_PROPERTIES',
 
-    } catch (e) {
-      docProps.deleteProperty('CONTEXTO_CLIENTE');
-    }
+      nome: dados.nome || null,
+
+      planilhaAdminId: dados.planilhaAdminId || null,
+      planilhaClienteId: dados.planilhaClienteId || null,
+      planilhaGeralId: obterPlanilhaGeralId_(),
+
+      pastaContextoId: dados.pastaContextoId || null,
+      pastaLocalidadesId: dados.pastaLocalidadesId || null,
+
+      localidadeAtivaId: dados.localidadeAtivaId || null,
+      localidadeAtivaNome: dados.localidadeAtivaNome || null
+    };
   }
 
-  // 🔄 Auto discovery
-  const reconstruido = descobrirContextoClienteAutomaticamente_();
+  // ============================================================
+  // 2️⃣ CLIENTE (DocumentProperties)
+  // ============================================================
 
-  if (contextoClienteValido_(reconstruido)) {
-    salvarContextoCliente_(reconstruido);
-    return reconstruido;
+  const rawCliente = PropertiesService
+    .getDocumentProperties()
+    .getProperty(PROPRIEDADES_CLIENTE.CONTEXTO_CLIENTE);
+
+  if (rawCliente) {
+
+    const dados = JSON.parse(rawCliente);
+
+    return {
+      tipo: 'CLIENTE',
+      origem: 'DOCUMENT_PROPERTIES',
+
+      nome: dados.nome || null,
+
+      planilhaAdminId: dados.planilhaAdminId || null,
+      planilhaClienteId: dados.planilhaClienteId || null,
+      planilhaGeralId: obterPlanilhaGeralId_(),
+
+      pastaContextoId: dados.pastaContextoId || null,
+      pastaLocalidadesId: dados.pastaLocalidadesId || null,
+
+      localidadeAtivaId: dados.localidadeAtivaId || null,
+      localidadeAtivaNome: dados.localidadeAtivaNome || null
+    };
   }
 
   return null;
@@ -114,7 +154,7 @@ function atualizarContextoCliente_(atualizacoes) {
   Logger.log('[CLIENTE] Atualizando contexto cliente...');
   Logger.log('[CLIENTE] Atualizações recebidas: ' + JSON.stringify(atualizacoes));
 
-  const contextoAtual = obterContextoCliente_();
+  const contextoAtual = obterContextoDominio_();
 
   Logger.log('[CLIENTE] Contexto antes da atualização: ' + JSON.stringify(contextoAtual));
 

@@ -1,8 +1,16 @@
+/**
+ * ============================================================
+ * PLANILHA GERAL — CRIAR OU RECRIAR (DOMÍNIO)
+ * ============================================================
+ *
+ * Cria ou recria a Planilha Geral a partir dos CSVs
+ * armazenados na pasta global CSV_GERAL.
+ */
 function criarOuRecriarPlanilhaGeral_() {
 
-  const sistemaGlobal = obterSistemaGlobal_();
   const ui = SpreadsheetApp.getUi();
-  const contexto = resolverContextoAtual_();
+  const sistemaGlobal = obterSistemaGlobal_();
+  const contexto = obterContextoDominio_();
 
   if (!contexto) {
     ui.alert('❌ Nenhum contexto ativo.');
@@ -24,7 +32,10 @@ function criarOuRecriarPlanilhaGeral_() {
     return;
   }
 
+  // ============================================================
   // Confirma recriação
+  // ============================================================
+
   if (contexto.planilhaGeralId) {
 
     const resp = ui.alert(
@@ -41,7 +52,7 @@ function criarOuRecriarPlanilhaGeral_() {
     try {
       DriveApp.getFileById(contexto.planilhaGeralId).setTrashed(true);
     } catch (e) {
-      Logger.log('[GERAL] Planilha anterior não encontrada.');
+      // silencioso — planilha pode já não existir
     }
   }
 
@@ -92,17 +103,20 @@ function criarOuRecriarPlanilhaGeral_() {
     ss.rename(`GERAL: Importado em ${dataFormatada}`);
   }
 
- // 🔹 Atualiza SISTEMA GLOBAL (fonte única)
-atualizarSistemaGlobal_({
-  planilhaGeralId: ss.getId()
-});
+  // ============================================================
+  // Atualizações de estado
+  // ============================================================
 
-// 🔹 Atualiza contexto ativo (Admin)
-persistirContextoAtual_({
-  planilhaGeralId: ss.getId()
-});
+  // 🔹 Atualiza SISTEMA GLOBAL (fonte única)
+  atualizarSistemaGlobal_({
+    planilhaGeralId: ss.getId()
+  });
+
+  // 🔹 Atualiza contexto ativo (ADMIN ou CLIENTE)
+  persistirContextoAtual_({
+    planilhaGeralId: ss.getId()
+  });
 
   toast_('Planilha Geral criada com sucesso!', 'Concluído', 6);
   ui.alert('Planilha Geral criada com sucesso a partir dos CSVs.');
 }
-
