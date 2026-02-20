@@ -1,22 +1,23 @@
 /**
  * ============================================================
- * ÁREA DE FOTOS — TROCAR PASTA ATIVA (TIPADO + DOMÍNIO CENTRAL)
+ * ÁREA DE FOTOS — TROCAR PASTA ATIVA (DOMÍNIO)
  * ============================================================
+ *
+ * ✔ Compatível com ADMIN e CLIENTE
+ * ✔ Baseado em obterContextoDominio_()
+ * ✔ Persistência centralizada em aplicarLocalidadeAtiva_
  */
-
 function trocarPastaFotos_() {
 
   const ui = SpreadsheetApp.getUi();
-  const ctx = resolverContextoAtual_();
+  let contexto = obterContextoDominio_();
 
-  if (!ctx) {
-    ui.alert("❌ Nenhum contexto válido encontrado.");
+  if (!contexto) {
+    ui.alert("❌ Nenhum contexto ativo.");
     return;
   }
 
-  const { dados: contextoOriginal } = ctx;
-
-  const contexto = sincronizarLocalidadeAtiva_(contextoOriginal);
+  contexto = sincronizarLocalidadeAtiva_(contexto);
 
   if (!contexto.pastaLocalidadesId) {
     ui.alert("❌ Contexto inválido.");
@@ -32,7 +33,7 @@ function trocarPastaFotos_() {
     const p = it.next();
     pastas.push({
       id: p.getId(),
-      nome: p.getName()
+      nome: p.getName(),
     });
   }
 
@@ -48,7 +49,7 @@ function trocarPastaFotos_() {
   );
 
   const pastaAtivaId = contexto.localidadeAtivaId;
-  const pastasDisponiveis = pastas.filter(p => p.id !== pastaAtivaId);
+  const pastasDisponiveis = pastas.filter((p) => p.id !== pastaAtivaId);
 
   if (pastasDisponiveis.length === 0) {
     ui.alert("⚠️ Não há outra pasta disponível para troca.");
@@ -68,6 +69,7 @@ function trocarPastaFotos_() {
   mensagem += "Escolha a nova pasta:\n\n";
 
   const mapa = {};
+
   pastasDisponiveis.forEach((p, i) => {
     const index = i + 1;
     mensagem += `${index} - ${p.nome}\n`;
@@ -90,8 +92,14 @@ function trocarPastaFotos_() {
     return;
   }
 
+  // ============================================================
   // 🔥 REGRA CENTRAL
-  aplicarLocalidadeAtiva_(ctx, escolhida);
+  // ============================================================
+
+  aplicarLocalidadeAtiva_(contexto, {
+    id: escolhida.id,
+    nome: escolhida.nome,
+  });
 
   // ============================================================
   // Abrir?

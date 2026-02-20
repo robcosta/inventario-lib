@@ -1,28 +1,25 @@
 /**
  * ============================================================
- * ÁREA DE FOTOS — ABRIR PASTA ATUAL (TIPADO)
+ * ÁREA DE FOTOS — ABRIR PASTA ATUAL (DOMÍNIO)
  * ============================================================
  *
  * ✔ Compatível com ADMIN e CLIENTE
- * ✔ Baseado em resolverContextoAtual_() tipado
- * ✔ Não usa heurística por ID ativo
+ * ✔ Baseado em obterContextoDominio_()
+ * ✔ Sem wrapper tipado
  * ✔ Apenas valida e delega abertura
  */
-
 function abrirPastaFotosAtual_() {
 
   const ui = SpreadsheetApp.getUi();
-  const ctx = resolverContextoAtual_();
+  let contexto = obterContextoDominio_();
 
-  if (!ctx) {
-    ui.alert("❌ Nenhum contexto válido encontrado.");
+  if (!contexto) {
+    ui.alert("❌ Nenhum contexto ativo.");
     return;
   }
 
-  const { dados: contextoOriginal } = ctx;
-
-  // 🔄 Sincroniza domínio
-  const contexto = sincronizarLocalidadeAtiva_(contextoOriginal);
+  // 🔄 Sincroniza localidade ativa
+  contexto = sincronizarLocalidadeAtiva_(contexto);
 
   if (!contexto.pastaLocalidadesId) {
     ui.alert("❌ Contexto inválido.");
@@ -38,7 +35,7 @@ function abrirPastaFotosAtual_() {
   }
 
   try {
-    // Apenas valida se existe
+    // Apenas valida se a pasta existe
     DriveApp.getFolderById(contexto.localidadeAtivaId);
   } catch (e) {
     ui.alert(

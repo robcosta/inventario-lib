@@ -1,10 +1,10 @@
 /**
  * ============================================================
- * PROCESSAR IMAGENS — INVENTÁRIO (TIPADO)
+ * PROCESSAR IMAGENS — INVENTÁRIO (DOMÍNIO)
  * ============================================================
  *
  * Fluxo:
- * 1️⃣ Resolver contexto (ADMIN ou CLIENTE)
+ * 1️⃣ Resolver contexto (DOMÍNIO)
  * 2️⃣ Validar pasta ativa
  * 3️⃣ Validar planilhas (ADMIN + GERAL)
  * 4️⃣ Confirmar com usuário
@@ -16,18 +16,16 @@ function processarImagens_() {
   const ui = SpreadsheetApp.getUi();
 
   // ============================================================
-  // 1️⃣ Resolver Contexto (TIPADO)
+  // 1️⃣ Resolver Contexto (DOMÍNIO)
   // ============================================================
-  const ctx = resolverContextoAtual_();
+  let contexto = obterContextoDominio_();
 
-  if (!ctx) {
-    ui.alert("❌ Nenhum contexto válido encontrado.");
+  if (!contexto) {
+    ui.alert("❌ Nenhum contexto ativo.");
     return;
   }
 
-  let contexto = ctx.dados;
-
-  // 🔄 Sincroniza localidade ativa
+  // 🔄 Sincroniza localidade ativa (se sua função ainda for necessária)
   contexto = sincronizarLocalidadeAtiva_(contexto);
 
   if (!contexto.pastaLocalidadesId) {
@@ -56,7 +54,6 @@ function processarImagens_() {
   // ============================================================
   // 3️⃣ Validar Planilhas (ADMIN + GERAL)
   // ============================================================
-
   const planilhaAdminId = contexto.planilhaAdminId;
   const planilhaGeralId = obterPlanilhaGeralId_(); // 🔥 Sempre global
 
@@ -106,11 +103,11 @@ function processarImagens_() {
 
     contextoVision = montarContextoVision_({
       ...contexto,
-      planilhaGeralId: planilhaGeralId // 🔥 Força uso do ID global
+      planilhaGeralId: planilhaGeralId // 🔥 Força ID global
     });
 
     Logger.log("=============== CONTEXTO VISION ===============");
-    Logger.log("Tipo Contexto: " + ctx.tipo);
+    Logger.log("Tipo Contexto: " + contexto.tipo);
     Logger.log("planilhaContextoId: " + contextoVision.planilhaContextoId);
     Logger.log("planilhaGeralId: " + contextoVision.planilhaGeralId);
     Logger.log("pastaTrabalhoId: " + contextoVision.pastaTrabalhoId);

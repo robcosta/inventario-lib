@@ -1,20 +1,21 @@
 /**
  * ============================================================
- * ÁREA DE FOTOS — CRIAR NOVA PASTA (TIPADO + DOMÍNIO CENTRAL)
+ * ÁREA DE FOTOS — CRIAR NOVA PASTA (DOMÍNIO)
  * ============================================================
+ *
+ * ✔ Compatível com ADMIN e CLIENTE
+ * ✔ Baseado em obterContextoDominio_()
+ * ✔ Regra centralizada em aplicarLocalidadeAtiva_
  */
-
 function criarNovaPastaFotos_() {
 
   const ui = SpreadsheetApp.getUi();
-  const ctx = resolverContextoAtual_();
+  let contexto = obterContextoDominio_();
 
-  if (!ctx) {
-    ui.alert("❌ Nenhum contexto válido encontrado.");
+  if (!contexto) {
+    ui.alert("❌ Nenhum contexto ativo.");
     return;
   }
-
-  const { dados: contexto } = ctx;
 
   if (!contexto.pastaLocalidadesId) {
     ui.alert("❌ Contexto inválido.");
@@ -104,8 +105,8 @@ function criarNovaPastaFotos_() {
 
   const novaPasta = pastaRaiz.createFolder(nome);
 
-  // 🔥 REGRA CENTRAL
-  aplicarLocalidadeAtiva_(ctx, {
+  // 🔥 REGRA CENTRAL (AGORA DOMÍNIO)
+  aplicarLocalidadeAtiva_(contexto, {
     id: novaPasta.getId(),
     nome: nome
   });

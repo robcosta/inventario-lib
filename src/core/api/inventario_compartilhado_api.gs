@@ -43,14 +43,12 @@ function abrirPlanilhaGeral() {
  * ============================================================ */
 function formatarPlanilhaCliente() {
 
-  const ctx = resolverContextoAtual_();
+  const contexto = obterContextoDominio_();
 
-  if (!ctx) {
+  if (!contexto) {
     SpreadsheetApp.getUi().alert("❌ Nenhum contexto ativo.");
     return;
   }
-
-  const { tipo, dados: contexto } = ctx;
 
   if (!contexto.planilhaClienteId) {
     SpreadsheetApp.getUi().alert("❌ Planilha CLIENTE não configurada.");
@@ -61,7 +59,7 @@ function formatarPlanilhaCliente() {
   formatarPlanilhaCliente_(contexto.planilhaClienteId);
 
   // Se chamado a partir da CLIENTE → re-renderiza informações
-  if (tipo === 'CLIENTE') {
+  if (contexto.tipo === 'CLIENTE') {
     clienteMontarInformacoes_(contexto, true);
   }
 }
