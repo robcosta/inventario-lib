@@ -135,11 +135,11 @@ function contextoClienteValido_(contexto) {
   if (!contexto) return false;
 
   return !!(
-    contexto.id &&
     contexto.nome &&
     contexto.pastaLocalidadesId &&
     contexto.planilhaAdminId &&
-    contexto.planilhaClienteId
+    contexto.planilhaClienteId &&
+    contexto.tipo === 'CLIENTE'
   );
 }
 

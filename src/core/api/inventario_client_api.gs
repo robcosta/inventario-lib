@@ -26,20 +26,12 @@ function clientRenderMenu() {
 /* ============================================================
  * INFORMAÇÕES
  * ============================================================ */
-
 /**
  * Atualiza bloco de informações da planilha CLIENTE
  */
-//Via onOpen (leve)
-function clientAtualizarInformacoesLeve() {
-  const contexto = obterContextoDominio_();
-  clienteMontarInformacoes_(contexto, false);
-}
-
-//Via menu (completo) 
+//
 function clientAtualizarInformacoes() {
-  const contexto = obterContextoDominio_();
-  clienteMontarInformacoes_(contexto, true);
+  clientAtualizarInformacoes_();
 }
 
 

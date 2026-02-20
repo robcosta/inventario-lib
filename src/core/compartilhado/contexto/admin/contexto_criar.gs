@@ -65,7 +65,7 @@ function criarContextoTrabalho_() {
 
   const listaFormatada = nomesExistentes.length
     ? '\n\n📂 Contextos existentes:\n\n' +
-      nomesExistentes.map((n, i) => `${i + 1} - ${n}`).join('\n')
+    nomesExistentes.map((n, i) => `${i + 1} - ${n}`).join('\n')
     : '\n\n📂 Nenhum contexto existente ainda.';
 
   // ============================================================
@@ -141,13 +141,32 @@ function criarContextoTrabalho_() {
   fileAdmin.moveTo(pastaPlanilhas);
 
   // ============================================================
-  // 7️⃣ CRIAR PLANILHA CLIENTE
+  // 7️⃣ CRIAR PLANILHA CLIENTE (A PARTIR DO TEMPLATE)
   // ============================================================
 
-  ssAtiva.toast('Criando planilha CLIENTE...', '📊 Criando', 3);
+  ssAtiva.toast('Gerando planilha CLIENTE...', '📊 Criando', 3);
 
-  const planilhaCliente = SpreadsheetApp.create('CLIENTE: ' + nomeContexto);
-  DriveApp.getFileById(planilhaCliente.getId()).moveTo(pastaLocalidades);
+  const templateClienteFile = obterTemplateCliente_();
+
+  if (!templateClienteFile) {
+    ui.alert(
+      '❌ Template CLIENTE não encontrado.\n\nVerifique a pasta TEMPLATES.'
+    );
+    return;
+  }
+
+  const fileCliente = templateClienteFile.makeCopy(
+    'CLIENTE: ' + nomeContexto,
+    pastaLocalidades
+  );
+
+  const planilhaCliente = SpreadsheetApp.openById(fileCliente.getId());
+
+  // 🔄 Limpa qualquer contexto antigo herdado
+  SpreadsheetApp.setActiveSpreadsheet(planilhaCliente);
+  limparContextoAtivo_();
+
+  SpreadsheetApp.setActiveSpreadsheet(ssAtiva);
 
   // ============================================================
   // 8️⃣ SALVAR CONTEXTO ADMIN
@@ -189,4 +208,20 @@ function criarContextoTrabalho_() {
   );
 
   Logger.log('[FLUXO][CRIAR_CONTEXTO] FIM');
+}
+
+function obterTemplateCliente_() {
+
+  const raiz = obterPastaInventario_();
+  if (!raiz) return null;
+
+  const pastaTemplates = raiz.getFoldersByName('TEMPLATES');
+  if (!pastaTemplates.hasNext()) return null;
+
+  const pasta = pastaTemplates.next();
+  const arquivos = pasta.getFilesByName('CLIENTE: TEMPLATE');
+
+  if (!arquivos.hasNext()) return null;
+
+  return arquivos.next();
 }

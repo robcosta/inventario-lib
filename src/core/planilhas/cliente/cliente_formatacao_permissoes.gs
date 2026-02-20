@@ -3,27 +3,38 @@
  * CLIENTE — PERMISSÕES
  * ============================================================
  */
+/**
+ * ============================================================
+ * CLIENTE — PERMISSÕES
+ * ============================================================
+ */
 function clienteRenderPermissoes_(sheet, contexto) {
 
-  const arquivo = DriveApp.getFileById(contexto.planilhaClienteId);
+  const file = DriveApp.getFileById(contexto.planilhaClienteId);
 
-  const proprietario = arquivo.getOwner();
-  const editores = arquivo.getEditors();
-  const leitores = arquivo.getViewers();
+  const proprietario = file.getOwner();
+  const editores = file.getEditors();
+  const leitores = file.getViewers();
 
   let linha = 11;
 
-  const aplicarLabel = (range) =>
-    range.setFontFamily('Arial')
+  const aplicarLabel = (range) => {
+    range
+      .setFontFamily('Arial')
       .setFontSize(12)
       .setFontWeight('bold')
       .setHorizontalAlignment('left');
+  };
 
-  const aplicarEmail = (range) =>
-    range.setFontFamily('Arial')
+  const aplicarEmail = (range) => {
+    range
+      .setFontFamily('Arial')
       .setFontSize(12)
+      .setFontWeight('normal')
       .setHorizontalAlignment('left');
+  };
 
+  // PROPRIETÁRIO
   if (proprietario) {
 
     const label = sheet.getRange(`C${linha}`);
@@ -37,6 +48,7 @@ function clienteRenderPermissoes_(sheet, contexto) {
     linha += 2;
   }
 
+  // EDITORES
   if (editores.length > 0) {
 
     const label = sheet.getRange(`C${linha}`);
@@ -52,6 +64,7 @@ function clienteRenderPermissoes_(sheet, contexto) {
     linha += editores.length + 1;
   }
 
+  // LEITORES
   if (leitores.length > 0) {
 
     const label = sheet.getRange(`C${linha}`);

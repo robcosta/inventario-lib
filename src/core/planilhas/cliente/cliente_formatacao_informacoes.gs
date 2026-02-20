@@ -3,27 +3,36 @@
  * CLIENTE — MONTAR INFORMAÇÕES
  * ============================================================
  */
-function clienteMontarInformacoes_(contexto, modoCompleto = false) {
+/**
+ * ============================================================
+ * CLIENTE — MONTAR INFORMAÇÕES (DEFINITIVO)
+ * ============================================================
+ */
+function clienteMontarInformacoes_(contexto) {
 
   if (!contexto || !contexto.planilhaClienteId) return;
 
-  const ss = SpreadsheetApp.openById(contexto.planilhaClienteId);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName('INFORMAÇÕES');
+
   if (!sheet) return;
 
   clienteLimparAreaDinamica_(sheet);
+
   clienteRenderContextoBasico_(sheet, contexto);
 
-  if (modoCompleto) {
-    clienteRenderPermissoes_(sheet, contexto);
-  }
+  clienteRenderPermissoes_(sheet, contexto);
 
   clienteAtualizarRodape_(sheet);
 }
 
 function clienteLimparAreaDinamica_(sheet) {
+
   const maxRows = sheet.getMaxRows();
-  sheet.getRange(11, 3, maxRows - 10, 3).clearContent();
+
+  sheet
+    .getRange(11, 3, maxRows - 10, 3)
+    .clearContent();
 }
 
 function clienteRenderContextoBasico_(sheet, contexto) {
@@ -44,7 +53,9 @@ function clienteRenderContextoBasico_(sheet, contexto) {
 }
 
 function clienteAtualizarRodape_(sheet) {
+
   const ultima = obterUltimaLinhaColunaE_(sheet);
+
   rodape_(sheet, ultima);
 }
 
@@ -63,3 +74,4 @@ function obterUltimaLinhaColunaE_(sheet) {
 
   return 11;
 }
+
