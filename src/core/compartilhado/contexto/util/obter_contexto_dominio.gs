@@ -3,10 +3,8 @@
  * CONTEXTO DOMÍNIO — RESOLUÇÃO ÚNICA E NORMALIZAÇÃO
  * ============================================================
  *
- * Resolve o contexto ativo (ADMIN ou CLIENTE)
+ * Resolve o contexto ativo (ADMIN, CLIENTE ou RELATORIOS)
  * e retorna o contrato normalizado do sistema.
- *
- * Esta é a única porta de entrada para contexto.
  */
 function obterContextoDominio_() {
 
@@ -14,7 +12,7 @@ function obterContextoDominio_() {
   const id = ss.getId();
 
   // ============================================================
-  // 1️⃣ ADMIN (ScriptProperties)
+  // 1️⃣ ADMIN (ScriptProperties por ID da planilha)
   // ============================================================
 
   const rawAdmin = PropertiesService
@@ -25,22 +23,12 @@ function obterContextoDominio_() {
 
     const dados = JSON.parse(rawAdmin);
 
-    return {
+    return normalizarContexto_({
+      ...dados,
       tipo: 'ADMIN',
       origem: 'SCRIPT_PROPERTIES',
-
-      nome: dados.nome || null,
-
-      planilhaAdminId: dados.planilhaAdminId || null,
-      planilhaClienteId: dados.planilhaClienteId || null,
-      planilhaGeralId: obterPlanilhaGeralId_(),
-
-      pastaContextoId: dados.pastaContextoId || null,
-      pastaLocalidadesId: dados.pastaLocalidadesId || null,
-
-      localidadeAtivaId: dados.localidadeAtivaId || null,
-      localidadeAtivaNome: dados.localidadeAtivaNome || null
-    };
+      planilhaGeralId: obterPlanilhaGeralId_()
+    });
   }
 
   // ============================================================
@@ -55,23 +43,60 @@ function obterContextoDominio_() {
 
     const dados = JSON.parse(rawCliente);
 
-    return {
+    return normalizarContexto_({
+      ...dados,
       tipo: 'CLIENTE',
       origem: 'DOCUMENT_PROPERTIES',
+      planilhaGeralId: obterPlanilhaGeralId_()
+    });
+  }
 
-      nome: dados.nome || null,
+  // ============================================================
+  // 3️⃣ RELATORIOS (DocumentProperties)
+  // ============================================================
 
-      planilhaAdminId: dados.planilhaAdminId || null,
-      planilhaClienteId: dados.planilhaClienteId || null,
-      planilhaGeralId: obterPlanilhaGeralId_(),
+  const rawRelatorios = PropertiesService
+    .getDocumentProperties()
+    .getProperty(PROPRIEDADES_RELATORIOS.CONTEXTO_RELATORIOS);
 
-      pastaContextoId: dados.pastaContextoId || null,
-      pastaLocalidadesId: dados.pastaLocalidadesId || null,
+  if (rawRelatorios) {
 
-      localidadeAtivaId: dados.localidadeAtivaId || null,
-      localidadeAtivaNome: dados.localidadeAtivaNome || null
-    };
+    const dados = JSON.parse(rawRelatorios);
+
+    return normalizarContexto_({
+      ...dados,
+      tipo: 'RELATORIOS',
+      origem: 'DOCUMENT_PROPERTIES',
+      planilhaGeralId: obterPlanilhaGeralId_()
+    });
   }
 
   return null;
+}
+
+function normalizarContexto_(dados) {
+
+  return {
+    tipo: dados.tipo || null,
+    origem: dados.origem || null,
+
+    nome: dados.nome || null,
+
+    planilhaAdminId: dados.planilhaAdminId || null,
+    planilhaClienteId: dados.planilhaClienteId || null,
+    planilhaRelatoriosId: dados.planilhaRelatoriosId || null,
+    planilhaGeralId: dados.planilhaGeralId || null,
+
+    pastaContextoId: dados.pastaContextoId || null,
+    pastaPlanilhasId: dados.pastaPlanilhasId || null,
+    pastaCSVAdminId: dados.pastaCSVAdminId || null,
+    pastaLocalidadesId: dados.pastaLocalidadesId || null,
+
+    localidadeAtivaId: dados.localidadeAtivaId || null,
+    localidadeAtivaNome: dados.localidadeAtivaNome || null,
+
+    emailOperador: dados.emailOperador || null,
+    criadoEm: dados.criadoEm || null,
+    ultimaAtualizacao: dados.ultimaAtualizacao || null
+  };
 }
