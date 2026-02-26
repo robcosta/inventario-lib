@@ -35,10 +35,23 @@ const PROPRIEDADES_GLOBAL = {
   CSV_GERAL_REGISTRO: 'CSV_GERAL_REGISTRO'
 }
 
+/* ============================================================
+ * 🏛 ADMIN
+ * ============================================================ */
 const PROPRIEDADES_ADMIN = {
   CONTEXTO_ADMIN: 'CONTEXTO_ADMIN'
-}
+};
 
+/* ============================================================
+ * 📦 CLIENTE
+ * ============================================================ */
 const PROPRIEDADES_CLIENTE = {
   CONTEXTO_CLIENTE: 'CONTEXTO_CLIENTE'
-}
+};
+
+/* ============================================================
+ * 📊 RELATÓRIOS
+ * ============================================================ */
+const PROPRIEDADES_RELATORIOS = {
+  CONTEXTO_RELATORIOS: 'CONTEXTO_RELATORIOS'
+};

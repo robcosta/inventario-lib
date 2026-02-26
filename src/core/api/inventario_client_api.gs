@@ -53,3 +53,23 @@ function clientExecutarDiagnostico() {
   executarDiagnosticoCliente_();
 }
 
+/**
+ * ============================================================
+ * CLIENT API — RENDERIZAR PLANILHA CLIENTE
+ * ============================================================
+ */
+function clientRenderizarInformacoes() {
+
+  const contexto = obterContextoDominio_();
+
+  if (!contexto) {
+    throw new Error('Nenhum contexto ativo.');
+  }
+
+  if (contexto.tipo !== 'CLIENTE') {
+    throw new Error('Contexto inválido para CLIENTE.');
+  }
+
+  renderizarPlanilhaCliente_(contexto);
+}
+
