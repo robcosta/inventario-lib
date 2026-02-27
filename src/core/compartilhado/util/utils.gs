@@ -17,7 +17,7 @@ function obterPastaInventario_() {
     try {
       return DriveApp.getFolderById(sistemaGlobal.pastaRaizId);
     } catch (e) {
-      Logger.log('[UTILS] ID salvo inválido, tentando obter pela planilha ativa...');
+      Logger.log('[UTILS] ID pasta raiz salvo inválido, tentando obter pela planilha ativa...');
     }
   }
 

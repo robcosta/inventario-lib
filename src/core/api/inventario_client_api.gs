@@ -66,10 +66,28 @@ function clientRenderizarInformacoes() {
     throw new Error('Nenhum contexto ativo.');
   }
 
-  if (contexto.tipo !== 'CLIENTE') {
-    throw new Error('Contexto inválido para CLIENTE.');
+  if (!contexto.planilhaClienteId) {
+    throw new Error('ID da planilha CLIENTE não encontrado no contexto.');
   }
 
-  renderizarPlanilhaCliente_(contexto);
+  const ssAtual = SpreadsheetApp.getActiveSpreadsheet();
+
+  // ==========================================================
+  // Se já estiver na planilha CLIENTE
+  // ==========================================================
+
+  if (ssAtual.getId() === contexto.planilhaClienteId) {
+
+    renderizarPlanilhaCliente_(contexto, ssAtual);
+    return;
+  }
+
+  // ==========================================================
+  // Se estiver na ADMIN ou outra planilha
+  // ==========================================================
+
+  const ssCliente = SpreadsheetApp.openById(contexto.planilhaClienteId);
+
+  renderizarPlanilhaCliente_(contexto, ssCliente);
 }
 

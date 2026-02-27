@@ -78,6 +78,10 @@ function abrirPlanilhaCliente() {
   abrirPlanilhaCliente_();
 }
 
+function formatarPlanilhaCliente() {
+  clientRenderizarInformacoes();
+}
+
 /* ============================================================
  * DIAGNÓSTICO
  * ============================================================ */

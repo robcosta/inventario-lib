@@ -102,9 +102,8 @@ function abrirPlanilhaCliente() {
 }
 
 function formatarPlanilhaCliente() {
-  inventario.formatarPlanilhaCliente();
+  inventario.clientRenderizarInformacoes();
 }
-
 
 /* ============================================================
  * PROXIES — PLANILHA GERAL

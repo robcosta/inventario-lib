@@ -31,13 +31,14 @@
  *
  * ============================================================
  */
-function renderizarPlanilhaCliente_(contexto) {
+function renderizarPlanilhaCliente_(contexto, ssOverride) {
 
   if (!contexto) {
     throw new Error('renderizarPlanilhaCliente_: contexto inválido.');
   }
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = ssOverride || SpreadsheetApp.getActiveSpreadsheet();
+
   if (!ss) {
     throw new Error('Nenhuma planilha ativa.');
   }
@@ -57,18 +58,17 @@ function renderizarPlanilhaCliente_(contexto) {
   sheet.setHiddenGridlines(true);
 
   // ==========================================================
-  // 2️⃣ Aplicar Layout Institucional Base
+  // 2️⃣ Layout institucional
   // ==========================================================
 
   layoutBaseEstrutura_(sheet);
   layoutCabecalhoPRF_(sheet);
-  layoutTituloPrincipal_(sheet);
+  layoutTituloPrincipal_(sheet, 'INFORMAÇÕES BÁSICAS');
 
   // ==========================================================
-  // 3️⃣ Bloco — Informações Principais
+  // 3️⃣ Informações principais
   // ==========================================================
 
-  // Labels
   sheet.getRange("C8")
     .setValue("CONTEXTO DE TRABALHO :")
     .setFontFamily("Arial")
@@ -81,7 +81,6 @@ function renderizarPlanilhaCliente_(contexto) {
     .setFontSize(12)
     .setFontWeight("bold");
 
-  // Valores
   sheet.getRange("E8")
     .setValue(contexto.nome || "-")
     .setFontFamily("Arial")
@@ -93,7 +92,7 @@ function renderizarPlanilhaCliente_(contexto) {
     .setFontSize(12);
 
   // ==========================================================
-  // 4️⃣ Bloco — Permissões
+  // 4️⃣ Permissões
   // ==========================================================
 
   const permissoes = obterPermissoesCliente_(contexto);
@@ -101,8 +100,10 @@ function renderizarPlanilhaCliente_(contexto) {
   blocoPermissoesRenderer_(sheet, 10, permissoes);
 
   // ==========================================================
-  // 5️⃣ Rodapé Institucional
+  // 5️⃣ Rodapé
   // ==========================================================
 
   layoutRodapeInstitucional_(sheet, 16);
+
+  clienteRenderAbaManual_(ss.getId());
 }

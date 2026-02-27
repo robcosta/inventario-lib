@@ -1,23 +1,25 @@
 /**
  * ============================================================
- * CONTEXTO — FLUXO DE CRIAÇÃO (RENOVA TEMPLATE)
+ * CONTEXTO — CRIAÇÃO COMPLETA (ADMIN + CLIENTE + RELATÓRIO)
  * ============================================================
  *
- * Fluxo canônico:
- * 1. Executado SOMENTE a partir do ADMIN: Template
- * 2. Lista contextos existentes
- * 3. Solicita nome do contexto (CAIXA ALTA)
- * 4. Bloqueia duplicidade
- * 5. Copia a planilha ativa para gerar um NOVO ADMIN: Template
- * 6. Limpa qualquer resíduo de contexto da nova Template
- * 7. Cria estrutura de pastas CONTEXTOS/<NOME>/
- * 8. Renomeia a planilha ativa para ADMIN: <NOME>
- * 9. Move a planilha ADMIN para PLANILHA
- * 10. Cria planilha CLIENTE e move para LOCALIDADES
- * 11. Cria e ativa CONTEXTO_ADMIN via contexto_admin_manager
- * 12. Finaliza UX
+ * Fluxo oficial:
  *
- * ❗ Modelo 100% ID-based
+ * 1️⃣ Validar execução no ADMIN: TEMPLATE
+ * 2️⃣ Listar contextos existentes
+ * 3️⃣ Solicitar nome (CAIXA ALTA)
+ * 4️⃣ Bloquear duplicidade
+ * 5️⃣ Renovar TEMPLATE ADMIN
+ * 6️⃣ Criar estrutura de pastas
+ * 7️⃣ Renomear e mover ADMIN
+ * 8️⃣ Garantir templates CLIENTE e RELATÓRIO
+ * 9️⃣ Criar e formatar CLIENTE
+ * 🔟 Criar e formatar RELATÓRIO
+ * 1️⃣1️⃣ Salvar CONTEXTO_ADMIN
+ * 1️⃣2️⃣ Finalizar UX
+ *
+ * Modelo 100% ID-based
+ * ============================================================
  */
 
 function criarContextoTrabalho_() {
@@ -25,17 +27,20 @@ function criarContextoTrabalho_() {
   Logger.log('[FLUXO][CRIAR_CONTEXTO] INÍCIO');
 
   const ui = SpreadsheetApp.getUi();
-  const ssAtiva = SpreadsheetApp.getActiveSpreadsheet();
+  const ssAdmin = SpreadsheetApp.getActiveSpreadsheet();
 
-  if (!ssAtiva) {
+  if (!ssAdmin) {
     ui.alert('Nenhuma planilha ativa.');
     return;
   }
 
-  const nomePlanilhaAtual = ssAtiva.getName().toUpperCase();
+  const nomeAtual = ssAdmin.getName().toUpperCase();
 
-  // 0️⃣ Garantir execução apenas no TEMPLATE
-  if (!nomePlanilhaAtual.includes('TEMPLATE')) {
+  // ============================================================
+  // 1️⃣ VALIDAR TEMPLATE
+  // ============================================================
+
+  if (!nomeAtual.includes('TEMPLATE')) {
     ui.alert(
       'Criação de contexto só pode ser feita a partir da planilha:\n\nADMIN: TEMPLATE'
     );
@@ -43,7 +48,7 @@ function criarContextoTrabalho_() {
   }
 
   // ============================================================
-  // 1️⃣ LISTAR CONTEXTOS EXISTENTES (Drive físico)
+  // 2️⃣ LISTAR CONTEXTOS EXISTENTES
   // ============================================================
 
   const raiz = obterPastaInventario_();
@@ -65,11 +70,11 @@ function criarContextoTrabalho_() {
 
   const listaFormatada = nomesExistentes.length
     ? '\n\n📂 Contextos existentes:\n\n' +
-    nomesExistentes.map((n, i) => `${i + 1} - ${n}`).join('\n')
+      nomesExistentes.map((n, i) => `${i + 1} - ${n}`).join('\n')
     : '\n\n📂 Nenhum contexto existente ainda.';
 
   // ============================================================
-  // 2️⃣ SOLICITAR NOME
+  // 3️⃣ SOLICITAR NOME
   // ============================================================
 
   const resp = ui.prompt(
@@ -88,13 +93,10 @@ function criarContextoTrabalho_() {
   }
 
   // ============================================================
-  // 3️⃣ BLOQUEAR DUPLICIDADE
+  // 4️⃣ BLOQUEAR DUPLICIDADE
   // ============================================================
 
-  const jaExiste = nomesExistentes
-    .some(nome => nome.toUpperCase() === nomeContexto);
-
-  if (jaExiste) {
+  if (nomesExistentes.some(n => n.toUpperCase() === nomeContexto)) {
     ui.alert(
       '❌ Contexto já existente',
       `Já existe um contexto chamado:\n\n"${nomeContexto}"\n\nEscolha outro nome.`,
@@ -104,80 +106,98 @@ function criarContextoTrabalho_() {
   }
 
   // ============================================================
-  // 4️⃣ COPIAR TEMPLATE
+  // 5️⃣ RENOVAR TEMPLATE ADMIN
   // ============================================================
 
-  ssAtiva.toast('Copiando planilha template...', '📋 Criando', 3);
+  ssAdmin.toast('Renovando template ADMIN...', '📋 Criando', 3);
 
-  const fileAtivo = DriveApp.getFileById(ssAtiva.getId());
-  const fileNovaTemplate = fileAtivo.makeCopy('ADMIN: TEMPLATE');
+  const fileAdminAtual = DriveApp.getFileById(ssAdmin.getId());
+  const fileNovaTemplate = fileAdminAtual.makeCopy('ADMIN: TEMPLATE');
   const ssNovaTemplate = SpreadsheetApp.openById(fileNovaTemplate.getId());
 
-  SpreadsheetApp.setActiveSpreadsheet(ssNovaTemplate);
   limparContextoAtivo_();
 
-  SpreadsheetApp.setActiveSpreadsheet(ssAtiva);
-
   // ============================================================
-  // 5️⃣ CRIAR ESTRUTURA DE PASTAS
+  // 6️⃣ CRIAR ESTRUTURA DE PASTAS
   // ============================================================
 
-  ssAtiva.toast('Criando estrutura de pastas...', '📁 Configurando', 3);
+  ssAdmin.toast('Criando estrutura de pastas...', '📁 Configurando', 3);
 
   const pastaContexto = pastaContextosMae.createFolder(nomeContexto);
-
   const pastaPlanilhas = pastaContexto.createFolder('PLANILHA');
   const pastaCSVAdmin = pastaPlanilhas.createFolder('CSV_ADMIN');
   const pastaLocalidades = pastaContexto.createFolder('LOCALIDADES');
 
   // ============================================================
-  // 6️⃣ RENOMEAR ADMIN
+  // 7️⃣ RENOMEAR E MOVER ADMIN
   // ============================================================
 
-  ssAtiva.rename('ADMIN: ' + nomeContexto);
-  const fileAdmin = DriveApp.getFileById(ssAtiva.getId());
+  ssAdmin.rename('ADMIN: ' + nomeContexto);
 
-  ssAtiva.toast('Organizando planilha ADMIN...', '📂 Movendo', 3);
+  const fileAdmin = DriveApp.getFileById(ssAdmin.getId());
+  ssAdmin.toast('Movendo planilha ADMIN...', '📂 Organizando', 3);
   fileAdmin.moveTo(pastaPlanilhas);
 
   // ============================================================
-  // 7️⃣ CRIAR PLANILHA CLIENTE (A PARTIR DO TEMPLATE)
+  // 8️⃣ GARANTIR TEMPLATES
   // ============================================================
 
-  ssAtiva.toast('Gerando planilha CLIENTE...', '📊 Criando', 3);
+  ssAdmin.toast('Verificando templates...', '📦 Estrutura', 3);
 
-  const templateClienteFile = obterTemplateCliente_();
+  const templateCliente = garantirTemplatePlanilha_('CLIENTE');
+  const templateRelatorio = garantirTemplatePlanilha_('RELATORIO');
 
-  if (!templateClienteFile) {
-    ui.alert(
-      '❌ Template CLIENTE não encontrado.\n\nVerifique a pasta TEMPLATES.'
-    );
-    return;
-  }
+  // ============================================================
+  // 9️⃣ CRIAR E FORMATAR CLIENTE
+  // ============================================================
 
-  const fileCliente = templateClienteFile.makeCopy(
+  ssAdmin.toast('Gerando planilha CLIENTE...', '📊 Criando', 3);
+
+  const fileCliente = templateCliente.makeCopy(
     'CLIENTE: ' + nomeContexto,
     pastaLocalidades
   );
 
-  const planilhaCliente = SpreadsheetApp.openById(fileCliente.getId());
+  const ssCliente = SpreadsheetApp.openById(fileCliente.getId());
 
-  // 🔄 Limpa qualquer contexto antigo herdado
-  SpreadsheetApp.setActiveSpreadsheet(planilhaCliente);
+  renderizarPlanilhaCliente_(
+    { nome: nomeContexto, localidadeAtivaNome: '-' },
+    ssCliente
+  );
+
   limparContextoAtivo_();
 
-  SpreadsheetApp.setActiveSpreadsheet(ssAtiva);
-
   // ============================================================
-  // 8️⃣ SALVAR CONTEXTO ADMIN
+  // 🔟 CRIAR E FORMATAR RELATÓRIO
   // ============================================================
 
-  ssAtiva.toast('Salvando contexto ADMIN...', '💾 Salvando', 3);
+  ssAdmin.toast('Gerando planilha RELATÓRIO...', '📊 Criando', 3);
+
+  const fileRelatorio = templateRelatorio.makeCopy(
+    'RELATÓRIO: ' + nomeContexto,
+    pastaLocalidades
+  );
+
+  const ssRelatorio = SpreadsheetApp.openById(fileRelatorio.getId());
+
+  renderizarPlanilhaRelatorio_(
+    { nome: nomeContexto },
+    ssRelatorio
+  );
+
+  limparContextoAtivo_();
+
+  // ============================================================
+  // 1️⃣1️⃣ SALVAR CONTEXTO ADMIN
+  // ============================================================
+
+  ssAdmin.toast('Salvando contexto ADMIN...', '💾 Salvando', 3);
 
   const contextoAdmin = {
     nome: nomeContexto,
-    planilhaAdminId: ssAtiva.getId(),
-    planilhaClienteId: planilhaCliente.getId(),
+    planilhaAdminId: ssAdmin.getId(),
+    planilhaClienteId: ssCliente.getId(),
+    planilhaRelatorioId: ssRelatorio.getId(),
     pastaContextoId: pastaContexto.getId(),
     pastaPlanilhasId: pastaPlanilhas.getId(),
     pastaCSVAdminId: pastaCSVAdmin.getId(),
@@ -191,10 +211,10 @@ function criarContextoTrabalho_() {
   definirContextoAtivo_(contextoAdmin);
 
   // ============================================================
-  // 9️⃣ FINALIZAÇÃO
+  // 1️⃣2️⃣ FINALIZAÇÃO
   // ============================================================
 
-  ssAtiva.toast(
+  ssAdmin.toast(
     'Contexto "' + nomeContexto + '" criado com sucesso!',
     '✅ Finalizado',
     4
@@ -204,24 +224,8 @@ function criarContextoTrabalho_() {
 
   ui.alert(
     '✅ Contexto "' + nomeContexto + '" criado com sucesso!\n\n' +
-    '🎉 Menu admin já está ativo e pronto para uso.'
+    '🎉 ADMIN, CLIENTE e RELATÓRIO prontos para uso.'
   );
 
   Logger.log('[FLUXO][CRIAR_CONTEXTO] FIM');
-}
-
-function obterTemplateCliente_() {
-
-  const raiz = obterPastaInventario_();
-  if (!raiz) return null;
-
-  const pastaTemplates = raiz.getFoldersByName('TEMPLATES');
-  if (!pastaTemplates.hasNext()) return null;
-
-  const pasta = pastaTemplates.next();
-  const arquivos = pasta.getFilesByName('CLIENTE: TEMPLATE');
-
-  if (!arquivos.hasNext()) return null;
-
-  return arquivos.next();
 }

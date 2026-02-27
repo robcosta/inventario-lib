@@ -3,13 +3,13 @@
  * CONTEXTO DOMÍNIO — RESOLUÇÃO ÚNICA
  * ============================================================
  *
- * Resolve o contexto ativo (ADMIN, CLIENTE ou RELATORIOS)
+ * Resolve o contexto ativo (ADMIN, CLIENTE ou RELATORIO)
  * com prioridade determinística.
  *
  * Ordem de resolução:
  * 1️⃣ ADMIN (ScriptProperties por ID)
  * 2️⃣ CLIENTE (DocumentProperties)
- * 3️⃣ RELATORIOS (DocumentProperties)
+ * 3️⃣ RELATORIO (DocumentProperties)
  *
  * Retorna contrato normalizado.
  */
@@ -53,14 +53,14 @@ function obterContextoDominio_() {
   /* ============================================================
    * 3️⃣ RELATÓRIOS
    * ============================================================ */
-  const rawRelatorios = PropertiesService
+  const rawRelatorio = PropertiesService
     .getDocumentProperties()
-    .getProperty(PROPRIEDADES_RELATORIOS.CONTEXTO_RELATORIOS);
+    .getProperty(PROPRIEDADES_RELATORIO.CONTEXTO_RELATORIO);
 
-  if (rawRelatorios) {
+  if (rawRelatorio) {
     return normalizarContexto_(
-      JSON.parse(rawRelatorios),
-      'RELATORIOS',
+      JSON.parse(rawRelatorio),
+      'RELATORIO',
       'DOCUMENT_PROPERTIES'
     );
   }
@@ -84,7 +84,7 @@ function normalizarContexto_(dados, tipo, origem) {
 
     planilhaAdminId: dados.planilhaAdminId || null,
     planilhaClienteId: dados.planilhaClienteId || null,
-    planilhaRelatoriosId: dados.planilhaRelatoriosId || null,
+    planilhaRelatorioId: dados.planilhaRelatorioId || null,
     planilhaGeralId: dados.planilhaGeralId || obterPlanilhaGeralId_() || null,
 
     pastaContextoId: dados.pastaContextoId || null,

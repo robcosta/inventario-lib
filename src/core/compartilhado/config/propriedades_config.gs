@@ -52,6 +52,6 @@ const PROPRIEDADES_CLIENTE = {
 /* ============================================================
  * 📊 RELATÓRIOS
  * ============================================================ */
-const PROPRIEDADES_RELATORIOS = {
-  CONTEXTO_RELATORIOS: 'CONTEXTO_RELATORIOS'
+const PROPRIEDADES_RELATORIO = {
+  CONTEXTO_RELATORIO: 'CONTEXTO_RELATORIO'
 };

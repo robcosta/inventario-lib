@@ -14,7 +14,7 @@
  */
 function onOpen(e) {
   try {
-    inventario.clientRenderMenu();
+    inventario.clientRenderMenu(); 
     SpreadsheetApp.getActiveSpreadsheet()
       .toast("🔄 Atualize as informações para sincronizar o contexto.", "📦 Inventário Patrimonial", 7);
   } catch (err) {
@@ -72,7 +72,7 @@ function clientAbrirPlanilhaGeral() {
  * PROXIES — CLIENTE FORMATAÇÃO
  * ============================================================ */
 function formatarPlanilhaCliente() {
-  inventario.formatarPlanilhaCliente();
+  inventario.clientRenderizarInformacoes();
 }
 
 /* ============================================================
@@ -96,4 +96,39 @@ function mostrarVersaoSistema() {
   inventario.mostrarVersaoSistema();
 }
 
+function diagnosticarProtecoesCliente() {
 
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("INFORMAÇÕES");
+
+  Logger.log("=== DIAGNÓSTICO DE PROTEÇÕES ===");
+
+  const rangeProtections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+  rangeProtections.forEach(p => {
+    Logger.log("Range protegido: " + p.getRange().getA1Notation());
+    Logger.log("Descrição: " + p.getDescription());
+  });
+
+  const sheetProtections = sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+  sheetProtections.forEach(p => {
+    Logger.log("Aba inteira protegida");
+    Logger.log("Descrição: " + p.getDescription());
+  });
+}
+
+function removerProtecoesBlocoInformacoes() {
+
+  const sheet = SpreadsheetApp
+    .getActiveSpreadsheet()
+    .getSheetByName("INFORMAÇÕES");
+
+  const protections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+
+  protections.forEach(p => {
+    if (p.getDescription() === "Bloco protegido - Informações") {
+      p.remove();
+    }
+  });
+
+  SpreadsheetApp.getUi().alert("Proteções removidas.");
+}
