@@ -21,16 +21,31 @@
  * Modelo 100% ID-based
  * ============================================================
  */
-function garantirCapaPrimeiraAdmin_(ss) {
+function garantirCapaPrimeiraAdmin_(ss, subtitulo) {
   let capa = ss.getSheetByName('CAPA');
 
   if (!capa) {
     capa = ss.insertSheet('CAPA');
-    capa.getRange('A1').setValue('CAPA ADMIN');
   }
 
   ss.setActiveSheet(capa);
   ss.moveActiveSheet(1);
+
+  capa.clear();
+  capa.setHiddenGridlines(true);
+
+  layoutBaseEstrutura_(capa);
+  layoutCabecalhoPRF_(capa);
+  layoutTituloPrincipal_(capa, (subtitulo || 'ADMIN').toUpperCase());
+
+  capa.getRange('D9')
+    .setValue('Para acessar as funcionalidades, utilize o menu "Inventário".')
+    .setFontFamily('Arial')
+    .setFontSize(11)
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+
+  layoutRodapeInstitucional_(capa, 12);
 }
 
 function removerAbasEmBrancoAdmin_(ss) {
@@ -179,7 +194,7 @@ function criarContextoTrabalho_() {
     const fileNovaTemplate = fileAdminAtual.makeCopy('ADMIN: TEMPLATE');
     const ssNovaTemplate = SpreadsheetApp.openById(fileNovaTemplate.getId());
 
-    garantirCapaPrimeiraAdmin_(ssNovaTemplate);
+    garantirCapaPrimeiraAdmin_(ssNovaTemplate, 'TEMPLATE');
     removerAbasEmBrancoAdmin_(ssNovaTemplate);
 
     limparContextoAtivo_();
@@ -201,7 +216,7 @@ function criarContextoTrabalho_() {
 
     ssAdmin.rename('ADMIN: ' + nomeContexto);
 
-    garantirCapaPrimeiraAdmin_(ssAdmin);
+    garantirCapaPrimeiraAdmin_(ssAdmin, nomeContexto);
     removerAbasEmBrancoAdmin_(ssAdmin);
 
     const fileAdmin = DriveApp.getFileById(ssAdmin.getId());
