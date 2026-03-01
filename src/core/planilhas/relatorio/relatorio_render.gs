@@ -60,6 +60,31 @@ function renderizarPlanilhaRelatorio_(contexto, ssOverride) {
 
   relatorioRenderAbaManual_(ss);
   criarAbaControleRelatorio_(ss);
+  removerAbasEmBrancoRelatorio_(ss);
+}
+
+function removerAbasEmBrancoRelatorio_(ss) {
+  const preservar = {
+    CAPA: true,
+    MANUAL: true,
+    '__CONTROLE_PROCESSAMENTO__': true,
+    'CONTROLE_PROCESSAMENTO': true
+  };
+
+  ss.getSheets().forEach(sheet => {
+    const nome = sheet.getName();
+    if (preservar[nome]) return;
+
+    const range = sheet.getDataRange();
+    if (
+      range.getLastRow() === 1 &&
+      range.getLastColumn() === 1 &&
+      range.getValue() === '' &&
+      ss.getSheets().length > 1
+    ) {
+      ss.deleteSheet(sheet);
+    }
+  });
 }
 
 function relatorioRenderAbaManual_(ss) {
