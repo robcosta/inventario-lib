@@ -49,10 +49,25 @@ function selecionarContextoTrabalho() {
 /* ============================================================
  * PROXIES — ACESSOS
  * ============================================================ */
-function gerenciarAcessosContexto() {
-  inventario.gerenciarAcessosContexto();
+function gerenciarAcessosSupervisor() {
+  inventario.gerenciarAcessosSupervisor();
 }
 
+function gerenciarAcessosAdministrador() {
+  inventario.gerenciarAcessosAdministrador();
+}
+
+function gerenciarAcessosOperador() {
+  inventario.gerenciarAcessosOperador();
+}
+
+function gerenciarAcessosAdmin() {
+  inventario.gerenciarAcessosAdmin();
+}
+
+function gerenciarAcessosCliente() {
+  inventario.gerenciarAcessosCliente();
+}
 
 /* ============================================================
  * PROXIES — ÁREA DE FOTOS
