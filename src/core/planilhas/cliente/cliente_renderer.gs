@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * CLIENTE — RENDERIZAÇÃO DA ABA "INFORMAÇÕES"
+ * CLIENTE — RENDERIZAÇÃO DA ABA "CAPA"
  * ============================================================
  *
  * Responsável por montar a capa institucional da planilha CLIENTE.
@@ -33,6 +33,8 @@
  */
 function renderizarPlanilhaCliente_(contexto, ssOverride) {
 
+  Logger.log(`renderizarPlanilhaCliente_: renderizando aba CAPA para o contexto ${contexto.nome || 'não definido'}`);
+
   if (!contexto) {
     throw new Error('renderizarPlanilhaCliente_: contexto inválido.');
   }
@@ -44,16 +46,29 @@ function renderizarPlanilhaCliente_(contexto, ssOverride) {
   }
 
   // ==========================================================
-  // 1️⃣ Garantir aba "INFORMAÇÕES"
+  // 1️⃣ Garantir aba "CAPA"
   // ==========================================================
 
-  let sheet = ss.getSheetByName('INFORMAÇÕES');
+  const sheetInformacoes = ss.getSheetByName('INFORMAÇÕES');
+  let sheet = ss.getSheetByName('CAPA');
+
+  if (!sheet && sheetInformacoes) {
+    sheetInformacoes.setName('CAPA');
+    sheet = sheetInformacoes;
+  }
 
   if (!sheet) {
-    sheet = ss.insertSheet('INFORMAÇÕES');
+    sheet = ss.insertSheet('CAPA');
+  }
+
+  if (sheetInformacoes && sheetInformacoes.getName() === 'INFORMAÇÕES') {
+    if (ss.getSheets().length > 1) {
+      ss.deleteSheet(sheetInformacoes);
+    }
   }
 
   ss.setActiveSheet(sheet);
+  ss.moveActiveSheet(1);
   sheet.clear();
   sheet.setHiddenGridlines(true);
 
@@ -106,4 +121,20 @@ function renderizarPlanilhaCliente_(contexto, ssOverride) {
   layoutRodapeInstitucional_(sheet, 16);
 
   clienteRenderAbaManual_(ss.getId());
+
+  const proteger = { CAPA: true, MANUAL: true };
+  ss.getSheets().forEach(s => {
+    const nome = s.getName();
+    if (proteger[nome]) return;
+
+    const range = s.getDataRange();
+    if (
+      range.getLastRow() === 1 &&
+      range.getLastColumn() === 1 &&
+      range.getValue() === '' &&
+      ss.getSheets().length > 1
+    ) {
+      ss.deleteSheet(s);
+    }
+  });
 }

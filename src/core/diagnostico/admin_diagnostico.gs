@@ -25,6 +25,7 @@ function renderDiagnosticoContexto_(d) {
 🆔 IDS DAS PLANILHAS:
 - Planilha ADMIN: ${d.planilhas.admin || 'não definido'}
 - Planilha CLIENTE: ${d.planilhas.cliente || 'não definido'}
+- Planilha RELATÓRIO: ${d.planilhas.relatorio || 'não definido'}
 - Planilha GERAL (global): ${d.planilhas.geral || 'não definido'}
 
 📁 ESTRUTURA DO CONTEXTO (Drive):
@@ -60,6 +61,7 @@ function coletarDiagnosticoContexto_() {
     planilhas: {
       admin: contexto?.planilhaAdminId || null,
       cliente: contexto?.planilhaClienteId || null,
+      relatorio: contexto?.planilhaRelatorioId || null,
       geral: sistemaGlobal.planilhaGeralId || null
     },
 

@@ -28,10 +28,36 @@ function obterNomePlanilhaContexto_(tipo, nomeContexto) {
 }
 
 /**
- * Garante que o template exista.
- * Se não existir, cria automaticamente.
+ * Aplica estrutura/formatação inicial na template recem-criada.
  */
-function garantirTemplatePlanilha_(tipo) {
+function formatarTemplatePorTipo_(tipo, ssTemplate) {
+  if (tipo === 'CLIENTE') {
+    renderizarPlanilhaCliente_(
+      {
+        nome: 'TEMPLATE',
+        localidadeAtivaNome: '-',
+        planilhaClienteId: ssTemplate.getId()
+      },
+      ssTemplate
+    );
+    return;
+  }
+
+  if (tipo === 'RELATORIO') {
+    renderizarPlanilhaRelatorio_(
+      { nome: 'TEMPLATE' },
+      ssTemplate
+    );
+    return;
+  }
+
+  throw new Error('Tipo de planilha desconhecido: ' + tipo);
+}
+
+/**
+ * Garante template e retorna status (existente/criada).
+ */
+function garantirTemplatePlanilhaComStatus_(tipo) {
 
   const raiz = obterPastaInventario_();
   if (!raiz) {
@@ -44,16 +70,30 @@ function garantirTemplatePlanilha_(tipo) {
   const arquivos = pastaTemplates.getFilesByName(nomeTemplate);
 
   if (arquivos.hasNext()) {
-    return arquivos.next();
+    return {
+      file: arquivos.next(),
+      criada: false
+    };
   }
 
-  // Template não existe → criar automaticamente
   const ssNova = SpreadsheetApp.create(nomeTemplate);
   const fileNovo = DriveApp.getFileById(ssNova.getId());
 
+  formatarTemplatePorTipo_(tipo, ssNova);
   fileNovo.moveTo(pastaTemplates);
 
-  return fileNovo;
+  return {
+    file: fileNovo,
+    criada: true
+  };
+}
+
+/**
+ * Garante que o template exista.
+ * Se não existir, cria automaticamente.
+ */
+function garantirTemplatePlanilha_(tipo) {
+  return garantirTemplatePlanilhaComStatus_(tipo).file;
 }
 
 /**

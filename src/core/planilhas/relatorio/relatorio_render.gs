@@ -30,6 +30,8 @@
  */
 function renderizarPlanilhaRelatorio_(contexto, ssOverride) {
 
+  Logger.log(`renderizarPlanilhaRelatorio_: renderizando aba CAPA para o contexto ${contexto.nome || 'não definido'}`);
+
   if (!contexto) {
     throw new Error('renderizarPlanilhaRelatorio_: contexto inválido.');
   }
@@ -56,5 +58,19 @@ function renderizarPlanilhaRelatorio_(contexto, ssOverride) {
 
   layoutRodapeInstitucional_(sheet, 12);
 
+  relatorioRenderAbaManual_(ss);
   criarAbaControleRelatorio_(ss);
+}
+
+function relatorioRenderAbaManual_(ss) {
+  let manual = ss.getSheetByName('MANUAL');
+
+  if (!manual) {
+    manual = ss.insertSheet('MANUAL');
+  }
+
+  manual.clear();
+  manual.setHiddenGridlines(true);
+  manual.getRange('A1').setValue('MANUAL — RELATÓRIO');
+  manual.getRange('A2').setValue('Aba reservada para orientações e procedimentos do relatório.');
 }
