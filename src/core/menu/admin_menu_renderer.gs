@@ -76,7 +76,9 @@ function adminRenderMenu_() {
     // Acessos
     .addSubMenu(
       ui.createMenu('🔐 Gerenciar Acessos')
-        .addItem('👤 Acesso ADMIN', 'gerenciarAcessosAdmin')
+        .addItem('👑 Acesso SUPERVISOR', 'gerenciarAcessosSupervisor')
+        .addItem('🛡️ Acesso ADMINISTRADOR', 'gerenciarAcessosAdministrador')
+        .addItem('🧰 Acesso OPERADOR', 'gerenciarAcessosOperador')
         .addItem('👥 Acesso CLIENTE', 'gerenciarAcessosCliente')
     )
     .addSeparator()

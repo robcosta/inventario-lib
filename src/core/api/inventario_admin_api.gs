@@ -33,6 +33,18 @@ function repararContextoAdmin() {
 /* ============================================================
  * ACESSOS
  * ============================================================ */
+function gerenciarAcessosSupervisor() {
+  gerenciarAcessosSupervisor_();
+}
+
+function gerenciarAcessosAdministrador() {
+  gerenciarAcessosAdministrador_();
+}
+
+function gerenciarAcessosOperador() {
+  gerenciarAcessosOperador_();
+}
+
 function gerenciarAcessosAdmin() {
   gerenciarAcessosAdmin_();
 }
