@@ -14,6 +14,7 @@ function formatarPlanilha_(spreadsheetId) {
   sheets.forEach(sheet => {
     const nomeAba = sheet.getName();
     if (nomeAba === '__CONTROLE_PROCESSAMENTO__') return;
+    if (nomeAba === 'CAPA') return;
 
     ss.toast(`Processando aba: ${nomeAba}`, '🛠️ Formatação', 3);
 
@@ -94,10 +95,33 @@ function formatarPlanilha_(spreadsheetId) {
     sheet.getRange('J:L').clearFormat();
   });
 
+  reconstruirCapaAdminAposFormatacao_(ss, contexto);
+
   // ✨ NOVIDADE: Reconstrói a legenda após toda a formatação pesada
   if (contexto) {
     atualizarLegendasPlanilhaAdmin_(contexto);
   }
 
   ss.toast('Formatação concluída com sucesso', '✅ Concluído', 6);
+}
+
+function reconstruirCapaAdminAposFormatacao_(ss, contexto) {
+  if (!ss) return;
+
+  let subtitulo = null;
+
+  if (contexto && contexto.nome) {
+    subtitulo = contexto.nome;
+  } else {
+    const nomePlanilha = ss.getName() || '';
+    subtitulo = nomePlanilha.replace(/^ADMIN\s*:\s*/i, '').trim() || 'ADMIN';
+  }
+
+  try {
+    if (typeof garantirCapaPrimeiraAdmin_ === 'function') {
+      garantirCapaPrimeiraAdmin_(ss, subtitulo);
+    }
+  } catch (e) {
+    Logger.log('[FORMATAR][CAPA][ERRO] ' + e.message);
+  }
 }

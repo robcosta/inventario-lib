@@ -14,20 +14,24 @@
 function clientAtualizarInformacoes_() {
 
   const ui = SpreadsheetApp.getUi();
+  Logger.log('[CLIENTE][ATUALIZAR] Início');
 
   // ==========================================================
   // 1️⃣ Obter contexto atual
   // ==========================================================
   let contexto = obterContextoDominio_();
+  Logger.log('[CLIENTE][ATUALIZAR] Contexto inicial: ' + JSON.stringify(contexto));
 
   // ==========================================================
   // 2️⃣ Validar / reconstruir se necessário
   // ==========================================================
   if (!contexto || !contextoClienteValido_(contexto)) {
+    Logger.log('[CLIENTE][ATUALIZAR] Contexto inválido. Tentando auto-discovery...');
 
     contexto = descobrirContextoClienteAutomaticamente_();
 
     if (!contexto) {
+      Logger.log('[CLIENTE][ATUALIZAR][ERRO] Auto-discovery falhou.');
       ui.alert('❌ Não foi possível reconstruir o contexto.');
       return;
     }
@@ -36,6 +40,7 @@ function clientAtualizarInformacoes_() {
 
     // Após salvar, obter novamente via domínio
     contexto = obterContextoDominio_();
+    Logger.log('[CLIENTE][ATUALIZAR] Contexto após auto-discovery: ' + JSON.stringify(contexto));
   }
 
   // ==========================================================
@@ -43,6 +48,7 @@ function clientAtualizarInformacoes_() {
   // ==========================================================
   try {
     contexto = sincronizarLocalidadeAtiva_(contexto);
+    Logger.log('[CLIENTE][ATUALIZAR] Localidade sincronizada.');
   } catch (e) {
     Logger.log('[CLIENTE][SYNC][ERRO] ' + e.message);
   }
@@ -52,7 +58,9 @@ function clientAtualizarInformacoes_() {
   // ==========================================================
   try {
     clienteMontarInformacoes_(contexto);
+    Logger.log('[CLIENTE][ATUALIZAR] Renderização concluída.');
   } catch (e) {
+    Logger.log('[CLIENTE][ATUALIZAR][ERRO_RENDER] ' + e.message);
     ui.alert(
       '❌ Erro ao atualizar informações.\n\n' + e.message
     );
@@ -77,4 +85,6 @@ function clientAtualizarInformacoes_() {
       '📦 Inventário',
       4
     );
+
+  Logger.log('[CLIENTE][ATUALIZAR] Fim com sucesso');
 }

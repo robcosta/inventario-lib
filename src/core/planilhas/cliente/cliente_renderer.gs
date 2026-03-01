@@ -138,3 +138,28 @@ function renderizarPlanilhaCliente_(contexto, ssOverride) {
     }
   });
 }
+
+/**
+ * Compatibilidade: mantém chamadas legadas para atualização de informações.
+ */
+function clienteMontarInformacoes_(contexto, usarPlanilhaAtiva) {
+  if (!contexto) {
+    throw new Error('clienteMontarInformacoes_: contexto inválido.');
+  }
+
+  let ss = null;
+
+  if (usarPlanilhaAtiva) {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  }
+
+  if (!ss && contexto.planilhaClienteId) {
+    ss = SpreadsheetApp.openById(contexto.planilhaClienteId);
+  }
+
+  if (!ss) {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  }
+
+  renderizarPlanilhaCliente_(contexto, ss);
+}
