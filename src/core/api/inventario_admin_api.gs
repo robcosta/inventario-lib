@@ -94,6 +94,14 @@ function formatarPlanilhaCliente() {
   clientRenderizarInformacoes();
 }
 
+function adminAbrirPlanilhaRelatorio() {
+  abrirPlanilhaRelatorio_();
+}
+
+function adminRelatorioGerarVisaoGeral() {
+  relatorioGerarVisaoGeral_();
+}
+
 /* ============================================================
  * DIAGNÓSTICO
  * ============================================================ */

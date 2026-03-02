@@ -76,6 +76,17 @@ function formatarPlanilhaCliente() {
 }
 
 /* ============================================================
+ * PROXIES — PLANILHA RELATÓRIO
+ * ============================================================ */
+function abrirPlanilhaRelatorio() {
+  inventario.abrirPlanilhaRelatorio();
+}
+
+function relatorioGerarVisaoGeral() {
+  inventario.relatorioGerarVisaoGeral();
+}
+
+/* ============================================================
  * PROXIES — DIAGNÓSTICO
  * ============================================================ */
 function clientExecutarDiagnostico() {

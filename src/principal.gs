@@ -31,9 +31,24 @@ function onOpen() {
       clientRenderMenu();
       return;
     }
+
+    const rawRelatorio = propsDoc.getProperty('CONTEXTO_RELATORIO');
+    if (rawRelatorio) {
+      Logger.log('[PRINCIPAL][ONOPEN] Renderizando menu RELATÓRIO');
+      relatorioRenderMenu();
+      return;
+    }
     
     Logger.log('[PRINCIPAL][ONOPEN] Nenhum contexto encontrado - sem menu');
   } catch (e) {
     Logger.log('[PRINCIPAL][ONERROR] ' + e.message);
+  }
+}
+
+function onEdit(e) {
+  try {
+    registrarEdicaoManualRelatorio_(e);
+  } catch (err) {
+    Logger.log('[PRINCIPAL][ONEDIT][ERRO] ' + err.message);
   }
 }

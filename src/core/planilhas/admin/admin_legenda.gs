@@ -95,30 +95,41 @@ function atualizarLegendasPlanilhaAdmin_(contexto) {
     return;
   }
 
-  const abas = ss.getSheets();
+  let abas;
+  try {
+    abas = ss.getSheets();
+  } catch (e) {
+    console.warn('[LEGENDA] Erro ao obter abas:', e.message);
+    return;
+  }
 
   abas.forEach(sheet => {
+    try {
+      if (!sheet) return;
 
-    if (!sheet || sheet.getName() === '__CONTROLE_PROCESSAMENTO__') {
-      return;
+      const nomeAba = sheet.getName();
+      if (nomeAba === '__CONTROLE_PROCESSAMENTO__') return;
+      if (nomeAba === 'CAPA') return;
+
+      removerLegendaAntiga_(sheet);
+
+      const ultimaLinha = sheet.getLastRow();
+      const linhaDestino = ultimaLinha < 5 ? 10 : ultimaLinha + 2;
+      const totalColunas = Math.max(sheet.getLastColumn(), 1);
+
+      const range = sheet.getRange(linhaDestino, 1, 1, totalColunas);
+
+      try { range.breakApart(); } catch (_) {}
+
+      range
+        .merge()
+        .setBackground('#ffffff')
+        .setRichTextValue(richTextFinal)
+        .setHorizontalAlignment('left')
+        .setVerticalAlignment('middle');
+    } catch (e) {
+      console.warn('[LEGENDA] Erro ao atualizar aba:', sheet ? sheet.getName() : '-', e.message);
     }
-
-    removerLegendaAntiga_(sheet);
-
-    const ultimaLinha = sheet.getLastRow();
-    const linhaDestino = ultimaLinha < 5 ? 10 : ultimaLinha + 2;
-    const totalColunas = Math.max(sheet.getLastColumn(), 1);
-
-    const range = sheet.getRange(linhaDestino, 1, 1, totalColunas);
-
-    try { range.breakApart(); } catch (_) {}
-
-    range
-      .merge()
-      .setBackground('#ffffff')
-      .setRichTextValue(richTextFinal)
-      .setHorizontalAlignment('left')
-      .setVerticalAlignment('middle');
   });
 }
 

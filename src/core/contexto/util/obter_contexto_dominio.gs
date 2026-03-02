@@ -65,6 +65,15 @@ function obterContextoDominio_() {
     );
   }
 
+  const contextoRelatorioDescoberto = descobrirContextoRelatorioAutomaticamente_();
+  if (contextoRelatorioDescoberto) {
+    return normalizarContexto_(
+      contextoRelatorioDescoberto,
+      'RELATORIO',
+      'AUTO_DISCOVERY'
+    );
+  }
+
   return null;
 }
 

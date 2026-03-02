@@ -124,6 +124,14 @@ function adminRenderMenu_() {
     )
     .addSeparator()
 
+    // Planilha RELATÓRIO
+    .addSubMenu(
+      ui.createMenu('📙 Planilha Relatório')
+        .addItem('📂 Abrir Planilha', 'abrirPlanilhaRelatorio')
+        .addItem('📈 Visão Geral', 'relatorioGerarVisaoGeral')
+    )
+    .addSeparator()
+
     // Diagnóstico
     .addSubMenu(
       ui.createMenu('🧪 Diagnóstico')

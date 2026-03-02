@@ -40,11 +40,42 @@ function repararContextoAdmin_() {
   const pastaCSVAdmin = obterOuCriarSubpasta_(pastaPlanilhas, 'CSV_ADMIN');
   const pastaLocalidades = obterOuCriarSubpasta_(pastaContexto, 'LOCALIDADES');
 
-  // Localizar planilha CLIENTE
+  // Localizar planilhas CLIENTE e RELATÓRIO
   let planilhaClienteId = null;
-  const filesCliente = pastaLocalidades.getFilesByType(MimeType.GOOGLE_SHEETS);
-  if (filesCliente.hasNext()) {
-    planilhaClienteId = filesCliente.next().getId();
+  let planilhaRelatorioId = null;
+  let fallbackPrimeiraPlanilhaId = null;
+
+  const filesLocalidades = pastaLocalidades.getFilesByType(MimeType.GOOGLE_SHEETS);
+  while (filesLocalidades.hasNext()) {
+    const file = filesLocalidades.next();
+    const nome = String(file.getName() || '').toUpperCase();
+
+    if (!fallbackPrimeiraPlanilhaId) {
+      fallbackPrimeiraPlanilhaId = file.getId();
+    }
+
+    if (!planilhaClienteId && nome.startsWith('CLIENTE:')) {
+      planilhaClienteId = file.getId();
+      continue;
+    }
+
+    if (
+      !planilhaRelatorioId &&
+      (
+        nome.startsWith('RELATÓRIO:') ||
+        nome.startsWith('RELATÓRIOS:') ||
+        nome.startsWith('RELATORIO:') ||
+        nome.startsWith('RELATORIOS:')
+      )
+    ) {
+      planilhaRelatorioId = file.getId();
+      continue;
+    }
+  }
+
+  // Fallback legado: se só existir uma planilha na pasta LOCALIDADES
+  if (!planilhaClienteId && !planilhaRelatorioId && fallbackPrimeiraPlanilhaId) {
+    planilhaClienteId = fallbackPrimeiraPlanilhaId;
   }
 
   const contextoAdmin = {
@@ -52,6 +83,7 @@ function repararContextoAdmin_() {
 
     planilhaAdminId: ss.getId(),
     planilhaClienteId,
+    planilhaRelatorioId,
     planilhaGeralId: obterPlanilhaGeralId_(),
 
     pastaContextoId: pastaContexto.getId(),

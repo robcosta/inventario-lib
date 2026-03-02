@@ -46,6 +46,14 @@ function adminAbrirPlanilha() {
   adminAbrirPlanilha_();
 }
 
+function clientAbrirPlanilhaRelatorio() {
+  abrirPlanilhaRelatorio_();
+}
+
+function clientRelatorioGerarVisaoGeral() {
+  relatorioGerarVisaoGeral_();
+}
+
 /* ============================================================
  * DIAGNÓSTICO / SUPORTE
  * ============================================================ */

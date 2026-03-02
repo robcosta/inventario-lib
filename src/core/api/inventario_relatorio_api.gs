@@ -16,9 +16,7 @@ function relatorioRenderizarCapa() {
     throw new Error('Nenhum contexto ativo.');
   }
 
-  if (!contexto.planilhaRelatorioId) {
-    throw new Error('ID da planilha RELATÓRIO não encontrado no contexto.');
-  }
+  const planilhaRelatorioId = resolverPlanilhaRelatorioId_(contexto);
 
   const ssAtual = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -26,7 +24,7 @@ function relatorioRenderizarCapa() {
   // Se já estiver na RELATÓRIO
   // ==========================================================
 
-  if (ssAtual.getId() === contexto.planilhaRelatorioId) {
+  if (ssAtual.getId() === planilhaRelatorioId) {
 
     renderizarPlanilhaRelatorio_(contexto, ssAtual);
     return;
@@ -36,7 +34,19 @@ function relatorioRenderizarCapa() {
   // Se estiver na ADMIN ou CLIENTE
   // ==========================================================
 
-  const ssRelatorio = SpreadsheetApp.openById(contexto.planilhaRelatorioId);
+  const ssRelatorio = SpreadsheetApp.openById(planilhaRelatorioId);
 
   renderizarPlanilhaRelatorio_(contexto, ssRelatorio);
+}
+
+function relatorioRenderMenu() {
+  relatorioRenderMenu_();
+}
+
+function relatorioGerarVisaoGeral() {
+  relatorioGerarVisaoGeral_();
+}
+
+function abrirPlanilhaRelatorio() {
+  abrirPlanilhaRelatorio_();
 }
