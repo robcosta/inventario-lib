@@ -3,11 +3,11 @@
  * ============================================================ */
 
 
-function aplicarEstiloBloco_(sheet, linhas, estilo) {
+function aplicarEstiloBloco_(sheet, linhas, estilo, maxCol) {
 
   if (!linhas.length) return;
 
-  const lastCol = sheet.getLastColumn();
+  const lastCol = maxCol || sheet.getLastColumn();
 
   linhas.forEach(linha => {
 
@@ -164,10 +164,10 @@ function obterLocalidade_(valA, linha) {
  */
 
 function aplicarCabecalhoPrincipal_(sheet) {
-  sheet.getRange('A1:I1').merge().setFontSize(35).setFontWeight('bold').setHorizontalAlignment('center');
-  sheet.getRange('A2:I2').merge().setFontSize(14).setFontWeight('bold').setHorizontalAlignment('center');
-  sheet.getRange('A3:I3').merge().setFontSize(13).setFontWeight('bold').setHorizontalAlignment('center');
-  sheet.getRange('A4:I4').merge().setFontSize(13).setFontWeight('bold').setHorizontalAlignment('center');
+  sheet.getRange('A1:G1').merge().setFontSize(35).setFontWeight('bold').setHorizontalAlignment('center');
+  sheet.getRange('A2:G2').merge().setFontSize(14).setFontWeight('bold').setHorizontalAlignment('center');
+  sheet.getRange('A3:G3').merge().setFontSize(13).setFontWeight('bold').setHorizontalAlignment('center');
+  sheet.getRange('A4:G4').merge().setFontSize(13).setFontWeight('bold').setHorizontalAlignment('center');
 }
 
 

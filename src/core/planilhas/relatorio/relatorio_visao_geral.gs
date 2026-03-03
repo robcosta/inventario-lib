@@ -43,10 +43,12 @@ function relatorioGerarVisaoGeral_() {
 
   const localizacaoPorTombamento = mapearLocalizacaoPorTombamento_(ssGeral);
   const localizacaoPorCor = mapearLocalizacaoPorCor_(contexto);
+  const corPorLocalizacao = mapearCorPorLocalizacao_(contexto);
   const registros = extrairBensAdminParaRelatorio_(
     ssAdmin,
     localizacaoPorTombamento,
-    localizacaoPorCor
+    localizacaoPorCor,
+    corPorLocalizacao
   );
 
   const abaExistente = ssRelatorio.getSheetByName(RELATORIO_ABA_VISAO_GERAL);
@@ -55,6 +57,7 @@ function relatorioGerarVisaoGeral_() {
   const sheet = abaExistente || ssRelatorio.insertSheet(RELATORIO_ABA_VISAO_GERAL);
   montarAbaVisaoGeralRelatorio_(sheet, registros);
   ordenarAbasRelatorio_(ssRelatorio);
+  atualizarLegendaRelatorio_(ssRelatorio, contexto);
 
   registrarEventoControleRelatorio_(ssRelatorio, {
     tipoEvento: eventoTipo,
@@ -68,7 +71,7 @@ function relatorioGerarVisaoGeral_() {
   } catch (e) {}
 }
 
-function extrairBensAdminParaRelatorio_(ssAdmin, localizacaoPorTombamento, localizacaoPorCor) {
+function extrairBensAdminParaRelatorio_(ssAdmin, localizacaoPorTombamento, localizacaoPorCor, corPorLocalizacao) {
   const porTombamento = {};
   const sheets = ssAdmin.getSheets();
 
@@ -88,40 +91,80 @@ function extrairBensAdminParaRelatorio_(ssAdmin, localizacaoPorTombamento, local
       const tombamento = extrairTombamento_(row[idx.tombamento]);
       if (!tombamento) return;
 
-      const localizacaoDaGeral = localizacaoPorTombamento[tombamento] || '';
+      const localizacaoDaGeral = sanitizarTextoLocalizacao_(localizacaoPorTombamento[tombamento] || '');
       const corLinha = normalizarCorHex_(fundosColA[rowIndex][0]);
-      const localizacaoDaCor = localizacaoPorCor[corLinha] || '';
-      const localizacao = localizacaoDaGeral || localizacaoDaCor || '';
+      const localizacaoDaCor = sanitizarTextoLocalizacao_(localizacaoPorCor[corLinha] || '');
+      const termoBase = obterValorSeguro_(row[idx.termo]);
+
+      let localizacao = localizacaoDaGeral || localizacaoDaCor || '';
+      let termo = termoBase;
+
+      // Termo nunca deve ocupar a coluna Localização.
+      if (ehFormatoTermo_(localizacao)) {
+        if (!termo) termo = localizacao;
+        localizacao = '';
+      }
+      if (localizacao && termo && localizacao === termo) {
+        localizacao = '';
+      }
+
+      let aquisicao = formatarDataAquisicao_(row[idx.aquisicao]);
+      let marca = obterValorSeguro_(row[idx.marca]);
+      const ajusteAquisicaoMarca = ajustarAquisicaoMarca_(aquisicao, marca);
+      aquisicao = ajusteAquisicaoMarca.aquisicao;
+      marca = ajusteAquisicaoMarca.marca;
+
+      let corDestaque = '';
+      if (localizacao) {
+        const chaveLocalizacao = normalizarTextoComparacao_(localizacao);
+        corDestaque = corPorLocalizacao[chaveLocalizacao] || '';
+      }
+      if (!corDestaque && localizacaoDaCor) {
+        corDestaque = corLinha;
+      }
+      if (!corDestaque && localizacao && corLinha && corLinha !== '#ffffff') {
+        corDestaque = corLinha;
+      }
 
       const registro = [
         tombamento,
         obterValorSeguro_(row[idx.denominacao]),
-        '',
-        obterValorSeguro_(row[idx.aquisicao]),
-        obterValorSeguro_(row[idx.marca]),
-        '',
+        aquisicao,
+        marca,
         obterValorSeguro_(row[idx.situacao]),
         localizacao,
-        obterValorSeguro_(row[idx.termo])
+        termo
       ];
 
       if (!porTombamento[tombamento]) {
-        porTombamento[tombamento] = registro;
+        porTombamento[tombamento] = { dados: registro, cor: corDestaque };
         return;
       }
 
       // Se já existir, prioriza o registro com mais dados úteis.
-      const atual = porTombamento[tombamento];
+      const atual = porTombamento[tombamento].dados;
       const scoreAtual = contarCamposPreenchidos_(atual);
       const scoreNovo = contarCamposPreenchidos_(registro);
       if (scoreNovo > scoreAtual) {
-        porTombamento[tombamento] = registro;
+        porTombamento[tombamento] = { dados: registro, cor: corDestaque };
+        return;
+      }
+
+      // Se empate, prioriza o que já possui localização e cor definida.
+      if (scoreNovo === scoreAtual) {
+        const atualTemLocalizacao = !!String(atual[5] || '').trim();
+        const novoTemLocalizacao = !!String(registro[5] || '').trim();
+        const atualTemCor = !!String(porTombamento[tombamento].cor || '').trim();
+        const novoTemCor = !!String(corDestaque || '').trim();
+        if ((!atualTemLocalizacao && novoTemLocalizacao) || (!atualTemCor && novoTemCor)) {
+          porTombamento[tombamento] = { dados: registro, cor: corDestaque };
+        }
       }
     });
   });
 
   const registros = Object.keys(porTombamento).map(k => porTombamento[k]);
-  registros.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  registros.sort((a, b) => String(a.dados[0]).localeCompare(String(b.dados[0])));
   return registros;
 }
 
@@ -145,12 +188,13 @@ function mapearLocalizacaoPorTombamento_(ssGeral) {
       const tombamento = extrairTombamento_(row[idx.tombamento]);
       if (!tombamento) return;
 
-      const localizacao = obterValorSeguro_(row[idx.localizacao]);
+      let localizacao = sanitizarTextoLocalizacao_(row[idx.localizacao]);
       if (!localizacao) return;
       if (idx.termo >= 0) {
         const termo = obterValorSeguro_(row[idx.termo]);
         if (termo && termo === localizacao) return;
       }
+      if (ehFormatoTermo_(localizacao)) return;
 
       if (!mapa[tombamento]) {
         mapa[tombamento] = localizacao;
@@ -179,16 +223,35 @@ function mapearLocalizacaoPorCor_(contexto) {
   return mapa;
 }
 
+function mapearCorPorLocalizacao_(contexto) {
+  const mapa = {};
+  let pastas = [];
+  try {
+    pastas = obterPastasVivas_(contexto) || [];
+  } catch (e) {
+    return mapa;
+  }
+
+  pastas.forEach(p => {
+    const nome = normalizarTextoComparacao_(p.nome || '');
+    const cor = normalizarCorHex_(p.cor);
+    if (!nome || !cor) return;
+    mapa[nome] = cor;
+  });
+
+  return mapa;
+}
+
 function detectarIndiceColunasInventario_(valores) {
   const padrao = {
     headerRow: -1,
     tombamento: 0,
     denominacao: 1,
-    aquisicao: 3,
-    marca: 4,
-    situacao: 6,
-    localizacao: -1,
-    termo: 8
+    aquisicao: 2,
+    marca: 3,
+    situacao: 4,
+    localizacao: 5,
+    termo: 6
   };
 
   for (let i = 0; i < valores.length; i++) {
@@ -201,11 +264,11 @@ function detectarIndiceColunasInventario_(valores) {
     padrao.headerRow = i;
     padrao.tombamento = encontrarIndiceColuna_(normalizada, ['TOMBAMENTO'], 0);
     padrao.denominacao = encontrarIndiceColuna_(normalizada, ['DENOMINACAO'], 1);
-    padrao.aquisicao = encontrarIndiceColuna_(normalizada, ['AQUISICAO'], 3);
-    padrao.marca = encontrarIndiceColuna_(normalizada, ['MARCA', 'EDITORA'], 4);
-    padrao.situacao = encontrarIndiceColuna_(normalizada, ['SITUACAO'], 6);
-    padrao.localizacao = encontrarIndiceColuna_(normalizada, ['LOCALIZACAO'], -1);
-    padrao.termo = encontrarIndiceColuna_(normalizada, ['TERMO'], padrao.localizacao >= 0 ? padrao.localizacao + 1 : 7);
+    padrao.aquisicao = encontrarIndiceColuna_(normalizada, ['AQUISICAO'], 2);
+    padrao.marca = encontrarIndiceColuna_(normalizada, ['MARCA', 'EDITORA'], 3);
+    padrao.situacao = encontrarIndiceColuna_(normalizada, ['SITUACAO'], 4);
+    padrao.localizacao = encontrarIndiceColuna_(normalizada, ['LOCALIZACAO'], 5);
+    padrao.termo = encontrarIndiceColuna_(normalizada, ['TERMO'], 6);
     break;
   }
 
@@ -237,6 +300,9 @@ function extrairTombamento_(valor) {
 
 function obterValorSeguro_(valor) {
   if (valor === null || valor === undefined) return '';
+  if (valor instanceof Date) {
+    return Utilities.formatDate(valor, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+  }
   return String(valor).trim();
 }
 
@@ -257,11 +323,74 @@ function normalizarCorHex_(cor) {
   return texto;
 }
 
+function sanitizarTextoLocalizacao_(valor) {
+  return String(valor || '').trim();
+}
+
+function ehFormatoTermo_(texto) {
+  const val = String(texto || '').trim();
+  return /^\d{1,8}\/\d{4}$/.test(val);
+}
+
+function formatarDataAquisicao_(valor) {
+  if (valor instanceof Date && !isNaN(valor.getTime())) {
+    return Utilities.formatDate(valor, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+  }
+
+  const texto = String(valor || '').trim();
+  if (!texto) return '';
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(texto)) {
+    return texto;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
+    const dt = new Date(texto + 'T00:00:00');
+    if (!isNaN(dt.getTime())) {
+      return Utilities.formatDate(dt, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+    }
+  }
+
+  const dt = new Date(texto);
+  if (!isNaN(dt.getTime()) && /GMT|UTC|T\d{2}:\d{2}/i.test(texto)) {
+    return Utilities.formatDate(dt, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+  }
+
+  return texto;
+}
+
+function ehDataValidaTexto_(texto) {
+  return /^\d{2}\/\d{2}\/\d{4}$/.test(String(texto || '').trim());
+}
+
+function ajustarAquisicaoMarca_(aquisicao, marca) {
+  let aq = String(aquisicao || '').trim();
+  let mk = String(marca || '').trim();
+
+  // Quando aquisição vier textual (ex.: MARELLI) e marca estiver vazia,
+  // move para Marca/Editora.
+  if (aq && !ehDataValidaTexto_(aq) && !mk && /[A-Za-z]/.test(aq)) {
+    mk = aq;
+    aq = '';
+  }
+
+  return { aquisicao: aq, marca: mk };
+}
+
+function normalizarTextoComparacao_(valor) {
+  return String(valor || '')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function montarAbaVisaoGeralRelatorio_(sheet, registros) {
   sheet.clear();
   sheet.setHiddenGridlines(true);
 
-  sheet.getRange('A1:I1')
+  sheet.getRange('A1:G1')
     .merge()
     .setValue('Polícia Rodoviária Federal')
     .setFontFamily('Arial')
@@ -277,7 +406,7 @@ function montarAbaVisaoGeralRelatorio_(sheet, registros) {
   );
   const email = Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail() || 'DESCONHECIDO';
 
-  sheet.getRange('A2:I2')
+  sheet.getRange('A2:G2')
     .merge()
     .setValue(`Relatório: ${RELATORIO_ABA_VISAO_GERAL} | Gerado em: ${dataGeracao} | Usuário: ${email}`)
     .setFontFamily('Arial')
@@ -289,10 +418,8 @@ function montarAbaVisaoGeralRelatorio_(sheet, registros) {
   const cabecalho = [
     'Tombamento',
     'Denominação',
-    '',
     'Aquisição',
     'Marca/ Editora',
-    '',
     'Situação',
     'Localização',
     'Termo'
@@ -308,21 +435,26 @@ function montarAbaVisaoGeralRelatorio_(sheet, registros) {
     .setVerticalAlignment('middle');
 
   if (registros.length > 0) {
-    sheet.getRange(5, 1, registros.length, 9).setValues(registros);
+    const dados = registros.map(r => r.dados);
+    sheet.getRange(5, 1, dados.length, 7).setValues(dados);
+
+    const fundos = registros.map(r => {
+      const cor = r.cor || '#ffffff';
+      return [cor, cor, cor, cor, cor, cor, cor];
+    });
+    sheet.getRange(5, 1, dados.length, 7).setBackgrounds(fundos);
   }
 
   const ultimaLinha = Math.max(5, registros.length + 4);
-  sheet.getRange(4, 1, ultimaLinha - 3, 9).setBorder(true, true, true, true, true, true);
+  sheet.getRange(4, 1, ultimaLinha - 3, 7).setBorder(true, true, true, true, true, true);
 
   sheet.setColumnWidth(1, 130);
   sheet.setColumnWidth(2, 320);
-  sheet.setColumnWidth(3, 30);
-  sheet.setColumnWidth(4, 110);
-  sheet.setColumnWidth(5, 200);
-  sheet.setColumnWidth(6, 30);
-  sheet.setColumnWidth(7, 120);
-  sheet.setColumnWidth(8, 220);
-  sheet.setColumnWidth(9, 130);
+  sheet.setColumnWidth(3, 110);
+  sheet.setColumnWidth(4, 200);
+  sheet.setColumnWidth(5, 120);
+  sheet.setColumnWidth(6, 220);
+  sheet.setColumnWidth(7, 130);
 
   sheet.setFrozenRows(4);
 
@@ -332,6 +464,74 @@ function montarAbaVisaoGeralRelatorio_(sheet, registros) {
   } catch (e) {}
 
   if (ultimaLinha >= 4) {
-    sheet.getRange(4, 1, ultimaLinha - 3, 9).createFilter();
+    sheet.getRange(4, 1, ultimaLinha - 3, 7).createFilter();
   }
+}
+
+function atualizarLegendaRelatorio_(ss, contexto) {
+  if (!ss || !contexto) return;
+
+  let pastas = [];
+  try {
+    pastas = obterPastasVivas_(contexto) || [];
+  } catch (e) {
+    return;
+  }
+  if (!pastas.length) return;
+
+  pastas.sort((a, b) => a.nome.localeCompare(b.nome));
+
+  let richTextFinal = null;
+  try {
+    const builder = SpreadsheetApp.newRichTextValue();
+    let texto = '';
+    pastas.forEach(p => {
+      texto += ` ■ ${p.nome}    `;
+    });
+    builder.setText(texto);
+
+    let pos = 0;
+    pastas.forEach(p => {
+      const bloco = ` ■ ${p.nome}    `;
+      const estiloIcone = SpreadsheetApp.newTextStyle()
+        .setForegroundColor(p.cor)
+        .setBold(true)
+        .setFontSize(14)
+        .build();
+      const estiloTexto = SpreadsheetApp.newTextStyle()
+        .setForegroundColor('#202124')
+        .setBold(true)
+        .setFontSize(10)
+        .build();
+
+      builder.setTextStyle(pos, pos + 2, estiloIcone);
+      builder.setTextStyle(pos + 2, pos + bloco.length, estiloTexto);
+      pos += bloco.length;
+    });
+
+    richTextFinal = builder.build();
+  } catch (e) {
+    return;
+  }
+
+  ss.getSheets().forEach(sheet => {
+    const nome = sheet.getName();
+    if (nome === 'CAPA' || nome === 'MANUAL' || nome === '__CONTROLE_PROCESSAMENTO__') return;
+
+    try {
+      removerLegendaAntiga_(sheet);
+      const ultimaLinha = sheet.getLastRow();
+      const linhaDestino = ultimaLinha < 5 ? 10 : ultimaLinha + 2;
+      const totalColunas = Math.max(sheet.getLastColumn(), 7);
+      const range = sheet.getRange(linhaDestino, 1, 1, totalColunas);
+
+      try { range.breakApart(); } catch (_) {}
+      range
+        .merge()
+        .setBackground('#ffffff')
+        .setRichTextValue(richTextFinal)
+        .setHorizontalAlignment('left')
+        .setVerticalAlignment('middle');
+    } catch (e) {}
+  });
 }
