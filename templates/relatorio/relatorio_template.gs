@@ -20,3 +20,7 @@ function relatorioGerarVisaoGeral() {
 function relatorioGerarBensPendentes() {
   inventario.relatorioGerarBensPendentes();
 }
+
+function relatorioGerarBensEncontrados() {
+  inventario.relatorioGerarBensEncontrados();
+}

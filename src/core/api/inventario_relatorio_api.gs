@@ -51,6 +51,10 @@ function relatorioGerarBensPendentes() {
   relatorioGerarBensPendentes_();
 }
 
+function relatorioGerarBensEncontrados() {
+  relatorioGerarBensEncontrados_();
+}
+
 function abrirPlanilhaRelatorio() {
   abrirPlanilhaRelatorio_();
 }

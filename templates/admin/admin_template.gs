@@ -135,6 +135,10 @@ function relatorioGerarBensPendentes() {
   inventario.relatorioGerarBensPendentes();
 }
 
+function relatorioGerarBensEncontrados() {
+  inventario.relatorioGerarBensEncontrados();
+}
+
 /* ============================================================
  * PROXIES — PLANILHA GERAL
  * ============================================================ */

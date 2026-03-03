@@ -10,5 +10,6 @@ function relatorioRenderMenu_() {
   menu
     .addItem('📈 Visão Geral', 'relatorioGerarVisaoGeral')
     .addItem('📌 Bens Pendentes', 'relatorioGerarBensPendentes')
+    .addItem('✅ Bens Encontrados', 'relatorioGerarBensEncontrados')
     .addToUi();
 }

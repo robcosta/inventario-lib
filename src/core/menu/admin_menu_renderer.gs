@@ -130,6 +130,7 @@ function adminRenderMenu_() {
         .addItem('📂 Abrir Planilha', 'abrirPlanilhaRelatorio')
         .addItem('📈 Visão Geral', 'relatorioGerarVisaoGeral')
         .addItem('📌 Bens Pendentes', 'relatorioGerarBensPendentes')
+        .addItem('✅ Bens Encontrados', 'relatorioGerarBensEncontrados')
     )
     .addSeparator()
 
