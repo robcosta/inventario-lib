@@ -73,6 +73,12 @@ function formatarPlanilha_(spreadsheetId) {
         continue;
       }
 
+      if (ehLinhaPcaspParaConsolidar_(data[i])) {
+        data[i] = consolidarLinhaPcaspEmA_(data[i]);
+        blocos.pcasp.push(linha);
+        continue;
+      }
+
       if (/^\d{4}$/.test(valA)) {
         blocos.pcasp.push(linha);
         continue;
@@ -153,6 +159,36 @@ function reconstruirCapaAdminAposFormatacao_(ss, contexto) {
   } catch (e) {
     Logger.log('[FORMATAR][CAPA][ERRO] ' + e.message);
   }
+}
+
+function ehLinhaPcaspParaConsolidar_(row) {
+  if (!Array.isArray(row) || !row.length) return false;
+  return row.some(celula => /PCASP/i.test(String(celula || '')));
+}
+
+function consolidarLinhaPcaspEmA_(row) {
+  const nova = Array.isArray(row) ? row.slice() : [];
+  const partes = [];
+
+  for (let i = 0; i < nova.length; i++) {
+    const val = nova[i];
+    if (val === null || val === undefined || val === '') continue;
+
+    let texto = '';
+    if (val instanceof Date && !isNaN(val.getTime())) {
+      texto = Utilities.formatDate(val, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+    } else {
+      texto = String(val).trim();
+    }
+
+    if (!texto) continue;
+    partes.push(texto.replace(/\s+/g, ' '));
+  }
+
+  const consolidado = partes.join(' ').replace(/\s+/g, ' ').trim();
+  nova.fill('');
+  nova[0] = consolidado;
+  return nova;
 }
 
 /**
