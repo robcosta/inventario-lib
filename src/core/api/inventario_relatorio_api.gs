@@ -47,6 +47,10 @@ function relatorioGerarVisaoGeral() {
   relatorioGerarVisaoGeral_();
 }
 
+function relatorioGerarBensPendentes() {
+  relatorioGerarBensPendentes_();
+}
+
 function abrirPlanilhaRelatorio() {
   abrirPlanilhaRelatorio_();
 }

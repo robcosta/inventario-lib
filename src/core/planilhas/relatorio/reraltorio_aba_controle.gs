@@ -106,7 +106,7 @@ function registrarEdicaoManualRelatorio_(e) {
   const sheet = e.range.getSheet();
   const nomeAba = sheet.getName();
   if (nomeAba === '__CONTROLE_PROCESSAMENTO__') return;
-  if (nomeAba !== RELATORIO_ABA_VISAO_GERAL) return;
+  if (nomeAba === 'CAPA' || nomeAba === 'MANUAL') return;
 
   const linhaAba = e.range.getRow();
   const colunaAba = e.range.getColumn();

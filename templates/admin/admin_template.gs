@@ -131,6 +131,10 @@ function relatorioGerarVisaoGeral() {
   inventario.relatorioGerarVisaoGeral();
 }
 
+function relatorioGerarBensPendentes() {
+  inventario.relatorioGerarBensPendentes();
+}
+
 /* ============================================================
  * PROXIES — PLANILHA GERAL
  * ============================================================ */

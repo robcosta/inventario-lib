@@ -36,7 +36,6 @@ function formatarPlanilha_(spreadsheetId) {
     // 🔒 Preparações estruturais
     sheet.setFrozenRows(1);
     sheet.setHiddenGridlines(true);
-    aplicarCabecalhoPrincipal_(sheet);
     const colunasLayout = 7;
 
     const blocos = {
@@ -75,9 +74,6 @@ function formatarPlanilha_(spreadsheetId) {
       }
 
       if (/^\d{4}$/.test(valA)) {
-        const texto = data[i].map(v => String(v).trim()).filter(v => v !== '').join('  ');
-        data[i].fill('');
-        data[i][0] = texto;
         blocos.pcasp.push(linha);
         continue;
       }
@@ -90,6 +86,13 @@ function formatarPlanilha_(spreadsheetId) {
       if (valA.includes('Total de Bens do Grupo de Material')) {
         blocos.totalGrupo.push(linha);
       }
+    }
+
+    // Planilhas antigas podem conter mesclas legadas que impedem setValues.
+    try {
+      desfazerTodasMesclasDaAba_(sheet);
+    } catch (e) {
+      Logger.log('[FORMATAR][DESMESCLAR-ABA][ERRO] ' + e.message);
     }
 
     range.setValues(data);
@@ -107,6 +110,13 @@ function formatarPlanilha_(spreadsheetId) {
       normalizarColunasExcedentes_(sheet, colunasLayout);
     } catch (e) {
       Logger.log('[FORMATAR][COLUNAS][ERRO] ' + e.message);
+    }
+
+    // Reaplica mescla oficial do cabeçalho após toda a escrita.
+    try {
+      aplicarCabecalhoPrincipal_(sheet);
+    } catch (e) {
+      Logger.log('[FORMATAR][CABECALHO][ERRO] ' + e.message);
     }
   });
 
@@ -205,7 +215,11 @@ function normalizarLayoutInventarioSemBrancos_(sheet, ehAdmin) {
       continue;
     }
 
-    if (ehLinhaDetalheSerie_(normalizada) || ehLinhaDetalheTombamentoAntigo_(normalizada)) {
+    if (
+      ehLinhaDetalheSerie_(normalizada) ||
+      ehLinhaDetalheTombamentoAntigo_(normalizada) ||
+      ehLinhaDetalheRenavam_(normalizada)
+    ) {
       linhas[i] = normalizarLinhaDetalheNaoPatrimonial_(row, colunas);
       continue;
     }
@@ -285,9 +299,10 @@ function ehLinhaPatrimonioComTombamento_(row, mapa) {
   const normalizada = row.map(normalizarTextoAdminColuna_).join(' | ');
   const ehSerie = /N.? ?DE SERIE/.test(normalizada) || normalizada.includes('NUMERO DE SERIE');
   const ehTombamentoAntigo = normalizada.includes('TOMBAMENTO ANTIGO');
+  const ehRenavam = normalizada.includes('RENAVAM');
 
   // Linhas de descrição técnica não são itens patrimoniais.
-  if (ehSerie || ehTombamentoAntigo) {
+  if (ehSerie || ehTombamentoAntigo || ehRenavam) {
     return false;
   }
 
@@ -304,6 +319,11 @@ function ehLinhaDetalheSerie_(normalizadaRow) {
 function ehLinhaDetalheTombamentoAntigo_(normalizadaRow) {
   const linha = normalizadaRow.join(' | ');
   return linha.includes('TOMBAMENTO ANTIGO');
+}
+
+function ehLinhaDetalheRenavam_(normalizadaRow) {
+  const linha = normalizadaRow.join(' | ');
+  return linha.includes('RENAVAM');
 }
 
 function normalizarLinhaDetalheNaoPatrimonial_(row, colunas) {
@@ -566,6 +586,24 @@ function desfazerMesclasQueTocamExcedente_(sheet, colunasLayout, maxColsRef) {
       if (cFim > colunasLayout) {
         m.breakApart();
       }
+    } catch (e) {}
+  });
+}
+
+function desfazerTodasMesclasDaAba_(sheet) {
+  if (!sheet) return;
+
+  const maxRows = sheet.getMaxRows();
+  const maxCols = sheet.getMaxColumns();
+  if (maxRows < 1 || maxCols < 1) return;
+
+  const range = sheet.getRange(1, 1, maxRows, maxCols);
+  const mesclas = range.getMergedRanges();
+  if (!mesclas || !mesclas.length) return;
+
+  mesclas.forEach(m => {
+    try {
+      m.breakApart();
     } catch (e) {}
   });
 }

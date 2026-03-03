@@ -129,6 +129,7 @@ function adminRenderMenu_() {
       ui.createMenu('📙 Planilha Relatório')
         .addItem('📂 Abrir Planilha', 'abrirPlanilhaRelatorio')
         .addItem('📈 Visão Geral', 'relatorioGerarVisaoGeral')
+        .addItem('📌 Bens Pendentes', 'relatorioGerarBensPendentes')
     )
     .addSeparator()
 

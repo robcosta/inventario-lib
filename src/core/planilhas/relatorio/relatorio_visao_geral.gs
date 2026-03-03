@@ -55,7 +55,7 @@ function relatorioGerarVisaoGeral_() {
   const eventoTipo = abaExistente ? 'RECRIACAO_ABA' : 'CRIACAO_ABA';
 
   const sheet = abaExistente || ssRelatorio.insertSheet(RELATORIO_ABA_VISAO_GERAL);
-  montarAbaVisaoGeralRelatorio_(sheet, registros);
+  montarAbaVisaoGeralRelatorio_(sheet, registros, RELATORIO_ABA_VISAO_GERAL);
   ordenarAbasRelatorio_(ssRelatorio);
   atualizarLegendaRelatorio_(ssRelatorio, contexto);
 
@@ -386,7 +386,9 @@ function normalizarTextoComparacao_(valor) {
     .trim();
 }
 
-function montarAbaVisaoGeralRelatorio_(sheet, registros) {
+function montarAbaVisaoGeralRelatorio_(sheet, registros, nomeRelatorio) {
+  const tituloRelatorio = String(nomeRelatorio || RELATORIO_ABA_VISAO_GERAL).trim();
+
   sheet.clear();
   sheet.setHiddenGridlines(true);
 
@@ -408,7 +410,7 @@ function montarAbaVisaoGeralRelatorio_(sheet, registros) {
 
   sheet.getRange('A2:G2')
     .merge()
-    .setValue(`Relatório: ${RELATORIO_ABA_VISAO_GERAL} | Gerado em: ${dataGeracao} | Usuário: ${email}`)
+    .setValue(`Relatório: ${tituloRelatorio} | Gerado em: ${dataGeracao} | Usuário: ${email}`)
     .setFontFamily('Arial')
     .setFontSize(10)
     .setFontWeight('bold')

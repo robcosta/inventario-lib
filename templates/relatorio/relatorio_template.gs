@@ -16,3 +16,7 @@ function onOpen() {
 function relatorioGerarVisaoGeral() {
   inventario.relatorioGerarVisaoGeral();
 }
+
+function relatorioGerarBensPendentes() {
+  inventario.relatorioGerarBensPendentes();
+}
