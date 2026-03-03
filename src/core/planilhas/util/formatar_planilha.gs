@@ -102,15 +102,11 @@ function formatarPlanilha_(spreadsheetId) {
     aplicarEstiloBloco_(sheet, blocos.tombamento, { borderTop: true }, colunasLayout);
     aplicarEstiloBloco_(sheet, blocos.totalGrupo, { borderTop: true }, colunasLayout);
 
-    // Limpa sobras de formatação/conteúdo fora do layout A:G.
-    const lastColApos = sheet.getLastColumn();
-    if (lastColApos > colunasLayout) {
-      try {
-        sheet
-          .getRange(1, colunasLayout + 1, totalRows, lastColApos - colunasLayout)
-          .clearContent()
-          .clearFormat();
-      } catch (e) {}
+    // Limpa colunas excedentes (H em diante) com segurança para abas antigas mescladas.
+    try {
+      normalizarColunasExcedentes_(sheet, colunasLayout);
+    } catch (e) {
+      Logger.log('[FORMATAR][COLUNAS][ERRO] ' + e.message);
     }
   });
 
@@ -209,8 +205,8 @@ function normalizarLayoutInventarioSemBrancos_(sheet, ehAdmin) {
       continue;
     }
 
-    if (ehLinhaDetalheSerie_(normalizada)) {
-      linhas[i] = normalizarLinhaDetalheSerie_(row, colunas);
+    if (ehLinhaDetalheSerie_(normalizada) || ehLinhaDetalheTombamentoAntigo_(normalizada)) {
+      linhas[i] = normalizarLinhaDetalheNaoPatrimonial_(row, colunas);
       continue;
     }
 
@@ -288,17 +284,14 @@ function aplicarCabecalhoOficialAdmin_(row, headerOficial, colunas, ehAdmin) {
 function ehLinhaPatrimonioComTombamento_(row, mapa) {
   const normalizada = row.map(normalizarTextoAdminColuna_).join(' | ');
   const ehSerie = /N.? ?DE SERIE/.test(normalizada) || normalizada.includes('NUMERO DE SERIE');
+  const ehTombamentoAntigo = normalizada.includes('TOMBAMENTO ANTIGO');
 
-  // Linhas de descrição técnica (ex.: Nº DE SERIE) não são itens patrimoniais.
-  if (ehSerie) {
+  // Linhas de descrição técnica não são itens patrimoniais.
+  if (ehSerie || ehTombamentoAntigo) {
     return false;
   }
 
-  const idxTomb = (mapa && typeof mapa.tomb === 'number') ? mapa.tomb : 0;
-  const tombNoIndice = extrairTombamentoAdmin_(row[idxTomb]);
-  if (tombNoIndice) return true;
-
-  // Fallback restrito apenas à coluna A, nunca varrendo toda a linha.
+  // Regra oficial: tombamento válido vem somente da coluna A.
   const tombColunaA = extrairTombamentoAdmin_(row[0]);
   return !!tombColunaA;
 }
@@ -308,7 +301,12 @@ function ehLinhaDetalheSerie_(normalizadaRow) {
   return /N.? ?DE SERIE/.test(linha) || linha.includes('NUMERO DE SERIE');
 }
 
-function normalizarLinhaDetalheSerie_(row, colunas) {
+function ehLinhaDetalheTombamentoAntigo_(normalizadaRow) {
+  const linha = normalizadaRow.join(' | ');
+  return linha.includes('TOMBAMENTO ANTIGO');
+}
+
+function normalizarLinhaDetalheNaoPatrimonial_(row, colunas) {
   const nova = row.slice();
   while (nova.length < colunas) nova.push('');
 
@@ -327,7 +325,8 @@ function reorganizarLinhaPatrimonioAdmin_(row, mapa, colunas, ehAdmin) {
   const termoRegex = /^\d{1,8}\/\d{4}$/;
   const dataRegex = /^\d{2}\/\d{2}\/\d{4}$/;
 
-  const tomb = extrairTombamentoAdmin_(row[mapa.tomb]) || extrairTombamentoAdmin_(row[0]);
+  // Regra oficial: tombamento vem da coluna A.
+  const tomb = extrairTombamentoAdmin_(row[0]);
   let den = obterTextoAdmin_(row[mapa.den]);
   let aq = formatarDataAdmin_(row[mapa.aq]);
   let marca = obterTextoAdmin_(row[mapa.marca]);
@@ -481,4 +480,92 @@ function detectarDenominacaoNaLinhaAdmin_(row, tomb, aq, marca, sit, loc, termo)
     return texto;
   }
   return '';
+}
+
+/**
+ * ============================================================
+ * LAYOUT — REMOVER COLUNAS EXCEDENTES COM SEGURANÇA
+ * ============================================================
+ */
+function normalizarColunasExcedentes_(sheet, colunasLayout) {
+  if (!sheet) return;
+
+  let maxCols = 0;
+  try {
+    maxCols = sheet.getMaxColumns();
+  } catch (e) {
+    Logger.log('[FORMATAR][COLUNAS][MAXCOL][ERRO] ' + e.message);
+    return;
+  }
+
+  if (maxCols <= colunasLayout) return;
+
+  try {
+    desfazerMesclasQueTocamExcedente_(sheet, colunasLayout, maxCols);
+  } catch (e) {
+    Logger.log('[FORMATAR][COLUNAS][DESMESCLAR][ERRO] ' + e.message);
+  }
+
+  try {
+    sheet.deleteColumns(colunasLayout + 1, maxCols - colunasLayout);
+  } catch (e) {
+    Logger.log('[FORMATAR][COLUNAS][DELETE-EM-BLOCO][ERRO] ' + e.message);
+
+    // Fallback resiliente para planilhas antigas com mesclas complexas:
+    // remove uma coluna por vez (da direita para a esquerda).
+    for (let col = maxCols; col > colunasLayout; col--) {
+      // Em exclusões anteriores o índice pode já não existir.
+      if (col > sheet.getMaxColumns()) continue;
+
+      try {
+        sheet.deleteColumn(col);
+      } catch (e2) {
+        try {
+          desfazerMesclasQueTocamExcedente_(sheet, colunasLayout, sheet.getMaxColumns());
+        } catch (_) {}
+
+        try {
+          sheet.deleteColumn(col);
+        } catch (e3) {
+          Logger.log(
+            '[FORMATAR][COLUNAS][DELETE-UNITARIO][ERRO] Coluna ' +
+            col + ': ' + e3.message
+          );
+        }
+      }
+    }
+
+    // Última tentativa em bloco para qualquer sobra de coluna física.
+    const restantes = sheet.getMaxColumns() - colunasLayout;
+    if (restantes > 0) {
+      try {
+        sheet.deleteColumns(colunasLayout + 1, restantes);
+      } catch (e4) {
+        Logger.log('[FORMATAR][COLUNAS][DELETE-FINAL][ERRO] ' + e4.message);
+      }
+    }
+  }
+}
+
+function desfazerMesclasQueTocamExcedente_(sheet, colunasLayout, maxColsRef) {
+  if (!sheet) return;
+
+  const lastCol = Math.max(maxColsRef || sheet.getMaxColumns(), colunasLayout);
+  const maxRows = sheet.getMaxRows();
+
+  // Usa A:lastCol no escopo inteiro de linhas para capturar mesclas antigas
+  // fora do DataRange (caso comum em planilhas legadas).
+  const range = sheet.getRange(1, 1, maxRows, lastCol);
+  const mesclas = range.getMergedRanges();
+  if (!mesclas || !mesclas.length) return;
+
+  mesclas.forEach(m => {
+    try {
+      const cInicio = m.getColumn();
+      const cFim = cInicio + m.getNumColumns() - 1;
+      if (cFim > colunasLayout) {
+        m.breakApart();
+      }
+    } catch (e) {}
+  });
 }
