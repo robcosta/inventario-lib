@@ -94,6 +94,22 @@ function criarNovaPastaFotos_() {
     return;
   }
 
+  // ============================================================
+  // 3.1️⃣ Unicidade global (todos os contextos)
+  // ============================================================
+
+  const conflitoGlobal = buscarConflitoNomeLocalidadeGlobal_(nome);
+  if (conflitoGlobal) {
+    ui.alert(
+      "❌ Nome já utilizado",
+      `A pasta "${nome}" já foi criada no contexto:\n\n` +
+      `"${conflitoGlobal.nomeContexto}"\n\n` +
+      "Escolha outro nome para manter a unicidade global das localidades.",
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
   if (nomesExistentes.includes(nome)) {
     ui.alert("❌ Já existe uma pasta com esse nome.");
     return;
@@ -123,4 +139,77 @@ function criarNovaPastaFotos_() {
   if (abrir === ui.Button.YES) {
     abrirPastaNoNavegador_(novaPasta.getId());
   }
+}
+
+function buscarConflitoNomeLocalidadeGlobal_(nomeLocalidade) {
+  const alvo = normalizarNomeLocalidadeGlobal_(nomeLocalidade);
+  if (!alvo) return null;
+
+  const pastaContextos = obterPastaContextosGlobal_();
+  if (!pastaContextos) return null;
+
+  const itContextos = pastaContextos.getFolders();
+
+  while (itContextos.hasNext()) {
+    const pastaContexto = itContextos.next();
+    const nomeContexto = pastaContexto.getName();
+
+    let itLocalidades;
+    try {
+      itLocalidades = pastaContexto.getFoldersByName('LOCALIDADES');
+    } catch (e) {
+      continue;
+    }
+
+    while (itLocalidades.hasNext()) {
+      const pastaLocalidades = itLocalidades.next();
+      let itPastas;
+
+      try {
+        itPastas = pastaLocalidades.getFolders();
+      } catch (e) {
+        continue;
+      }
+
+      while (itPastas.hasNext()) {
+        const pasta = itPastas.next();
+        const nomePasta = normalizarNomeLocalidadeGlobal_(pasta.getName());
+        if (nomePasta === alvo) {
+          return {
+            nomeContexto: nomeContexto,
+            pastaId: pasta.getId()
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function obterPastaContextosGlobal_() {
+  // 1) Prioridade para o ID global da pasta CONTEXTOS.
+  try {
+    const sistemaGlobal = obterSistemaGlobal_();
+    if (sistemaGlobal && sistemaGlobal.pastaContextoId) {
+      return DriveApp.getFolderById(sistemaGlobal.pastaContextoId);
+    }
+  } catch (e) {}
+
+  // 2) Fallback pela pasta raiz do inventário.
+  try {
+    const raiz = obterPastaInventario_();
+    if (!raiz) return null;
+    const it = raiz.getFoldersByName('CONTEXTOS');
+    return it.hasNext() ? it.next() : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function normalizarNomeLocalidadeGlobal_(nome) {
+  return String(nome || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, ' ');
 }
