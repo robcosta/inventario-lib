@@ -114,21 +114,25 @@ function relatorioRenderAbaManual_(ss) {
 function ordenarAbasRelatorio_(ss) {
   if (!ss) return;
 
-  try {
-    const capa = ss.getSheetByName('CAPA');
-    if (capa) {
-      ss.setActiveSheet(capa);
-      ss.moveActiveSheet(1);
-    }
-  } catch (e) {}
+  const ordem = [
+    'CAPA',
+    'MANUAL',
+    'Visão Geral',
+    'Bens Pendentes',
+    'Bens Encontrados',
+    'Bens de Outra Localidade'
+  ];
 
-  try {
-    const manual = ss.getSheetByName('MANUAL');
-    if (manual) {
-      ss.setActiveSheet(manual);
-      ss.moveActiveSheet(2);
-    }
-  } catch (e) {}
+  let posicao = 1;
+  ordem.forEach(nome => {
+    try {
+      const sheet = ss.getSheetByName(nome);
+      if (!sheet) return;
+      ss.setActiveSheet(sheet);
+      ss.moveActiveSheet(posicao);
+      posicao++;
+    } catch (e) {}
+  });
 
   try {
     const controle = ss.getSheetByName('__CONTROLE_PROCESSAMENTO__');
@@ -136,5 +140,10 @@ function ordenarAbasRelatorio_(ss) {
       ss.setActiveSheet(controle);
       ss.moveActiveSheet(ss.getSheets().length);
     }
+  } catch (e) {}
+
+  try {
+    const capa = ss.getSheetByName('CAPA');
+    if (capa) ss.setActiveSheet(capa);
   } catch (e) {}
 }

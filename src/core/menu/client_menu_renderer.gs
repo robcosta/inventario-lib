@@ -68,6 +68,7 @@ function renderMenuClient_(contextoOverride) {
         .addItem('📈 Visão Geral', 'relatorioGerarVisaoGeral')
         .addItem('📌 Bens Pendentes', 'relatorioGerarBensPendentes')
         .addItem('✅ Bens Encontrados', 'relatorioGerarBensEncontrados')
+        .addItem('📍 Bens de Outra Localidade', 'relatorioGerarBensOutraLocalidade')
     )
     .addSeparator()
 

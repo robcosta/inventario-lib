@@ -55,6 +55,10 @@ function relatorioGerarBensEncontrados() {
   relatorioGerarBensEncontrados_();
 }
 
+function relatorioGerarBensOutraLocalidade() {
+  relatorioGerarBensOutraLocalidade_();
+}
+
 function abrirPlanilhaRelatorio() {
   abrirPlanilhaRelatorio_();
 }
