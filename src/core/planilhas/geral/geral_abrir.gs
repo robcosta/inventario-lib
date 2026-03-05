@@ -6,7 +6,7 @@
 /*function abrirPlanilhaGeral_() {
 
   const ui = SpreadsheetApp.getUi();
-  const planilha = obterPlanilhaGeral_();
+  const planilha = resolverPlanilhaGeralId_();
 
   if (!planilha) {
     ui.alert('Nenhuma Planilha Geral encontrada.');

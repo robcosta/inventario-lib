@@ -89,11 +89,11 @@ function validarPlanilhaContextoFormatada_() {
  */
 function validarPlanilhaGeralFormatada_() {
   try {
-    const planilhaGeral = obterPlanilhaGeral_();
-    if (!planilhaGeral) {
+    const planilhaGeralId = resolverPlanilhaGeralId_();
+    if (!planilhaGeralId) {
       return false;
     }
-    return validarPlanilhaFormatada_(planilhaGeral.getId());
+    return validarPlanilhaFormatada_(planilhaGeralId);
   } catch (e) {
     console.error('Erro ao validar Geral:', e.message);
     return false;
