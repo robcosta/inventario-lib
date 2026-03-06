@@ -38,6 +38,11 @@ function formatarPlanilhaAdminPorId_(spreadsheetId) {
 
   formatarPlanilha_(spreadsheetId);
 
+  // Regera a aba MANUAL após a formatação para manter orientações atualizadas.
+  if (typeof adminRenderAbaManual_ === 'function') {
+    adminRenderAbaManual_(spreadsheetId);
+  }
+
   toast_(
     'Formatação da Planilha de Contexto concluída.',
     'Concluído',

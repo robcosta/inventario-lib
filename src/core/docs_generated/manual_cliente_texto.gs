@@ -178,6 +178,6 @@ Mostra a versão atual do sistema instalada na planilha.
 * Nunca edite a planilha manualmente
 `;
 
-function obterTextoManualCliente_ () {
+function obterTexto_manual_cliente() {
   return MANUAL_CLIENTE_MD;
 }
