@@ -104,6 +104,193 @@ function pedirEmailAcesso_(ui, titulo, contextoNome, perfil, descricaoPermissoes
   return email;
 }
 
+function formatarNivelAcesso_(role) {
+  const valor = String(role || '').toLowerCase();
+
+  if (valor === 'owner') return 'PROPRIETARIO';
+  if (valor === 'writer') return 'EDITOR';
+  if (valor === 'reader') return 'LEITOR';
+  if (valor === 'commenter') return 'COMENTARISTA';
+
+  return valor ? valor.toUpperCase() : '-';
+}
+
+function mapearRecursosGerenciaveisAcessos_(contexto) {
+  const recursos = [];
+  const adicionados = {};
+
+  function adicionar(id, nome, chave) {
+    if (!id || adicionados[id]) return;
+    adicionados[id] = true;
+    recursos.push({ id: id, nome: nome, chave: chave || '' });
+  }
+
+  const raiz = obterPastaInventario_();
+  const sistemaGlobal = obterSistemaGlobal_();
+  const pastaSistema = obterPastaSistema_(raiz);
+  const pastaTemplates = raiz ? obterOuCriarSubpasta_(raiz, 'TEMPLATES') : null;
+  const planilhaGeralId = resolverPlanilhaGeralId_();
+
+  adicionar(raiz ? raiz.getId() : '', 'Pasta raiz Inventario', 'PASTA_RAIZ');
+  adicionar(contexto && contexto.pastaContextoId, 'Pasta CONTEXTO', 'PASTA_CONTEXTO');
+  adicionar(contexto && contexto.pastaLocalidadesId, 'Pasta LOCALIDADES', 'PASTA_LOCALIDADES');
+  adicionar(sistemaGlobal && sistemaGlobal.pastaGeralId, 'Pasta GERAL', 'PASTA_GERAL');
+  adicionar(pastaTemplates ? pastaTemplates.getId() : '', 'Pasta TEMPLATES', 'PASTA_TEMPLATES');
+  adicionar(pastaSistema ? pastaSistema.getId() : '', 'Pasta _SISTEMA', 'PASTA_SISTEMA');
+  adicionar(contexto && contexto.planilhaAdminId, 'Planilha ADMIN', 'PLANILHA_ADMIN');
+  adicionar(contexto && contexto.planilhaClienteId, 'Planilha CLIENTE', 'PLANILHA_CLIENTE');
+  adicionar(contexto && contexto.planilhaRelatorioId, 'Planilha RELATORIO', 'PLANILHA_RELATORIO');
+  adicionar(planilhaGeralId, 'Planilha GERAL', 'PLANILHA_GERAL');
+
+  return recursos;
+}
+
+function inferirNivelAcessoConsolidado_(recursosPorChave) {
+  function eh(chave, role) {
+    return recursosPorChave[chave] === role;
+  }
+
+  const perfilSupervisor = eh('PASTA_RAIZ', 'writer');
+  const perfilAdministrador =
+    eh('PASTA_CONTEXTO', 'writer') &&
+    eh('PASTA_GERAL', 'writer') &&
+    eh('PASTA_TEMPLATES', 'writer') &&
+    eh('PASTA_SISTEMA', 'reader');
+  const perfilOperador =
+    eh('PASTA_CONTEXTO', 'writer') &&
+    eh('PLANILHA_GERAL', 'reader') &&
+    eh('PASTA_SISTEMA', 'reader');
+  const perfilCliente =
+    eh('PASTA_LOCALIDADES', 'writer') &&
+    eh('PLANILHA_ADMIN', 'reader') &&
+    eh('PLANILHA_GERAL', 'reader') &&
+    eh('PASTA_SISTEMA', 'reader');
+
+  if (perfilSupervisor) return 'SUPERVISOR';
+  if (perfilAdministrador) return 'ADMINISTRADOR';
+  if (perfilOperador) return 'OPERADOR';
+  if (perfilCliente) return 'CLIENTE';
+
+  return 'PERSONALIZADO';
+}
+
+function listarAcessosConcedidos_(recursos) {
+  const porEmail = {};
+
+  recursos.forEach(r => {
+    try {
+      const resposta = Drive.Permissions.list(r.id);
+      const itens = (resposta && resposta.items) || [];
+
+      itens.forEach(item => {
+        if (item.type !== 'user') return;
+
+        const email = normalizarEmail_(item.emailAddress || item.name || '');
+        if (!email) return;
+
+        const role = String(item.role || '').toLowerCase();
+        if (role === 'owner') return;
+
+        if (!porEmail[email]) {
+          porEmail[email] = {
+            email: email,
+            recursos: {}
+          };
+        }
+
+        porEmail[email].recursos[r.chave || r.nome] = role;
+      });
+    } catch (e) {
+      Logger.log('[ACESSOS-RETIRAR][AVISO] Falha ao listar permissoes de ' + r.nome + ': ' + e.message);
+    }
+  });
+
+  const linhas = Object.keys(porEmail).map(email => {
+    const recursosPorChave = porEmail[email].recursos;
+    return {
+      email: email,
+      nivel: inferirNivelAcessoConsolidado_(recursosPorChave)
+    };
+  });
+
+  linhas.sort((a, b) => a.email.localeCompare(b.email));
+  return linhas;
+}
+
+function montarTextoListagemAcessos_(linhas) {
+  if (!linhas.length) {
+    return 'Nenhum acesso de usuario foi encontrado nos recursos gerenciaveis.';
+  }
+
+  const limite = 40;
+  const cabecalho = 'Email | Nivel';
+  const corpo = linhas.slice(0, limite).map(item => {
+    return item.email + ' | ' + item.nivel;
+  });
+
+  if (linhas.length > limite) {
+    corpo.push('... (' + (linhas.length - limite) + ' registro(s) adicional(is) omitido(s))');
+  }
+
+  return [cabecalho].concat(corpo).join('\n');
+}
+
+function pedirEmailRetiradaAcesso_(ui, contextoNome, linhasListagem) {
+  const textoListagem = montarTextoListagemAcessos_(linhasListagem);
+  const resp = ui.prompt(
+    'Retirar Acessos por E-mail',
+    'Contexto: ' + (contextoNome || '-') + '\n\n' +
+    textoListagem + '\n\n' +
+    'Digite o e-mail para remover todos os acessos listados desse usuario.',
+    ui.ButtonSet.OK_CANCEL
+  );
+
+  if (resp.getSelectedButton() !== ui.Button.OK) return null;
+
+  const email = normalizarEmail_(resp.getResponseText());
+  if (!emailValido_(email)) {
+    ui.alert('E-mail invalido: ' + (resp.getResponseText() || ''));
+    return null;
+  }
+
+  return email;
+}
+
+function removerTodosAcessosDoEmail_(email, recursos) {
+  const alvo = normalizarEmail_(email);
+  const removidos = [];
+  const falhas = [];
+
+  recursos.forEach(r => {
+    try {
+      const resposta = Drive.Permissions.list(r.id);
+      const itens = (resposta && resposta.items) || [];
+
+      itens.forEach(item => {
+        if (item.type !== 'user') return;
+
+        const emailPermissao = normalizarEmail_(item.emailAddress || item.name || '');
+        if (emailPermissao !== alvo) return;
+        if (String(item.role || '').toLowerCase() === 'owner') return;
+
+        try {
+          Drive.Permissions.remove(r.id, item.id);
+          removidos.push(r.nome + ' (' + formatarNivelAcesso_(item.role) + ')');
+        } catch (eRemover) {
+          falhas.push(r.nome + ': ' + eRemover.message);
+        }
+      });
+    } catch (eListar) {
+      falhas.push(r.nome + ': ' + eListar.message);
+    }
+  });
+
+  return {
+    removidos: removidos,
+    falhas: falhas
+  };
+}
+
 function erroSemContaGoogle_(mensagem) {
   const texto = String(mensagem || '').toLowerCase();
 
@@ -511,6 +698,65 @@ function gerenciarAcessosCliente_() {
     Logger.log('[ACESSOS-CLIENTE][ERRO] ' + e.message);
     ui.alert('❌ Falha ao conceder acesso CLIENTE: ' + e.message);
   }
+}
+
+/**
+ * ============================================================
+ * RETIRAR ACESSOS
+ * ============================================================
+ * - Lista acessos concedidos (recurso, email, nivel)
+ * - Recebe email alvo
+ * - Remove todas as permissoes do email nos recursos gerenciaveis
+ */
+function gerenciarRetiradaAcessos_() {
+  const ui = SpreadsheetApp.getUi();
+  const contexto = obterContextoAtivo_();
+
+  if (!contexto) {
+    ui.alert('Nenhum contexto ativo para gerenciar retirada de acessos.');
+    return;
+  }
+
+  const recursos = mapearRecursosGerenciaveisAcessos_(contexto);
+  if (!recursos.length) {
+    ui.alert('Nenhum recurso disponivel para retirada de acessos.');
+    return;
+  }
+
+  const linhas = listarAcessosConcedidos_(recursos);
+  const email = pedirEmailRetiradaAcesso_(ui, contexto.nome, linhas);
+  if (!email) return;
+
+  const resultado = removerTodosAcessosDoEmail_(email, recursos);
+  const totalRemovidos = resultado.removidos.length;
+
+  if (!totalRemovidos && !resultado.falhas.length) {
+    ui.alert('Nenhum acesso encontrado para o e-mail: ' + email);
+    return;
+  }
+
+  let mensagem = 'Retirada de acessos concluida para: ' + email + '\n\n' +
+    'Acessos removidos: ' + totalRemovidos;
+
+  if (resultado.removidos.length) {
+    const limiteDetalhe = 12;
+    const detalhes = resultado.removidos.slice(0, limiteDetalhe);
+    if (resultado.removidos.length > limiteDetalhe) {
+      detalhes.push('... (' + (resultado.removidos.length - limiteDetalhe) + ' item(ns) adicional(is))');
+    }
+    mensagem += '\n\nItens removidos:\n- ' + detalhes.join('\n- ');
+  }
+
+  if (resultado.falhas.length) {
+    const limiteFalhas = 6;
+    const falhas = resultado.falhas.slice(0, limiteFalhas);
+    if (resultado.falhas.length > limiteFalhas) {
+      falhas.push('... (' + (resultado.falhas.length - limiteFalhas) + ' falha(s) adicional(is))');
+    }
+    mensagem += '\n\nFalhas:\n- ' + falhas.join('\n- ');
+  }
+
+  ui.alert(mensagem);
 }
 
 /**

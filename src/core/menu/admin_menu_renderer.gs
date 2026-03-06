@@ -80,6 +80,7 @@ function adminRenderMenu_() {
         .addItem('🛡️ Acesso ADMINISTRADOR', 'gerenciarAcessosAdministrador')
         .addItem('🧰 Acesso OPERADOR', 'gerenciarAcessosOperador')
         .addItem('👥 Acesso CLIENTE', 'gerenciarAcessosCliente')
+        .addItem('🗑️ Retirar Acessos', 'gerenciarRetiradaAcessos')
     )
     .addSeparator()
 

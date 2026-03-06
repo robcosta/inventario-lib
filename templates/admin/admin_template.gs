@@ -69,6 +69,11 @@ function gerenciarAcessosCliente() {
   inventario.gerenciarAcessosCliente();
 }
 
+function gerenciarRetiradaAcessos() {
+  inventario.gerenciarRetiradaAcessos();
+}
+
+
 /* ============================================================
  * PROXIES — ÁREA DE FOTOS
  * ============================================================ */

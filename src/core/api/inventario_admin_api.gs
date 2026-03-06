@@ -53,6 +53,10 @@ function gerenciarAcessosCliente() {
   gerenciarAcessosCliente_();
 }
 
+function gerenciarRetiradaAcessos() {
+  gerenciarRetiradaAcessos_();
+}
+
 /* ============================================================
  * PLANILHA GERAL
  * ============================================================ */
