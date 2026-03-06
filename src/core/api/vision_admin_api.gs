@@ -55,7 +55,7 @@ function processarImagens_() {
   // 3️⃣ Validar Planilhas (ADMIN + GERAL)
   // ============================================================
   const planilhaAdminId = contexto.planilhaAdminId;
-  const planilhaGeralId = obterPlanilhaGeralId_(); // 🔥 Sempre global
+  const planilhaGeralId = resolverPlanilhaGeralId_(); // 🔥 Sempre global
 
   if (!planilhaAdminId || !planilhaGeralId) {
     ui.alert("❌ Planilhas obrigatórias não configuradas.");

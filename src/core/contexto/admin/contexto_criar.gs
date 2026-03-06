@@ -314,7 +314,7 @@ function criarContextoTrabalho_() {
       pastaPlanilhasId: pastaPlanilhas.getId(),
       pastaCSVAdminId: pastaCSVAdmin.getId(),
       pastaLocalidadesId: pastaLocalidades.getId(),
-      planilhaGeralId: obterPlanilhaGeralId_(),
+      planilhaGeralId: resolverPlanilhaGeralId_(),
       emailOperador: Session.getActiveUser().getEmail(),
       criadoEm: new Date().toISOString(),
       ultimaAtualizacao: new Date().toISOString()

@@ -44,7 +44,7 @@ function coletarDiagnosticoCliente_() {
 
   // 🔵 Resolver ID da geral dinamicamente
   try {
-    resultado.planilhas.geral = obterPlanilhaGeralId_();
+    resultado.planilhas.geral = resolverPlanilhaGeralId_();
   } catch (e) {
     resultado.planilhas.geral = null;
   }

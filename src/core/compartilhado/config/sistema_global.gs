@@ -72,11 +72,11 @@ function atualizarSistemaGlobal_(atualizacoes) {
  * Obtém ID da Planilha Geral (atalho)
  * @return {string|null}
  */
-function obterPlanilhaGeralId_() {
-  return PropertiesService
-    .getScriptProperties()
-    .getProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID);
-}
+//function obterPlanilhaGeralId_() {
+//  return PropertiesService
+//    .getScriptProperties()
+//    .getProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID);
+//}
 
 /**
  * Define ID da Planilha Geral (atalho)

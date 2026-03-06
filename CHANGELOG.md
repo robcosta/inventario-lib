@@ -52,7 +52,7 @@ Versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 #### Funções Duplicadas de Planilha Geral
 - **Arquivo:** `geral_util.gs`
-- ❌ Removidas: `obterPlanilhaGeralId_()`, `setPlanilhaGeralId_()`  
+- ❌ Removidas: `resolverPlanilhaGeralId_()`, `setPlanilhaGeralId_()`  
 - ✅ Mantidas em: `sistema_global.gs` (versão correta usa constante PROPRIEDADES_GLOBAL)
 
 #### Função de Atualização Obsoleta

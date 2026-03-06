@@ -14,7 +14,7 @@
 function obterPlanilhaGeral_() {
 
   // 1️⃣ Tenta via ScriptProperties
-  const id = obterPlanilhaGeralId_();
+  const id = resolverPlanilhaGeralId_();
   if (id) {
     try {
       return SpreadsheetApp.openById(id);
@@ -66,7 +66,7 @@ function obterPlanilhaGeral_() {
 }
 
 // ============================================================
-// NOTA: obterPlanilhaGeralId_() e setPlanilhaGeralId_() 
+// NOTA: resolverPlanilhaGeralId_() e setPlanilhaGeralId_() 
 // foram removidas deste arquivo. Versões atualizadas estão em:
 // admin/compartilhado/config/sistema_global.gs
 // ============================================================

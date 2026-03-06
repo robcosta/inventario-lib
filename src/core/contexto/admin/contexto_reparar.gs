@@ -84,7 +84,7 @@ function repararContextoAdmin_() {
     planilhaAdminId: ss.getId(),
     planilhaClienteId,
     planilhaRelatorioId,
-    planilhaGeralId: obterPlanilhaGeralId_(),
+    planilhaGeralId: resolverPlanilhaGeralId_(),
 
     pastaContextoId: pastaContexto.getId(),
     pastaPlanilhasId: pastaPlanilhas.getId(),

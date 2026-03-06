@@ -22,7 +22,7 @@ function relatorioGerarBensEncontrados_() {
     throw new Error('Planilha ADMIN não configurada no contexto.');
   }
 
-  const planilhaGeralId = contexto.planilhaGeralId || obterPlanilhaGeralId_();
+  const planilhaGeralId = contexto.planilhaGeralId || resolverPlanilhaGeralId_();
   if (!planilhaGeralId) {
     throw new Error('Planilha GERAL não configurada.');
   }

@@ -70,7 +70,7 @@ function descobrirContextoClienteAutomaticamente_() {
       nome: pastaContexto.getName(),
       pastaLocalidadesId: pastaLocalidades.getId(),
       planilhaAdminId: planilhaAdminId,
-      planilhaGeralId: obterPlanilhaGeralId_(),
+      planilhaGeralId: resolverPlanilhaGeralId_(),
       planilhaClienteId: ss.getId()
     };
 

@@ -34,7 +34,7 @@ function montarContextoVision_(contexto) {
   }
 
   // 🔥 FONTE ÚNICA — SISTEMA GLOBAL
-  const planilhaGeralId = obterPlanilhaGeralId_();
+  const planilhaGeralId = resolverPlanilhaGeralId_();
 
   if (!planilhaGeralId) {
     throw new Error('Planilha Geral ainda não foi criada.');
