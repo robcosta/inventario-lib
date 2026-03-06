@@ -59,6 +59,10 @@ function relatorioGerarBensOutraLocalidade() {
   relatorioGerarBensOutraLocalidade_();
 }
 
+function relatorioGerarBensEtiquetas() {
+  relatorioGerarBensEtiquetas_();
+}
+
 function abrirPlanilhaRelatorio() {
   abrirPlanilhaRelatorio_();
 }

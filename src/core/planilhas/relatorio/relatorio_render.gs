@@ -120,7 +120,8 @@ function ordenarAbasRelatorio_(ss) {
     'Visão Geral',
     'Bens Pendentes',
     'Bens Encontrados',
-    'Bens de Outra Localidade'
+    'Bens de Outra Localidade',
+    'Bens para Nova Etiqueta'
   ];
 
   let posicao = 1;

@@ -28,3 +28,7 @@ function relatorioGerarBensEncontrados() {
 function relatorioGerarBensOutraLocalidade() {
   inventario.relatorioGerarBensOutraLocalidade();
 }
+
+function relatorioGerarBensEtiquetas() {
+  inventario.relatorioGerarBensEtiquetas();
+}

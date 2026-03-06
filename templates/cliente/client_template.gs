@@ -98,6 +98,10 @@ function relatorioGerarBensOutraLocalidade() {
   inventario.relatorioGerarBensOutraLocalidade();
 }
 
+function relatorioGerarBensEtiquetas() {
+  inventario.relatorioGerarBensEtiquetas();
+}
+
 /* ============================================================
  * PROXIES — DIAGNÓSTICO
  * ============================================================ */

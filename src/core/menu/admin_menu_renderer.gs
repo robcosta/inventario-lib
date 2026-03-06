@@ -133,6 +133,7 @@ function adminRenderMenu_() {
         .addItem('📌 Bens Pendentes', 'relatorioGerarBensPendentes')
         .addItem('✅ Bens Encontrados', 'relatorioGerarBensEncontrados')
         .addItem('📍 Bens de Outra Localidade', 'relatorioGerarBensOutraLocalidade')
+        .addItem('🏷️ Bens para Nova Etiqueta', 'relatorioGerarBensEtiquetas')
     )
     .addSeparator()
 
