@@ -179,6 +179,10 @@ function executarDiagnostico() {
   inventario.executarDiagnostico();
 }
 
+function instalarTemplatesOutroDrive() {
+  inventario.instalarTemplatesOutroDrive();
+}
+
 function runTestsPlanilhaGeral() {
   inventario.runTestsPlanilhaGeral();
 }

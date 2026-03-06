@@ -113,6 +113,10 @@ function executarDiagnostico() {
   executarDiagnostico_();
 }
 
+function instalarTemplatesOutroDrive() {
+  instalarTemplatesOutroDrive_();
+}
+
 /* ============================================================
  * HTML / UPLOAD CSV
  * ============================================================ */

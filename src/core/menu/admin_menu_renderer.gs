@@ -141,6 +141,7 @@ function adminRenderMenu_() {
     .addSubMenu(
       ui.createMenu('🧪 Diagnóstico')
         .addItem('📊 Executar Diagnóstico', 'executarDiagnostico')
+        .addItem('🚚 Instalar Templates em Outro Drive', 'instalarTemplatesOutroDrive')
         .addItem('🧪 Testar Planilha Geral', 'runTestsPlanilhaGeral')
     )
 
