@@ -39,32 +39,6 @@ function abrirPlanilhaGeral() {
 }
 
 /* ============================================================
- * PLANILHA CLIENTE - FORMATAÇÃO
- * ============================================================ */
-function formatarPlanilhaCliente() {
-
-  const contexto = obterContextoDominio_();
-
-  if (!contexto) {
-    SpreadsheetApp.getUi().alert("❌ Nenhum contexto ativo.");
-    return;
-  }
-
-  if (!contexto.planilhaClienteId) {
-    SpreadsheetApp.getUi().alert("❌ Planilha CLIENTE não configurada.");
-    return;
-  }
-
-  // Sempre formata a planilha cliente correta
-  formatarPlanilhaCliente_(contexto.planilhaClienteId);
-
-  // Se chamado a partir da CLIENTE → re-renderiza informações
-  if (contexto.tipo === 'CLIENTE') {
-    clienteMontarInformacoes_(contexto, true);
-  }
-}
-
-/* ============================================================
  * VERSÃO DO SISTEMA
  * ============================================================ */
 function mostrarVersaoSistema() {

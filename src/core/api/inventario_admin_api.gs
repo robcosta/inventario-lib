@@ -113,18 +113,6 @@ function executarDiagnostico() {
   executarDiagnostico_();
 }
 
-function debugContextoPlanilhaAtual() {
-  debugContextoPlanilhaAtual_();
-}
-
-function corrigirContextoPlanilhaAtual() {
-  corrigirContextoPlanilhaAtual_();
-}
-
-function runTestsPlanilhaGeral() {
-  runTestsPlanilhaGeral_();
-}
-
 /* ============================================================
  * HTML / UPLOAD CSV
  * ============================================================ */
