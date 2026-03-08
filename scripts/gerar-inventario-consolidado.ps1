@@ -38,11 +38,18 @@ function New-InventarioConsolidado(
 
   $sourceRootResolved = (Resolve-Path $SourceRootParam).Path.TrimEnd("\")
 
-  Write-Step "Lendo arquivos .gs em: $sourceRootResolved"
-  $files = Get-ChildItem -Path $sourceRootResolved -Recurse -File -Filter "*.gs" |
+  Write-Step "Lendo arquivos em: $sourceRootResolved"
+  $files = Get-ChildItem -Path $sourceRootResolved -Recurse -File |
     Sort-Object FullName
 
   if (-not $files -or $files.Count -eq 0) {
+    throw "Nenhum arquivo encontrado em: $sourceRootResolved"
+  }
+
+  $gsFiles = $files | Where-Object { $_.Extension -eq '.gs' }
+  $nonGsFiles = $files | Where-Object { $_.Extension -ne '.gs' }
+
+  if (-not $gsFiles -or $gsFiles.Count -eq 0) {
     throw "Nenhum arquivo .gs encontrado em: $sourceRootResolved"
   }
 
@@ -54,11 +61,11 @@ function New-InventarioConsolidado(
   $linhas.Add(" * INVENTARIO CONSOLIDADO")
   $linhas.Add(" * Gerado em: $((Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))")
   $linhas.Add(" * Origem: $sourceRootResolved")
-  $linhas.Add(" * Total de arquivos .gs: $($files.Count)")
+  $linhas.Add(" * Total de arquivos .gs: $($gsFiles.Count)")
   $linhas.Add(" */")
   $linhas.Add("")
 
-  foreach ($file in $files) {
+  foreach ($file in $gsFiles) {
     $relativePath = $file.FullName.Substring($sourceRootResolved.Length).TrimStart("\")
     $conteudo = Get-Content -Path $file.FullName -Raw -Encoding UTF8
     $conteudo = $conteudo.TrimEnd("`r", "`n")
@@ -75,11 +82,26 @@ function New-InventarioConsolidado(
   $utf8SemBom = New-Object System.Text.UTF8Encoding($false)
   [System.IO.File]::WriteAllText($outputFile, $conteudoFinal, $utf8SemBom)
 
+  Write-Step "Exportando arquivos nao-.gs em separado"
+  foreach ($file in $nonGsFiles) {
+    $relativePath = $file.FullName.Substring($sourceRootResolved.Length).TrimStart("\")
+    $destinationFile = Join-Path $OutputRootParam $relativePath
+    $destinationDir = Split-Path -Path $destinationFile -Parent
+
+    if (-not (Test-Path -Path $destinationDir -PathType Container)) {
+      New-Item -ItemType Directory -Path $destinationDir -Force | Out-Null
+    }
+
+    Copy-Item -Path $file.FullName -Destination $destinationFile -Force
+  }
+
   return [PSCustomObject]@{
     SourceRoot = $sourceRootResolved
     OutputRoot = (Resolve-Path $OutputRootParam).Path
     OutputFile = $outputFile
-    FileCount = $files.Count
+    TotalFileCount = $files.Count
+    GsFileCount = $gsFiles.Count
+    NonGsFileCount = $nonGsFiles.Count
   }
 }
 
@@ -91,4 +113,6 @@ $resultado = New-InventarioConsolidado `
 
 Write-Step "Concluido"
 Write-Host "Arquivo gerado: $($resultado.OutputFile)" -ForegroundColor Green
-Write-Host "Arquivos consolidados: $($resultado.FileCount)" -ForegroundColor Green
+Write-Host "Arquivos .gs consolidados: $($resultado.GsFileCount)" -ForegroundColor Green
+Write-Host "Arquivos nao-.gs exportados: $($resultado.NonGsFileCount)" -ForegroundColor Green
+Write-Host "Arquivos totais processados: $($resultado.TotalFileCount)" -ForegroundColor Green
