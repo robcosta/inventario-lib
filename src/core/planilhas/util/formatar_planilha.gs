@@ -659,19 +659,23 @@ function removerLinhasTotalmenteEmBrancoDaAba_(sheet) {
   const lastRow = sheet.getLastRow();
   const lastCol = sheet.getLastColumn();
   if (lastRow < 1 || lastCol < 1) return;
-
-  const valores = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+  const chunkSize = 500;
   const linhasVazias = [];
 
-  for (let i = 0; i < valores.length; i++) {
-    const linhaVazia = valores[i].every(function(celula) {
-      if (celula === null || celula === undefined) return true;
-      if (celula instanceof Date && !isNaN(celula.getTime())) return false;
-      return String(celula).trim() === '';
-    });
+  for (let inicio = 1; inicio <= lastRow; inicio += chunkSize) {
+    const qtd = Math.min(chunkSize, lastRow - inicio + 1);
+    const bloco = sheet.getRange(inicio, 1, qtd, lastCol).getValues();
 
-    if (linhaVazia) {
-      linhasVazias.push(i + 1);
+    for (let i = 0; i < bloco.length; i++) {
+      const linhaVazia = bloco[i].every(function(celula) {
+        if (celula === null || celula === undefined) return true;
+        if (celula instanceof Date && !isNaN(celula.getTime())) return false;
+        return String(celula).trim() === '';
+      });
+
+      if (linhaVazia) {
+        linhasVazias.push(inicio + i);
+      }
     }
   }
 

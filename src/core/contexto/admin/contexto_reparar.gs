@@ -36,6 +36,36 @@ function repararContextoAdmin_() {
 
   const pastaContexto = pastaPlanilhas.getParents().next();
 
+  // 🌍 Reconstroi estrutura global a partir do contexto atual:
+  // CONTEXTOS -> RAIZ -> GERAL -> CSV_GERAL.
+  let pastaContextosGlobal = null;
+  let pastaRaiz = null;
+
+  const paisContexto = pastaContexto.getParents();
+  if (paisContexto.hasNext()) {
+    pastaContextosGlobal = paisContexto.next();
+
+    const paisContextos = pastaContextosGlobal.getParents();
+    if (paisContextos.hasNext()) {
+      pastaRaiz = paisContextos.next();
+    }
+  }
+
+  let pastaGeral = null;
+  let pastaCSVGeral = null;
+
+  if (pastaRaiz) {
+    pastaGeral = obterOuCriarSubpasta_(pastaRaiz, 'GERAL');
+    pastaCSVGeral = obterOuCriarSubpasta_(pastaGeral, 'CSV_GERAL');
+
+    atualizarSistemaGlobal_({
+      pastaRaizId: pastaRaiz.getId(),
+      pastaContextoId: pastaContextosGlobal ? pastaContextosGlobal.getId() : undefined,
+      pastaGeralId: pastaGeral.getId(),
+      pastaCSVGeralId: pastaCSVGeral.getId()
+    });
+  }
+
   // Subpastas obrigatórias
   const pastaCSVAdmin = obterOuCriarSubpasta_(pastaPlanilhas, 'CSV_ADMIN');
   const pastaLocalidades = obterOuCriarSubpasta_(pastaContexto, 'LOCALIDADES');
