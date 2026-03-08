@@ -33,6 +33,11 @@ function formatarPlanilha_(spreadsheetId) {
       data = range.getValues();
       totalRows = data.length;
 
+    removerLinhasTotalmenteEmBrancoDaAba_(sheet);
+      range = sheet.getDataRange();
+      data = range.getValues();
+      totalRows = data.length;
+
     // 🔒 Preparações estruturais
     sheet.setFrozenRows(1);
     sheet.setHiddenGridlines(true);
@@ -642,4 +647,51 @@ function desfazerTodasMesclasDaAba_(sheet) {
       m.breakApart();
     } catch (e) {}
   });
+}
+
+/**
+ * Remove fisicamente linhas sem nenhum dado (todas as colunas vazias).
+ * A exclusao e feita de baixo para cima em blocos contiguos para manter performance.
+ */
+function removerLinhasTotalmenteEmBrancoDaAba_(sheet) {
+  if (!sheet) return;
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  if (lastRow < 1 || lastCol < 1) return;
+
+  const valores = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+  const linhasVazias = [];
+
+  for (let i = 0; i < valores.length; i++) {
+    const linhaVazia = valores[i].every(function(celula) {
+      if (celula === null || celula === undefined) return true;
+      if (celula instanceof Date && !isNaN(celula.getTime())) return false;
+      return String(celula).trim() === '';
+    });
+
+    if (linhaVazia) {
+      linhasVazias.push(i + 1);
+    }
+  }
+
+  if (!linhasVazias.length) return;
+
+  let fim = linhasVazias[linhasVazias.length - 1];
+  let inicio = fim;
+
+  for (let i = linhasVazias.length - 2; i >= 0; i--) {
+    const linhaAtual = linhasVazias[i];
+
+    if (linhaAtual === inicio - 1) {
+      inicio = linhaAtual;
+      continue;
+    }
+
+    sheet.deleteRows(inicio, fim - inicio + 1);
+    inicio = linhaAtual;
+    fim = linhaAtual;
+  }
+
+  sheet.deleteRows(inicio, fim - inicio + 1);
 }
