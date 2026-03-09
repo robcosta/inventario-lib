@@ -95,6 +95,35 @@ function removerAbasEmBrancoAdmin_(ss) {
   });
 }
 
+function garantirPlanilhaGeralParaContexto_(pastaGeral) {
+  try {
+    return resolverPlanilhaGeralId_();
+  } catch (e) {
+    const mensagem = String((e && e.message) || e || '');
+    if (!mensagem.includes('Planilha Geral ainda nao foi criada')) {
+      throw e;
+    }
+
+    Logger.log('[FLUXO][CRIAR_CONTEXTO] Planilha Geral nao encontrada. Criando automaticamente.');
+
+    const data = Utilities.formatDate(
+      new Date(),
+      Session.getScriptTimeZone(),
+      'yyyy-MM-dd HH:mm'
+    );
+
+    const ssGeral = SpreadsheetApp.create('GERAL: ' + data);
+    const fileGeral = DriveApp.getFileById(ssGeral.getId());
+    fileGeral.moveTo(pastaGeral);
+
+    atualizarSistemaGlobal_({
+      planilhaGeralId: ssGeral.getId()
+    });
+
+    return ssGeral.getId();
+  }
+}
+
 function criarContextoTrabalho_() {
   const ui = SpreadsheetApp.getUi();
   const ssAdmin = SpreadsheetApp.getActiveSpreadsheet();
@@ -210,6 +239,17 @@ function criarContextoTrabalho_() {
     const pastaCSVAdmin = pastaPlanilhas.createFolder('CSV_ADMIN');
     const pastaLocalidades = pastaContexto.createFolder('LOCALIDADES');
 
+    // Estrutura global da Planilha GERAL deve existir antes de resolver o ID.
+    const pastaGeral = obterOuCriarSubpasta_(raiz, 'GERAL');
+    const pastaCSVGeral = obterOuCriarSubpasta_(pastaGeral, 'CSV_GERAL');
+
+    atualizarSistemaGlobal_({
+      pastaRaizId: raiz.getId(),
+      pastaContextoId: pastaContextosMae.getId(),
+      pastaGeralId: pastaGeral.getId(),
+      pastaCSVGeralId: pastaCSVGeral.getId()
+    });
+
     // ============================================================
     // 7️⃣ RENOMEAR E MOVER ADMIN
     // ============================================================
@@ -305,6 +345,8 @@ function criarContextoTrabalho_() {
 
     ssAdmin.toast('Salvando contexto ADMIN...', '💾 Salvando', 3);
 
+    const planilhaGeralId = garantirPlanilhaGeralParaContexto_(pastaGeral);
+
     const contextoAdmin = {
       nome: nomeContexto,
       planilhaAdminId: ssAdmin.getId(),
@@ -314,7 +356,7 @@ function criarContextoTrabalho_() {
       pastaPlanilhasId: pastaPlanilhas.getId(),
       pastaCSVAdminId: pastaCSVAdmin.getId(),
       pastaLocalidadesId: pastaLocalidades.getId(),
-      planilhaGeralId: resolverPlanilhaGeralId_(),
+      planilhaGeralId: planilhaGeralId,
       emailOperador: Session.getActiveUser().getEmail(),
       criadoEm: new Date().toISOString(),
       ultimaAtualizacao: new Date().toISOString()

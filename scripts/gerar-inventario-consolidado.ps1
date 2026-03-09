@@ -7,7 +7,7 @@ COMO RODAR - INVENTARIO
 COM PARAMETROS (opcional):
 .\scripts\gerar-inventario-consolidado.ps1 `
   -SourceRoot "C:\projects\inventario\src" `
-  -OutputRoot "C:\projects\inventario_consolidado" `
+  -OutputRoot "C:\projects\consolidados" `
   -OutputFileName "inventario_consolidado.gs"
 
 Se a execucao de script estiver bloqueada:
@@ -15,8 +15,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\gerar-inventario-consolidado.
 #>
 
 param(
-  [string]$SourceRoot = "C:\projects\inventario\src",
-  [string]$OutputRoot = "C:\projects\inventario_consolidado",
+  [string]$SourceRoot = "C:\projects\dev\inventario\src",
+  [string]$OutputRoot = "C:\projects\consolidados",
   [string]$OutputFileName = "inventario_consolidado.gs"
 )
 
@@ -39,17 +39,19 @@ function New-InventarioConsolidado(
   $sourceRootResolved = (Resolve-Path $SourceRootParam).Path.TrimEnd("\")
 
   Write-Step "Lendo arquivos em: $sourceRootResolved"
-  $files = Get-ChildItem -Path $sourceRootResolved -Recurse -File |
-    Sort-Object FullName
+  $files = @(
+    Get-ChildItem -Path $sourceRootResolved -Recurse -File |
+      Sort-Object FullName
+  )
 
-  if (-not $files -or $files.Count -eq 0) {
+  if ($files.Count -eq 0) {
     throw "Nenhum arquivo encontrado em: $sourceRootResolved"
   }
 
-  $gsFiles = $files | Where-Object { $_.Extension -eq '.gs' }
-  $nonGsFiles = $files | Where-Object { $_.Extension -ne '.gs' }
+  $gsFiles = @($files | Where-Object { $_.Extension -eq '.gs' })
+  $nonGsFiles = @($files | Where-Object { $_.Extension -ne '.gs' })
 
-  if (-not $gsFiles -or $gsFiles.Count -eq 0) {
+  if ($gsFiles.Count -eq 0) {
     throw "Nenhum arquivo .gs encontrado em: $sourceRootResolved"
   }
 
@@ -83,7 +85,14 @@ function New-InventarioConsolidado(
   [System.IO.File]::WriteAllText($outputFile, $conteudoFinal, $utf8SemBom)
 
   Write-Step "Exportando arquivos nao-.gs em separado"
+  $exportedNonGsCount = 0
+  $pastaCsvCore = (Join-Path $sourceRootResolved 'core\compartilhado\csv').TrimEnd('\')
+
   foreach ($file in $nonGsFiles) {
+    if ($file.FullName.StartsWith($pastaCsvCore, [System.StringComparison]::OrdinalIgnoreCase)) {
+      continue
+    }
+
     $relativePath = $file.FullName.Substring($sourceRootResolved.Length).TrimStart("\")
     $destinationFile = Join-Path $OutputRootParam $relativePath
     $destinationDir = Split-Path -Path $destinationFile -Parent
@@ -93,6 +102,14 @@ function New-InventarioConsolidado(
     }
 
     Copy-Item -Path $file.FullName -Destination $destinationFile -Force
+    $exportedNonGsCount++
+  }
+
+  # csv_upload.html deve ficar na raiz de consolidacao.
+  $csvUploadSource = Join-Path $sourceRootResolved 'core\compartilhado\csv\csv_upload.html'
+  if (Test-Path -Path $csvUploadSource -PathType Leaf) {
+    Copy-Item -Path $csvUploadSource -Destination (Join-Path $OutputRootParam 'csv_upload.html') -Force
+    $exportedNonGsCount++
   }
 
   return [PSCustomObject]@{
@@ -101,7 +118,7 @@ function New-InventarioConsolidado(
     OutputFile = $outputFile
     TotalFileCount = $files.Count
     GsFileCount = $gsFiles.Count
-    NonGsFileCount = $nonGsFiles.Count
+    NonGsFileCount = $exportedNonGsCount
   }
 }
 

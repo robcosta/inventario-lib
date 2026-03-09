@@ -9,17 +9,43 @@
 function resolverPlanilhaGeralId_() {
   const mensagemErro = 'Planilha Geral ainda nao foi criada.';
   const sistemaGlobal = obterSistemaGlobal_() || {};
+  const props = PropertiesService.getScriptProperties();
 
-  // 1) Prioridade: ID salvo em ScriptProperties
-  const idSalvo = String(sistemaGlobal.planilhaGeralId || '').trim();
-  if (idSalvo) {
+  function validarIdPlanilha_(idPossivel) {
+    const id = String(idPossivel || '').trim();
+    if (!id) return null;
+
     try {
-      SpreadsheetApp.openById(idSalvo); // valida acesso/existencia
-      return idSalvo;
+      SpreadsheetApp.openById(id);
+      return id;
     } catch (e) {
-      Logger.log('[GERAL] PLANILHA_GERAL_ID invalido/inacessivel. Tentando redescobrir no Drive.');
+      return null;
     }
   }
+
+  // 1) Prioridade: ID salvo em ScriptProperties
+  const idSalvo = validarIdPlanilha_(sistemaGlobal.planilhaGeralId);
+  if (idSalvo) {
+    return idSalvo;
+  }
+
+  // 1.1) Compatibilidade: chave canonica fixa em ScriptProperties
+  const idCanonico = validarIdPlanilha_(props.getProperty('PLANILHA_GERAL_ID'));
+  if (idCanonico) {
+    atualizarSistemaGlobal_({ planilhaGeralId: idCanonico });
+    return idCanonico;
+  }
+
+  // 1.2) Compatibilidade: se a constante foi preenchida com um ID por engano
+  const valorConstante = String(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID || '').trim();
+  const idNaConstante = validarIdPlanilha_(valorConstante);
+  if (idNaConstante) {
+    Logger.log('[GERAL] Detectado ID de planilha no valor da constante PLANILHA_GERAL_ID. Sincronizando ScriptProperties.');
+    atualizarSistemaGlobal_({ planilhaGeralId: idNaConstante });
+    return idNaConstante;
+  }
+
+  Logger.log('[GERAL] PLANILHA_GERAL_ID nao encontrado ou invalido. Tentando redescobrir no Drive.');
 
   // 2) Fallback: localizar pasta GERAL e escolher planilha candidata
   const pastaGeral = resolverPastaGeralFallback_(sistemaGlobal);

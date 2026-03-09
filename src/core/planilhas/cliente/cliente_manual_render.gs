@@ -27,7 +27,7 @@ function clienteRenderAbaManual_(spreadsheetId) {
   sheet.setRowHeight(1, 50);
   sheet.setRowHeight(2, 21);
 
-  const texto = obterTextoManualCliente_();
+  const texto = obterTexto_manual_cliente();
 
   let richText = SpreadsheetApp.newRichTextValue().setText(texto);
 
