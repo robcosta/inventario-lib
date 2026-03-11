@@ -95,33 +95,193 @@ function removerAbasEmBrancoAdmin_(ss) {
   });
 }
 
-function garantirPlanilhaGeralParaContexto_(pastaGeral) {
+function solicitarPastaRaizCriacaoContexto_(ui) {
+  const sistemaGlobal = obterSistemaGlobal_() || {};
+  const idSalvo = String(sistemaGlobal.pastaRaizId || '').trim();
+
+  const textoPrompt =
+    'Informe o ID da pasta RAIZ do Inventário.' +
+    '\n\nA estrutura será criada/reutilizada automaticamente: CONTEXTOS, GERAL e TEMPLATES.' +
+    (idSalvo
+      ? '\n\nID salvo atualmente:\n' + idSalvo + '\n\nDeixe em branco para reutilizar o ID salvo.'
+      : '');
+
+  const resp = ui.prompt(
+    'Pasta Raiz do Inventário',
+    textoPrompt,
+    ui.ButtonSet.OK_CANCEL
+  );
+
+  if (resp.getSelectedButton() !== ui.Button.OK) return null;
+
+  const informado = String(resp.getResponseText() || '').trim();
+  const raizId = informado || idSalvo;
+
+  if (!raizId) {
+    ui.alert('❌ ID da pasta raiz não informado.');
+    return null;
+  }
+
   try {
-    return resolverPlanilhaGeralId_();
+    return DriveApp.getFolderById(raizId);
   } catch (e) {
-    const mensagem = String((e && e.message) || e || '');
-    if (!mensagem.includes('Planilha Geral ainda nao foi criada')) {
-      throw e;
+    ui.alert('❌ Não foi possível acessar a pasta raiz pelo ID informado.\n\n' + e.message);
+    return null;
+  }
+}
+
+function garantirEstruturaGlobalInventario_(pastaRaiz) {
+  const pastaContextosMae = obterOuCriarSubpasta_(pastaRaiz, 'CONTEXTOS');
+  const pastaGeral = obterOuCriarSubpasta_(pastaRaiz, 'GERAL');
+  const pastaCSVGeral = obterOuCriarSubpasta_(pastaGeral, 'CSV_GERAL');
+  const pastaTemplates = obterOuCriarSubpasta_(pastaRaiz, 'TEMPLATES');
+
+  atualizarSistemaGlobal_({
+    pastaRaizId: pastaRaiz.getId(),
+    pastaContextoId: pastaContextosMae.getId(),
+    pastaGeralId: pastaGeral.getId(),
+    pastaCSVGeralId: pastaCSVGeral.getId(),
+    pastaTemplatesId: pastaTemplates.getId()
+  });
+
+  return {
+    pastaContextosMae: pastaContextosMae,
+    pastaGeral: pastaGeral,
+    pastaCSVGeral: pastaCSVGeral,
+    pastaTemplates: pastaTemplates
+  };
+}
+
+function nomePlanilhaGeralMinimoValido_(nome) {
+  return /^GERAL:\s*\S+/i.test(String(nome || '').trim());
+}
+
+function localizarPlanilhaGeralNomeValidoNaPasta_(pastaGeral) {
+  const files = pastaGeral.getFilesByType(MimeType.GOOGLE_SHEETS);
+  let melhor = null;
+
+  while (files.hasNext()) {
+    const atual = files.next();
+    if (!nomePlanilhaGeralMinimoValido_(atual.getName())) continue;
+
+    if (!melhor || atual.getLastUpdated() > melhor.getLastUpdated()) {
+      melhor = atual;
     }
+  }
 
-    Logger.log('[FLUXO][CRIAR_CONTEXTO] Planilha Geral nao encontrada. Criando automaticamente.');
+  return melhor;
+}
 
-    const data = Utilities.formatDate(
-      new Date(),
-      Session.getScriptTimeZone(),
-      'yyyy-MM-dd HH:mm'
-    );
+function arquivoPertenceAPasta_(arquivo, pasta) {
+  if (!arquivo || !pasta) return false;
 
-    const ssGeral = SpreadsheetApp.create('GERAL: ' + data);
+  const pastaId = pasta.getId();
+  const pais = arquivo.getParents();
+
+  while (pais.hasNext()) {
+    if (pais.next().getId() === pastaId) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function garantirPlanilhaGeralParaContexto_(pastaGeral) {
+  let planilhaGeralId = null;
+
+  try {
+    const idResolvido = resolverPlanilhaGeralId_();
+    if (idResolvido) {
+      const fileResolvido = DriveApp.getFileById(idResolvido);
+      if (
+        nomePlanilhaGeralMinimoValido_(fileResolvido.getName()) &&
+        arquivoPertenceAPasta_(fileResolvido, pastaGeral)
+      ) {
+        planilhaGeralId = idResolvido;
+      }
+    }
+  } catch (e) {
+    // continua para fallback estrutural
+  }
+
+  if (!planilhaGeralId) {
+    const fileEncontrado = localizarPlanilhaGeralNomeValidoNaPasta_(pastaGeral);
+    if (fileEncontrado) {
+      planilhaGeralId = fileEncontrado.getId();
+    }
+  }
+
+  if (!planilhaGeralId) {
+    Logger.log('[FLUXO][CRIAR_CONTEXTO] Planilha Geral nao encontrada. Criando GERAL: NOVA PLANILHA.');
+
+    const ssGeral = SpreadsheetApp.create('GERAL: NOVA PLANILHA');
     const fileGeral = DriveApp.getFileById(ssGeral.getId());
     fileGeral.moveTo(pastaGeral);
-
-    atualizarSistemaGlobal_({
-      planilhaGeralId: ssGeral.getId()
-    });
-
-    return ssGeral.getId();
+    planilhaGeralId = ssGeral.getId();
   }
+
+  atualizarSistemaGlobal_({
+    planilhaGeralId: planilhaGeralId
+  });
+
+  return planilhaGeralId;
+}
+
+function localizarArquivoPorNomeExato_(pasta, nomeArquivo) {
+  if (!pasta || !nomeArquivo) return null;
+  const itens = pasta.getFilesByName(nomeArquivo);
+  return itens.hasNext() ? itens.next() : null;
+}
+
+function obterTemplateClienteEmTemplates_(pastaTemplates) {
+  return localizarArquivoPorNomeExato_(pastaTemplates, 'CLIENTE: TEMPLATE');
+}
+
+function obterTemplateRelatoriosEmTemplates_(pastaTemplates) {
+  return localizarArquivoPorNomeExato_(pastaTemplates, 'RELATÓRIOS: TEMPLATE');
+}
+
+function criarPlanilhaClienteNoContexto_(nomeContexto, pastaLocalidades) {
+  const ssCliente = SpreadsheetApp.create('CLIENTE: ' + nomeContexto);
+  const fileCliente = DriveApp.getFileById(ssCliente.getId());
+  fileCliente.moveTo(pastaLocalidades);
+
+  renderizarPlanilhaCliente_(
+    {
+      nome: nomeContexto,
+      localidadeAtivaNome: '-',
+      planilhaClienteId: ssCliente.getId()
+    },
+    ssCliente
+  );
+
+  return {
+    file: fileCliente,
+    ss: ssCliente
+  };
+}
+
+function criarPlanilhaRelatorioNoContexto_(nomeContexto, pastaLocalidades) {
+  const ssRelatorio = SpreadsheetApp.create('RELATÓRIOS: ' + nomeContexto);
+  const fileRelatorio = DriveApp.getFileById(ssRelatorio.getId());
+  fileRelatorio.moveTo(pastaLocalidades);
+
+  renderizarPlanilhaRelatorio_(
+    { nome: nomeContexto },
+    ssRelatorio
+  );
+
+  return {
+    file: fileRelatorio,
+    ss: ssRelatorio
+  };
+}
+
+function gerarTemplateAPartirDePlanilhaContexto_(fileContexto, pastaTemplates, nomeTemplate) {
+  const existente = localizarArquivoPorNomeExato_(pastaTemplates, nomeTemplate);
+  if (existente) return existente;
+  return fileContexto.makeCopy(nomeTemplate, pastaTemplates);
 }
 
 function criarContextoTrabalho_() {
@@ -160,13 +320,13 @@ function criarContextoTrabalho_() {
     // 2️⃣ LISTAR CONTEXTOS EXISTENTES
     // ============================================================
 
-    const raiz = obterPastaInventario_();
+    const raiz = solicitarPastaRaizCriacaoContexto_(ui);
     if (!raiz) {
-      ui.alert('❌ Pasta raiz do Inventário não encontrada.');
       return;
     }
 
-    const pastaContextosMae = obterOuCriarSubpasta_(raiz, 'CONTEXTOS');
+    const estruturaGlobal = garantirEstruturaGlobalInventario_(raiz);
+    const pastaContextosMae = estruturaGlobal.pastaContextosMae;
     const it = pastaContextosMae.getFolders();
     const nomesExistentes = [];
 
@@ -220,11 +380,18 @@ function criarContextoTrabalho_() {
     ssAdmin.toast('Renovando template ADMIN...', '📋 Criando', 3);
 
     const fileAdminAtual = DriveApp.getFileById(ssAdmin.getId());
-    const fileNovaTemplate = fileAdminAtual.makeCopy('ADMIN: TEMPLATE');
+    const fileNovaTemplate = fileAdminAtual.makeCopy(
+      'ADMIN: TEMPLATE',
+      estruturaGlobal.pastaTemplates
+    );
     const ssNovaTemplate = SpreadsheetApp.openById(fileNovaTemplate.getId());
 
     garantirCapaPrimeiraAdmin_(ssNovaTemplate, 'TEMPLATE');
     removerAbasEmBrancoAdmin_(ssNovaTemplate);
+
+    atualizarSistemaGlobal_({
+      planilhaTemplateAdminId: fileNovaTemplate.getId()
+    });
 
     limparContextoAtivo_();
 
@@ -239,16 +406,8 @@ function criarContextoTrabalho_() {
     const pastaCSVAdmin = pastaPlanilhas.createFolder('CSV_ADMIN');
     const pastaLocalidades = pastaContexto.createFolder('LOCALIDADES');
 
-    // Estrutura global da Planilha GERAL deve existir antes de resolver o ID.
-    const pastaGeral = obterOuCriarSubpasta_(raiz, 'GERAL');
-    const pastaCSVGeral = obterOuCriarSubpasta_(pastaGeral, 'CSV_GERAL');
-
-    atualizarSistemaGlobal_({
-      pastaRaizId: raiz.getId(),
-      pastaContextoId: pastaContextosMae.getId(),
-      pastaGeralId: pastaGeral.getId(),
-      pastaCSVGeralId: pastaCSVGeral.getId()
-    });
+    // Estrutura global compartilhada.
+    const pastaGeral = estruturaGlobal.pastaGeral;
 
     // ============================================================
     // 7️⃣ RENOMEAR E MOVER ADMIN
@@ -264,78 +423,73 @@ function criarContextoTrabalho_() {
     fileAdmin.moveTo(pastaPlanilhas);
 
     // ============================================================
-    // 8️⃣ GARANTIR TEMPLATES
+    // 8️⃣ CLIENTE/RELATÓRIOS: REUSAR TEMPLATE OU CRIAR NO CONTEXTO
     // ============================================================
 
-    ssAdmin.toast('Verificando template CLIENTE...', '📦 Estrutura', 3);
+    const pastaTemplates = estruturaGlobal.pastaTemplates;
 
-    const templateClienteInfo = garantirTemplatePlanilhaComStatus_('CLIENTE');
+    ssAdmin.toast('Verificando template CLIENTE em TEMPLATES...', '📦 Estrutura', 3);
+    let templateClienteFile = obterTemplateClienteEmTemplates_(pastaTemplates);
+    let fileCliente;
+    let ssCliente;
 
-    ssAdmin.toast(
-      templateClienteInfo.criada
-        ? 'Template CLIENTE criada e formatada.'
-        : 'Template CLIENTE já existe.',
-      '📦 Template',
-      3
-    );
-
-    ssAdmin.toast('Verificando template RELATÓRIO...', '📦 Estrutura', 3);
-
-    const templateRelatorioInfo = garantirTemplatePlanilhaComStatus_('RELATORIO');
-
-    ssAdmin.toast(
-      templateRelatorioInfo.criada
-        ? 'Template RELATÓRIO criada e formatada.'
-        : 'Template RELATÓRIO já existe.',
-      '📦 Template',
-      3
-    );
-
-    // ============================================================
-    // 9️⃣ CRIAR E FORMATAR CLIENTE
-    // ============================================================
-
-    ssAdmin.toast('Copiando template CLIENTE para o contexto...', '📊 Criando', 3);
-
-    const fileCliente = templateClienteInfo.file.makeCopy(
-      'CLIENTE: ' + nomeContexto,
-      pastaLocalidades
-    );
-
-    ssAdmin.toast('Planilha CLIENTE criada no contexto.', '📂 Organizando', 3);
-
-    const ssCliente = SpreadsheetApp.openById(fileCliente.getId());
-
-    renderizarPlanilhaCliente_(
-      {
-        nome: nomeContexto,
-        localidadeAtivaNome: '-',
-        planilhaClienteId: ssCliente.getId()
-      },
-      ssCliente
-    );
+    if (templateClienteFile) {
+      fileCliente = templateClienteFile.makeCopy('CLIENTE: ' + nomeContexto, pastaLocalidades);
+      ssCliente = SpreadsheetApp.openById(fileCliente.getId());
+      renderizarPlanilhaCliente_(
+        {
+          nome: nomeContexto,
+          localidadeAtivaNome: '-',
+          planilhaClienteId: ssCliente.getId()
+        },
+        ssCliente
+      );
+      ssAdmin.toast('Template CLIENTE reutilizada no contexto.', '📦 Template', 3);
+    } else {
+      ssAdmin.toast('Template CLIENTE ausente. Criando no contexto...', '📦 Template', 3);
+      const criadoCliente = criarPlanilhaClienteNoContexto_(nomeContexto, pastaLocalidades);
+      fileCliente = criadoCliente.file;
+      ssCliente = criadoCliente.ss;
+      templateClienteFile = gerarTemplateAPartirDePlanilhaContexto_(
+        fileCliente,
+        pastaTemplates,
+        'CLIENTE: TEMPLATE'
+      );
+      ssAdmin.toast('Template CLIENTE criada em TEMPLATES.', '📦 Template', 3);
+    }
 
     limparContextoAtivo_();
 
-    // ============================================================
-    // 🔟 CRIAR E FORMATAR RELATÓRIO
-    // ============================================================
+    ssAdmin.toast('Verificando template RELATÓRIOS em TEMPLATES...', '📦 Estrutura', 3);
+    let templateRelatorioFile = obterTemplateRelatoriosEmTemplates_(pastaTemplates);
+    let fileRelatorio;
+    let ssRelatorio;
 
-    ssAdmin.toast('Copiando template RELATÓRIO para o contexto...', '📊 Criando', 3);
+    if (templateRelatorioFile) {
+      fileRelatorio = templateRelatorioFile.makeCopy('RELATÓRIOS: ' + nomeContexto, pastaLocalidades);
+      ssRelatorio = SpreadsheetApp.openById(fileRelatorio.getId());
+      renderizarPlanilhaRelatorio_(
+        { nome: nomeContexto },
+        ssRelatorio
+      );
+      ssAdmin.toast('Template RELATÓRIOS reutilizada no contexto.', '📦 Template', 3);
+    } else {
+      ssAdmin.toast('Template RELATÓRIOS ausente. Criando no contexto...', '📦 Template', 3);
+      const criadoRelatorio = criarPlanilhaRelatorioNoContexto_(nomeContexto, pastaLocalidades);
+      fileRelatorio = criadoRelatorio.file;
+      ssRelatorio = criadoRelatorio.ss;
+      templateRelatorioFile = gerarTemplateAPartirDePlanilhaContexto_(
+        fileRelatorio,
+        pastaTemplates,
+        'RELATÓRIOS: TEMPLATE'
+      );
+      ssAdmin.toast('Template RELATÓRIOS criada em TEMPLATES.', '📦 Template', 3);
+    }
 
-    const fileRelatorio = templateRelatorioInfo.file.makeCopy(
-      'RELATÓRIO: ' + nomeContexto,
-      pastaLocalidades
-    );
-
-    ssAdmin.toast('Planilha RELATÓRIO criada no contexto.', '📂 Organizando', 3);
-
-    const ssRelatorio = SpreadsheetApp.openById(fileRelatorio.getId());
-
-    renderizarPlanilhaRelatorio_(
-      { nome: nomeContexto },
-      ssRelatorio
-    );
+    atualizarSistemaGlobal_({
+      planilhaTemplateClienteId: templateClienteFile.getId(),
+      planilhaTemplateRelatorioId: templateRelatorioFile.getId()
+    });
 
     limparContextoAtivo_();
 

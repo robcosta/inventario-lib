@@ -27,11 +27,11 @@ function relatorioGerarVisaoGeral_() {
   }
 
   const adminFormatada = validarPlanilhaFormatada_(contexto.planilhaAdminId);
-  const geralFormatada = validarPlanilhaFormatada_(planilhaGeralId);
-  if (!adminFormatada || !geralFormatada) {
+  const geralPronta = validarPlanilhaGeralPronta_(planilhaGeralId);
+  if (!adminFormatada || !geralPronta) {
     const faltantes = [];
     if (!adminFormatada) faltantes.push('ADMIN');
-    if (!geralFormatada) faltantes.push('GERAL');
+    if (!geralPronta) faltantes.push('GERAL (nome, dados e formatação)');
     throw new Error(
       'Antes de gerar o relatório, formate as planilhas: ' + faltantes.join(' e ') + '.'
     );
@@ -410,7 +410,7 @@ function montarAbaVisaoGeralRelatorio_(sheet, registros, nomeRelatorio) {
 
   sheet.getRange('A2:G2')
     .merge()
-    .setValue(`Relatório: ${tituloRelatorio} | Gerado em: ${dataGeracao} | Usuário: ${email}`)
+    .setValue(`RELATÓRIOS: ${tituloRelatorio} | Gerado em: ${dataGeracao} | Usuário: ${email}`)
     .setFontFamily('Arial')
     .setFontSize(10)
     .setFontWeight('bold')

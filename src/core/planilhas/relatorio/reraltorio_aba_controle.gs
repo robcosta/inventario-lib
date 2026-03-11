@@ -91,7 +91,13 @@ function registrarEventoControleRelatorio_(ss, evento) {
     evento?.observacao || ''
   ];
 
-  sheet.appendRow(linha);
+  try {
+    sheet.appendRow(linha);
+  } catch (e) {
+    // O controle é auxiliar. Se a aba estiver protegida para o executor atual,
+    // não deve bloquear a geração do relatório principal.
+    Logger.log('[RELATORIO][CONTROLE][AVISO] Falha ao registrar evento: ' + e.message);
+  }
 }
 
 function registrarEdicaoManualRelatorio_(e) {
@@ -136,22 +142,52 @@ function protegerAbaControleRelatorio_(sheet) {
   if (!sheet) return;
 
   try {
-    const protecoes = sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET);
-    protecoes.forEach(p => {
-      if (p.getDescription() === 'Controle RELATÓRIO — protegido') {
-        p.remove();
-      }
+    const descricao = 'Controle RELATÓRIO — protegido';
+    const ss = sheet.getParent();
+    const file = DriveApp.getFileById(ss.getId());
+
+    const protecoes = sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET)
+      .filter(p => p.getDescription() === descricao);
+
+    let protecao = protecoes.length ? protecoes[0] : sheet.protect().setDescription(descricao);
+
+    // Remove proteções duplicadas (se existirem).
+    for (let i = 1; i < protecoes.length; i++) {
+      try {
+        protecoes[i].remove();
+      } catch (e) {}
+    }
+
+    // Política: manter aba protegida, porém liberar para todos os editores
+    // do arquivo RELATÓRIO (evita falha para cliente remoto editor).
+    const permitidos = {};
+    const owner = file.getOwner();
+    const ownerEmail = owner ? String(owner.getEmail() || '').trim().toLowerCase() : '';
+    if (ownerEmail) permitidos[ownerEmail] = true;
+
+    (file.getEditors() || []).forEach(u => {
+      const email = String((u && u.getEmail && u.getEmail()) || '').trim().toLowerCase();
+      if (email) permitidos[email] = true;
     });
 
-    const protecao = sheet.protect().setDescription('Controle RELATÓRIO — protegido');
-    const meuEmail = Session.getEffectiveUser().getEmail();
-    const editores = protecao.getEditors();
-    if (editores && editores.length) {
-      protecao.removeEditors(editores);
-    }
-    if (meuEmail) {
-      protecao.addEditor(meuEmail);
-    }
+    const efetivo = String(Session.getEffectiveUser().getEmail() || '').trim().toLowerCase();
+    if (efetivo) permitidos[efetivo] = true;
+
+    const ativos = protecao.getEditors() || [];
+    ativos.forEach(u => {
+      const email = String((u && u.getEmail && u.getEmail()) || '').trim().toLowerCase();
+      if (!email || permitidos[email]) return;
+      try {
+        protecao.removeEditor(u);
+      } catch (e) {}
+    });
+
+    Object.keys(permitidos).forEach(email => {
+      try {
+        protecao.addEditor(email);
+      } catch (e) {}
+    });
+
     if (protecao.canDomainEdit()) {
       protecao.setDomainEdit(false);
     }

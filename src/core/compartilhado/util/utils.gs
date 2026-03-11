@@ -5,47 +5,125 @@
  */
 
 /**
- * Obtém a pasta raiz do inventário
- * Prioridade: ScriptProperties -> Pasta mãe da planilha ativa
+ * Obtém a pasta raiz do inventário.
+ * Prioridade:
+ * 1) ID global salvo em ScriptProperties
+ * 2) Descoberta por ancestrais da planilha ativa (sem usar pasta direta cegamente)
+ *
  * @return {GoogleAppsScript.Drive.Folder|null}
  */
 function obterPastaInventario_() {
-  // 1️⃣ Tentar via configuração global (ID)
-  const sistemaGlobal = obterSistemaGlobal_();
-  
-  if (sistemaGlobal.pastaRaizId) {
-    try {
-      return DriveApp.getFolderById(sistemaGlobal.pastaRaizId);
-    } catch (e) {
-      Logger.log('[UTILS] ID pasta raiz salvo inválido, tentando obter pela planilha ativa...');
-    }
+  const sistemaGlobal = obterSistemaGlobal_() || {};
+
+  const pastaRaizSalva = obterPastaPorIdSeguro_(sistemaGlobal.pastaRaizId);
+  if (pastaRaizSalva) {
+    return pastaRaizSalva;
   }
 
-  // 2️⃣ Fallback: obter pasta mãe da planilha ativa (ID)
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss) return null;
+  const pastaDescoberta = descobrirPastaRaizInventarioPelosAncestrais_();
+  if (pastaDescoberta) {
+    atualizarSistemaGlobal_({ pastaRaizId: pastaDescoberta.getId() });
+    return pastaDescoberta;
+  }
 
-  const arquivo = DriveApp.getFileById(ss.getId());
-  const pais = arquivo.getParents();
-  if (!pais.hasNext()) return null;
-
-  const pasta = pais.next();
-
-  // 3️⃣ Sincroniza o ID para uso futuro
-  atualizarSistemaGlobal_({ pastaRaizId: pasta.getId() });
-  
-  return pasta;
+  return null;
 }
 
 /**
- * Obtém ou cria uma subpasta
- * @param {GoogleAppsScript.Drive.Folder} pai
- * @param {string} nome
- * @return {GoogleAppsScript.Drive.Folder}
+ * Busca pasta por ID de forma segura.
+ * @param {string} id
+ * @return {GoogleAppsScript.Drive.Folder|null}
  */
-function obterOuCriarSubpasta_(pai, nome) {
-  const it = pai.getFoldersByName(nome);
-  return it.hasNext() ? it.next() : pai.createFolder(nome);
+function obterPastaPorIdSeguro_(id) {
+  const folderId = String(id || '').trim();
+  if (!folderId) return null;
+
+  try {
+    return DriveApp.getFolderById(folderId);
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Descobre a raiz do inventário subindo a árvore de pais da planilha ativa.
+ * @return {GoogleAppsScript.Drive.Folder|null}
+ */
+function descobrirPastaRaizInventarioPelosAncestrais_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) return null;
+
+  try {
+    const arquivo = DriveApp.getFileById(ss.getId());
+    const paisDiretos = arquivo.getParents();
+
+    while (paisDiretos.hasNext()) {
+      let pastaAtual = paisDiretos.next();
+      let profundidade = 0;
+
+      while (pastaAtual && profundidade < 10) {
+        if (pastaPareceRaizInventario_(pastaAtual)) {
+          return pastaAtual;
+        }
+
+        const nomeAtual = String(pastaAtual.getName() || '').toUpperCase();
+        if (
+          nomeAtual === 'TEMPLATES' ||
+          nomeAtual === 'TEMPLATE' ||
+          nomeAtual === 'CONTEXTOS' ||
+          nomeAtual === 'GERAL'
+        ) {
+          const pais = pastaAtual.getParents();
+          if (pais.hasNext()) {
+            const pai = pais.next();
+            if (pastaPareceRaizInventario_(pai)) {
+              return pai;
+            }
+          }
+        }
+
+        const pais = pastaAtual.getParents();
+        if (!pais.hasNext()) break;
+        pastaAtual = pais.next();
+        profundidade++;
+      }
+    }
+  } catch (e) {
+    Logger.log('[UTILS] Falha ao descobrir raiz pelos ancestrais: ' + e.message);
+  }
+
+  return null;
+}
+
+/**
+ * Heurística de identificação da pasta raiz do inventário.
+ * @param {GoogleAppsScript.Drive.Folder} pasta
+ * @return {boolean}
+ */
+function pastaPareceRaizInventario_(pasta) {
+  if (!pasta) return false;
+
+  try {
+    return (
+      pastaTemSubpasta_(pasta, 'CONTEXTOS') ||
+      pastaTemSubpasta_(pasta, 'GERAL') ||
+      pastaTemSubpasta_(pasta, 'TEMPLATES') ||
+      pastaTemSubpasta_(pasta, 'TEMPLATE')
+    );
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Verifica se uma pasta contém subpasta com nome exato.
+ * @param {GoogleAppsScript.Drive.Folder} pasta
+ * @param {string} nome
+ * @return {boolean}
+ */
+function pastaTemSubpasta_(pasta, nome) {
+  if (!pasta || !nome) return false;
+  return pasta.getFoldersByName(nome).hasNext();
 }
 
 /**

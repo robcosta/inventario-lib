@@ -6,6 +6,10 @@
  * - Fallback: redescoberta na pasta GERAL
  * ============================================================
  */
+function nomePlanilhaGeralValido_(nome) {
+  return /^GERAL:\s*\S+/i.test(String(nome || '').trim());
+}
+
 function resolverPlanilhaGeralId_() {
   const mensagemErro = 'Planilha Geral ainda nao foi criada.';
   const sistemaGlobal = obterSistemaGlobal_() || {};
@@ -16,7 +20,10 @@ function resolverPlanilhaGeralId_() {
     if (!id) return null;
 
     try {
-      SpreadsheetApp.openById(id);
+      const ss = SpreadsheetApp.openById(id);
+      if (!nomePlanilhaGeralValido_(ss.getName())) {
+        return null;
+      }
       return id;
     } catch (e) {
       return null;
@@ -65,6 +72,19 @@ function resolverPlanilhaGeralId_() {
   });
 
   return planilha.getId();
+}
+
+/**
+ * Resolve ID da planilha GERAL sem lançar exceção.
+ *
+ * @return {string|null}
+ */
+function resolverPlanilhaGeralIdSeguro_() {
+  try {
+    return resolverPlanilhaGeralId_();
+  } catch (e) {
+    return null;
+  }
 }
 
 /**
@@ -138,6 +158,11 @@ function localizarPlanilhaGeralNaPasta_(pastaGeral) {
 
   while (files.hasNext()) {
     const atual = files.next();
+    const nomeAtual = String(atual.getName() || '');
+    if (!nomePlanilhaGeralValido_(nomeAtual)) {
+      continue;
+    }
+
     try {
       SpreadsheetApp.openById(atual.getId()); // valida acesso/existencia
     } catch (e) {
@@ -150,17 +175,7 @@ function localizarPlanilhaGeralNaPasta_(pastaGeral) {
       continue;
     }
 
-    const nomeAtual = String(atual.getName() || '').toUpperCase();
-    const nomeMelhor = String(melhor.getName() || '').toUpperCase();
-    const atualEhGeral = nomeAtual.startsWith('GERAL');
-    const melhorEhGeral = nomeMelhor.startsWith('GERAL');
-
-    if (atualEhGeral && !melhorEhGeral) {
-      melhor = atual;
-      continue;
-    }
-
-    if (atualEhGeral === melhorEhGeral && atual.getLastUpdated() > melhor.getLastUpdated()) {
+    if (atual.getLastUpdated() > melhor.getLastUpdated()) {
       melhor = atual;
     }
   }

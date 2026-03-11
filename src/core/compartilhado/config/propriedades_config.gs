@@ -11,6 +11,7 @@ const PROPRIEDADES_GLOBAL = {
   // ============================================================
   PASTA_RAIZ_ID: 'PASTA_RAIZ_ID',
   PASTA_CONTEXTO_ID: 'PASTA_CONTEXTO_ID',
+  PASTA_TEMPLATES_ID: 'PASTA_TEMPLATES_ID',
   
   // ============================================================
   // � PASTAS — PLANILHA GERAL
@@ -22,6 +23,13 @@ const PROPRIEDADES_GLOBAL = {
   // �📊 PLANILHA GERAL
   // ============================================================
   PLANILHA_GERAL_ID: 'PLANILHA_GERAL_ID',
+  
+  // ============================================================
+  // 📄 PLANILHAS TEMPLATE
+  // ============================================================
+  PLANILHA_TEMPLATE_ADMIN_ID: 'PLANILHA_TEMPLATE_ADMIN_ID',
+  PLANILHA_TEMPLATE_CLIENTE_ID: 'PLANILHA_TEMPLATE_CLIENTE_ID',
+  PLANILHA_TEMPLATE_RELATORIO_ID: 'PLANILHA_TEMPLATE_RELATORIO_ID',
   
   // ============================================================
   // 🔧 CONFIGURAÇÕES

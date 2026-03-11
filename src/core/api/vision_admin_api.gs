@@ -63,9 +63,9 @@ function processarImagens_() {
   }
 
   const adminFormatada = validarPlanilhaFormatada_(planilhaAdminId);
-  const geralFormatada = validarPlanilhaFormatada_(planilhaGeralId);
+  const geralPronta = validarPlanilhaGeralPronta_(planilhaGeralId);
 
-  if (!adminFormatada || !geralFormatada) {
+  if (!adminFormatada || !geralPronta) {
 
     let mensagem = "⚠️ Antes de processar imagens, formate:\n\n";
 
@@ -73,8 +73,8 @@ function processarImagens_() {
       mensagem += "• Planilha ADMIN\n";
     }
 
-    if (!geralFormatada) {
-      mensagem += "• Planilha GERAL\n";
+    if (!geralPronta) {
+      mensagem += "• Planilha GERAL (nome GERAL:..., dados e formatação)\n";
     }
 
     mensagem += "\nUse o menu correspondente para formatar.";

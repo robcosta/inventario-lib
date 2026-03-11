@@ -16,7 +16,7 @@ function selecionarContextoTrabalho_() {
   const ui = SpreadsheetApp.getUi();
 
   const contextoAtual = obterContextoAtivo_();
-  const contextos = listarContextos_();
+  const contextos = listarContextosParaSelecao_();
 
   if (!Array.isArray(contextos) || contextos.length === 0) {
     ui.alert('Não há contextos disponíveis para seleção.');
@@ -69,6 +69,169 @@ function selecionarContextoTrabalho_() {
   // Apenas abre a planilha do outro contexto
 
   abrirPlanilhaNoNavegador_(escolhido.planilhaAdminId);
+}
+
+function listarContextosParaSelecao_() {
+  const porAdminId = {};
+
+  // 1) Contextos já persistidos nas ScriptProperties.
+  const persistidos = listarContextos_();
+  (persistidos || []).forEach(ctx => {
+    if (!ctx || !ctx.planilhaAdminId) return;
+    porAdminId[ctx.planilhaAdminId] = ctx;
+  });
+
+  // 2) Fallback: descobrir contextos diretamente no Drive.
+  const descobertos = listarContextosViaDrive_();
+  (descobertos || []).forEach(ctx => {
+    if (!ctx || !ctx.planilhaAdminId) return;
+    if (!porAdminId[ctx.planilhaAdminId]) {
+      porAdminId[ctx.planilhaAdminId] = ctx;
+    }
+  });
+
+  return Object.keys(porAdminId).map(id => porAdminId[id]);
+}
+
+function listarContextosViaDrive_() {
+  const pastaContextos = resolverPastaContextosParaSelecao_();
+  if (!pastaContextos) return [];
+
+  const lista = [];
+  const pastas = pastaContextos.getFolders();
+
+  while (pastas.hasNext()) {
+    const pastaContexto = pastas.next();
+    const contexto = montarContextoBasicoDaPasta_(pastaContexto);
+    if (contexto && contexto.planilhaAdminId) {
+      lista.push(contexto);
+    }
+  }
+
+  return lista;
+}
+
+function resolverPastaContextosParaSelecao_() {
+  const sistema = obterSistemaGlobal_() || {};
+  const contextoAtual = obterContextoAtivo_() || {};
+
+  const pastaContextosId = String(sistema.pastaContextoId || '').trim();
+  if (pastaContextosId) {
+    try {
+      return DriveApp.getFolderById(pastaContextosId);
+    } catch (e) {
+      Logger.log('[CONTEXTO][SELECIONAR] pastaContextoId global invalido: ' + e.message);
+    }
+  }
+
+  // Fallback: usa a pasta do contexto atual -> pai deve ser CONTEXTOS.
+  const pastaContextoAtualId = String(contextoAtual.pastaContextoId || '').trim();
+  if (pastaContextoAtualId) {
+    try {
+      const pastaContextoAtual = DriveApp.getFolderById(pastaContextoAtualId);
+      const pais = pastaContextoAtual.getParents();
+      if (pais.hasNext()) {
+        return pais.next();
+      }
+    } catch (e) {
+      Logger.log('[CONTEXTO][SELECIONAR] falha ao resolver pasta CONTEXTOS por pastaContextoId atual.');
+    }
+  }
+
+  // Último fallback: deduz pela planilha ativa ADMIN.
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) return null;
+
+    const fileAdmin = DriveApp.getFileById(ss.getId());
+    const paisPlanilha = fileAdmin.getParents();
+    if (!paisPlanilha.hasNext()) return null;
+
+    const pastaPlanilhas = paisPlanilha.next();
+    const paisContexto = pastaPlanilhas.getParents();
+    if (!paisContexto.hasNext()) return null;
+
+    const pastaContexto = paisContexto.next();
+    const paisContextos = pastaContexto.getParents();
+    if (!paisContextos.hasNext()) return null;
+
+    return paisContextos.next();
+  } catch (e) {
+    Logger.log('[CONTEXTO][SELECIONAR] falha ao deduzir pasta CONTEXTOS pela planilha ativa.');
+  }
+
+  return null;
+}
+
+function montarContextoBasicoDaPasta_(pastaContexto) {
+  if (!pastaContexto) return null;
+
+  const pastaPlanilhas = localizarSubpastaPorNomeExato_(pastaContexto, 'PLANILHA') ||
+    localizarSubpastaPorNomeExato_(pastaContexto, 'PLANILHAS');
+  const pastaLocalidades = localizarSubpastaPorNomeExato_(pastaContexto, 'LOCALIDADES');
+  const pastaCSVAdmin = pastaPlanilhas
+    ? localizarSubpastaPorNomeExato_(pastaPlanilhas, 'CSV_ADMIN')
+    : null;
+
+  if (!pastaPlanilhas || !pastaLocalidades || !pastaCSVAdmin) {
+    return null;
+  }
+
+  let planilhaAdminId = null;
+  const filesAdmin = pastaPlanilhas.getFilesByType(MimeType.GOOGLE_SHEETS);
+  while (filesAdmin.hasNext()) {
+    const file = filesAdmin.next();
+    const nome = String(file.getName() || '').toUpperCase();
+    if (nome.startsWith('ADMIN:')) {
+      planilhaAdminId = file.getId();
+      break;
+    }
+  }
+
+  if (!planilhaAdminId) {
+    return null;
+  }
+
+  let planilhaClienteId = null;
+  let planilhaRelatorioId = null;
+  const filesLocalidades = pastaLocalidades.getFilesByType(MimeType.GOOGLE_SHEETS);
+
+  while (filesLocalidades.hasNext()) {
+    const file = filesLocalidades.next();
+    const nome = String(file.getName() || '').toUpperCase();
+
+    if (!planilhaClienteId && nome.startsWith('CLIENTE:')) {
+      planilhaClienteId = file.getId();
+      continue;
+    }
+
+    if (!planilhaRelatorioId && (
+      nome.startsWith('RELATÓRIOS:') ||
+      nome.startsWith('RELATÓRIOS:') ||
+      nome.startsWith('RELATORIO:') ||
+      nome.startsWith('RELATORIOS:')
+    )) {
+      planilhaRelatorioId = file.getId();
+      continue;
+    }
+  }
+
+  return {
+    nome: pastaContexto.getName(),
+    planilhaAdminId: planilhaAdminId,
+    planilhaClienteId: planilhaClienteId,
+    planilhaRelatorioId: planilhaRelatorioId,
+    pastaContextoId: pastaContexto.getId(),
+    pastaPlanilhasId: pastaPlanilhas.getId(),
+    pastaCSVAdminId: pastaCSVAdmin.getId(),
+    pastaLocalidadesId: pastaLocalidades.getId()
+  };
+}
+
+function localizarSubpastaPorNomeExato_(pastaPai, nome) {
+  if (!pastaPai || !nome) return null;
+  const it = pastaPai.getFoldersByName(nome);
+  return it.hasNext() ? it.next() : null;
 }
 
 

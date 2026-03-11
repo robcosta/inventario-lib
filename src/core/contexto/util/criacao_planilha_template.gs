@@ -59,12 +59,30 @@ function formatarTemplatePorTipo_(tipo, ssTemplate) {
  */
 function garantirTemplatePlanilhaComStatus_(tipo) {
 
-  const raiz = obterPastaInventario_();
-  if (!raiz) {
-    throw new Error('Pasta raiz do Inventário não encontrada.');
+  const sistemaGlobal = obterSistemaGlobal_() || {};
+  let pastaTemplates = null;
+
+  const pastaTemplatesId = String(sistemaGlobal.pastaTemplatesId || '').trim();
+  if (pastaTemplatesId) {
+    try {
+      pastaTemplates = DriveApp.getFolderById(pastaTemplatesId);
+    } catch (e) {
+      Logger.log('[TEMPLATE] PASTA_TEMPLATES_ID invalido. Tentando resolver pela raiz.');
+    }
   }
 
-  const pastaTemplates = obterOuCriarSubpasta_(raiz, 'TEMPLATES');
+  if (!pastaTemplates) {
+    const raiz = obterPastaInventario_();
+    if (!raiz) {
+      throw new Error('Pasta raiz do Inventário não encontrada.');
+    }
+
+    pastaTemplates = obterOuCriarSubpasta_(raiz, 'TEMPLATES');
+    atualizarSistemaGlobal_({
+      pastaRaizId: raiz.getId(),
+      pastaTemplatesId: pastaTemplates.getId()
+    });
+  }
 
   const nomeTemplate = obterNomeTemplatePorTipo_(tipo);
   const arquivos = pastaTemplates.getFilesByName(nomeTemplate);
@@ -81,6 +99,12 @@ function garantirTemplatePlanilhaComStatus_(tipo) {
 
   formatarTemplatePorTipo_(tipo, ssNova);
   fileNovo.moveTo(pastaTemplates);
+
+  if (tipo === 'CLIENTE') {
+    atualizarSistemaGlobal_({ planilhaTemplateClienteId: fileNovo.getId() });
+  } else if (tipo === 'RELATORIO') {
+    atualizarSistemaGlobal_({ planilhaTemplateRelatorioId: fileNovo.getId() });
+  }
 
   return {
     file: fileNovo,

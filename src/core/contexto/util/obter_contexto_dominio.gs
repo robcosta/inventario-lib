@@ -83,6 +83,7 @@ function obterContextoDominio_() {
  * ============================================================
  */
 function normalizarContexto_(dados, tipo, origem) {
+  const planilhaGeralIdResolvida = dados.planilhaGeralId || resolverPlanilhaGeralIdSeguro_() || null;
 
   return {
 
@@ -94,7 +95,7 @@ function normalizarContexto_(dados, tipo, origem) {
     planilhaAdminId: dados.planilhaAdminId || null,
     planilhaClienteId: dados.planilhaClienteId || null,
     planilhaRelatorioId: dados.planilhaRelatorioId || null,
-    planilhaGeralId: dados.planilhaGeralId || resolverPlanilhaGeralId_() || null,
+    planilhaGeralId: planilhaGeralIdResolvida,
 
     pastaContextoId: dados.pastaContextoId || null,
     pastaPlanilhasId: dados.pastaPlanilhasId || null,

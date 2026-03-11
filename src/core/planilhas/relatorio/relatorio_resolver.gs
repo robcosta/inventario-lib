@@ -48,7 +48,7 @@ function descobrirPlanilhaRelatorioNoDrive_(contexto) {
     const file = arquivos.next();
     const nome = String(file.getName() || '').toUpperCase();
     if (
-      nome.startsWith('RELATÓRIO:') ||
+      nome.startsWith('RELATÓRIOS:') ||
       nome.startsWith('RELATÓRIOS:') ||
       nome.startsWith('RELATORIO:') ||
       nome.startsWith('RELATORIOS:')

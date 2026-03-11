@@ -92,7 +92,7 @@ function repararContextoAdmin_() {
     if (
       !planilhaRelatorioId &&
       (
-        nome.startsWith('RELATÓRIO:') ||
+        nome.startsWith('RELATÓRIOS:') ||
         nome.startsWith('RELATÓRIOS:') ||
         nome.startsWith('RELATORIO:') ||
         nome.startsWith('RELATORIOS:')

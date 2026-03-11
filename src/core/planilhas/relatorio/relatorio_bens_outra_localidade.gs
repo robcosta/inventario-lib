@@ -29,11 +29,11 @@ function relatorioGerarBensOutraLocalidade_() {
   }
 
   const adminFormatada = validarPlanilhaFormatada_(contexto.planilhaAdminId);
-  const geralFormatada = validarPlanilhaFormatada_(planilhaGeralId);
-  if (!adminFormatada || !geralFormatada) {
+  const geralPronta = validarPlanilhaGeralPronta_(planilhaGeralId);
+  if (!adminFormatada || !geralPronta) {
     const faltantes = [];
     if (!adminFormatada) faltantes.push('ADMIN');
-    if (!geralFormatada) faltantes.push('GERAL');
+    if (!geralPronta) faltantes.push('GERAL (nome, dados e formatação)');
     throw new Error(
       'Antes de gerar o relatório, formate as planilhas: ' + faltantes.join(' e ') + '.'
     );

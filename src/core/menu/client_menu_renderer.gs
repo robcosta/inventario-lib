@@ -12,10 +12,14 @@ function renderMenuClient_(contextoOverride) {
     contextoOverride ||
     obterContextoDominio_();
 
+  const planilhaGeralId =
+    (contexto && contexto.planilhaGeralId) ||
+    resolverPlanilhaGeralIdSeguro_();
+
   const temContexto =
     !!contexto &&
     !!contexto.planilhaAdminId &&
-    !!resolverPlanilhaGeralId_() &&
+    !!planilhaGeralId &&
     !!contexto.pastaLocalidadesId;
 
   const menu = ui.createMenu('📦 Inventário Patrimonial');

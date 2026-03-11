@@ -44,6 +44,20 @@ function clientAtualizarInformacoes_() {
   }
 
   // ==========================================================
+  // 2.1️⃣ Garantir planilha GERAL no contexto, quando possível
+  // ==========================================================
+  if (!contexto.planilhaGeralId) {
+    const planilhaGeralId = resolverPlanilhaGeralIdSeguro_();
+    if (planilhaGeralId) {
+      try {
+        contexto = atualizarContextoCliente_({ planilhaGeralId: planilhaGeralId });
+      } catch (e) {
+        Logger.log('[CLIENTE][ATUALIZAR][AVISO] Nao foi possivel persistir planilhaGeralId no contexto: ' + e.message);
+      }
+    }
+  }
+
+  // ==========================================================
   // 3️⃣ Sincronizar localidade ativa
   // ==========================================================
   try {

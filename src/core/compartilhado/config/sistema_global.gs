@@ -15,11 +15,15 @@ function obterSistemaGlobal_() {
   return {
     pastaRaizId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_RAIZ_ID),
     pastaContextoId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_CONTEXTO_ID),
+    pastaTemplatesId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_TEMPLATES_ID),
 
     pastaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_GERAL_ID),
     pastaCSVGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PASTA_CSV_GERAL_ID),
 
-    planilhaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID),    
+    planilhaGeralId: props.getProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID),
+    planilhaTemplateAdminId: props.getProperty(PROPRIEDADES_GLOBAL.PLANILHA_TEMPLATE_ADMIN_ID),
+    planilhaTemplateClienteId: props.getProperty(PROPRIEDADES_GLOBAL.PLANILHA_TEMPLATE_CLIENTE_ID),
+    planilhaTemplateRelatorioId: props.getProperty(PROPRIEDADES_GLOBAL.PLANILHA_TEMPLATE_RELATORIO_ID),
     visionApiKey: props.getProperty(PROPRIEDADES_GLOBAL.VISION_API_KEY),
     
     ambienteAtivo: props.getProperty(PROPRIEDADES_GLOBAL.AMBIENTE_ATIVO) || 'DEV',
@@ -42,11 +46,11 @@ function atualizarSistemaGlobal_(atualizacoes) {
   if (atualizacoes.pastaContextoId !== undefined) {
     props.setProperty(PROPRIEDADES_GLOBAL.PASTA_CONTEXTO_ID, atualizacoes.pastaContextoId);
   }
+  if (atualizacoes.pastaTemplatesId !== undefined) {
+    props.setProperty(PROPRIEDADES_GLOBAL.PASTA_TEMPLATES_ID, atualizacoes.pastaTemplatesId);
+  }
   
   // Pastas — Planilha Geral
-  if (atualizacoes.pastaPlanilhasId !== undefined) {
-    props.setProperty(PROPRIEDADES_GLOBAL.PASTA_PLANILHAS_ID, atualizacoes.pastaPlanilhasId);
-  }
   if (atualizacoes.pastaGeralId !== undefined) {
     props.setProperty(PROPRIEDADES_GLOBAL.PASTA_GERAL_ID, atualizacoes.pastaGeralId);
   }
@@ -57,6 +61,15 @@ function atualizarSistemaGlobal_(atualizacoes) {
   // Planilha Geral
   if (atualizacoes.planilhaGeralId !== undefined) {
     props.setProperty(PROPRIEDADES_GLOBAL.PLANILHA_GERAL_ID, atualizacoes.planilhaGeralId);
+  }
+  if (atualizacoes.planilhaTemplateAdminId !== undefined) {
+    props.setProperty(PROPRIEDADES_GLOBAL.PLANILHA_TEMPLATE_ADMIN_ID, atualizacoes.planilhaTemplateAdminId);
+  }
+  if (atualizacoes.planilhaTemplateClienteId !== undefined) {
+    props.setProperty(PROPRIEDADES_GLOBAL.PLANILHA_TEMPLATE_CLIENTE_ID, atualizacoes.planilhaTemplateClienteId);
+  }
+  if (atualizacoes.planilhaTemplateRelatorioId !== undefined) {
+    props.setProperty(PROPRIEDADES_GLOBAL.PLANILHA_TEMPLATE_RELATORIO_ID, atualizacoes.planilhaTemplateRelatorioId);
   }
   
   // Configurações

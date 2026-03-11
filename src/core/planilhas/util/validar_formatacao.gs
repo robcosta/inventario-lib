@@ -66,6 +66,49 @@ function validarPlanilhaFormatada_(spreadsheetId) {
   }
 }
 
+function planilhaTemDadosOperacionais_(ss) {
+  if (!ss) return false;
+
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const sheet = sheets[i];
+    const nomeAba = String(sheet.getName() || '');
+    if (nomeAba === '__CONTROLE_PROCESSAMENTO__') continue;
+
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    if (lastRow < 2 || lastCol < 1) continue;
+
+    const linhasDados = Math.min(lastRow - 1, 400);
+    const colunasDados = Math.min(lastCol, 30);
+    const valores = sheet.getRange(2, 1, linhasDados, colunasDados).getValues();
+
+    for (let r = 0; r < valores.length; r++) {
+      for (let c = 0; c < valores[r].length; c++) {
+        const valor = valores[r][c];
+        if (valor !== '' && valor !== null && valor !== undefined) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+function validarPlanilhaGeralPronta_(spreadsheetId) {
+  if (!spreadsheetId) return false;
+
+  try {
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    if (!nomePlanilhaGeralValido_(ss.getName())) return false;
+    if (!planilhaTemDadosOperacionais_(ss)) return false;
+    return validarPlanilhaFormatada_(spreadsheetId);
+  } catch (e) {
+    return false;
+  }
+}
+
 /**
  * Valida se a Planilha Contexto está formatada
  * @returns {boolean} true se formatada, false caso contrário
@@ -93,7 +136,7 @@ function validarPlanilhaGeralFormatada_() {
     if (!planilhaGeralId) {
       return false;
     }
-    return validarPlanilhaFormatada_(planilhaGeralId);
+    return validarPlanilhaGeralPronta_(planilhaGeralId);
   } catch (e) {
     console.error('Erro ao validar Geral:', e.message);
     return false;

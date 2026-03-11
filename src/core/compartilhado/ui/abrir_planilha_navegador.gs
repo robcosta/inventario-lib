@@ -30,68 +30,10 @@ function abrirPlanilhaNoNavegador_(spreadsheetId) {
 
   const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/view`;
 
-  const payload = {
-    spreadsheetId,
-    nomePlanilha,
-    url,
-    ttlMs: 30 * 60 * 1000
-  };
-
-  const payloadJson = JSON.stringify(payload).replace(/<\//g, '<\\/');
-
   const html = HtmlService.createHtmlOutput(`
     <script>
-      const data = ${payloadJson};
-
-      function obterChave(id) {
-        return 'inventario:planilha:aberta:' + id;
-      }
-
-      function limparRegistrosExpirados(prefixo) {
-        try {
-          const agora = Date.now();
-          for (let i = localStorage.length - 1; i >= 0; i--) {
-            const chave = localStorage.key(i);
-            if (!chave || !chave.startsWith(prefixo)) continue;
-
-            const valor = localStorage.getItem(chave);
-            if (!valor) {
-              localStorage.removeItem(chave);
-              continue;
-            }
-
-            const registro = JSON.parse(valor);
-            if (!registro || !registro.abertoEm || (agora - registro.abertoEm) > data.ttlMs) {
-              localStorage.removeItem(chave);
-            }
-          }
-        } catch (e) {
-        }
-      }
-
-      (function abrirOuAvisar() {
-        const prefixo = 'inventario:planilha:aberta:';
-        limparRegistrosExpirados(prefixo);
-
-        const chave = obterChave(data.spreadsheetId);
-        const registroAtual = localStorage.getItem(chave);
-
-        if (registroAtual) {
-          alert('ℹ️ A planilha "' + data.nomePlanilha + '" já se encontra aberta no navegador.');
-          google.script.host.close();
-          return;
-        }
-
-        localStorage.setItem(
-          chave,
-          JSON.stringify({
-            abertoEm: Date.now(),
-            nome: data.nomePlanilha,
-            url: data.url
-          })
-        );
-
-        window.open(data.url, '_blank');
+      (function abrirPlanilha() {
+        window.open('${url}', '_blank');
         google.script.host.close();
       })();
     </script>
