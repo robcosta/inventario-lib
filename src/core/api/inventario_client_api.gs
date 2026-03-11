@@ -61,6 +61,10 @@ function clientExecutarDiagnostico() {
   executarDiagnosticoCliente_();
 }
 
+function clientVerificarStatusProcessamento() {
+  clientVerificarStatusProcessamento_();
+}
+
 /**
  * ============================================================
  * CLIENT API — RENDERIZAR PLANILHA CLIENTE

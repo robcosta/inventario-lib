@@ -91,6 +91,15 @@ function clientAtualizarInformacoes_() {
   }
 
   // ==========================================================
+  // 5.1️⃣ Notificar status da fila de processamento (quando houver)
+  // ==========================================================
+  try {
+    notificarResultadosFilaProcessamentoCliente_(contexto);
+  } catch (e) {
+    Logger.log('[CLIENTE][FILA][NOTIFICACAO][ERRO] ' + e.message);
+  }
+
+  // ==========================================================
   // 6️⃣ Feedback visual
   // ==========================================================
   SpreadsheetApp.getActiveSpreadsheet()

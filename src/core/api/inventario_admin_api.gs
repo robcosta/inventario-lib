@@ -118,6 +118,21 @@ function instalarTemplatesOutroDrive() {
 }
 
 /* ============================================================
+ * FILA DE PROCESSAMENTO (WORKER)
+ * ============================================================ */
+function processarFilaImagensPendentes() {
+  processarFilaImagensPendentes_();
+}
+
+function instalarTriggerFilaProcessamento() {
+  instalarTriggerFilaProcessamento_();
+}
+
+function removerTriggerFilaProcessamento() {
+  removerTriggerFilaProcessamento_();
+}
+
+/* ============================================================
  * HTML / UPLOAD CSV
  * ============================================================ */
 /**

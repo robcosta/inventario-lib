@@ -12,141 +12,223 @@
  * 6️⃣ Delegar processamento
  */
 function processarImagens_() {
-
   const ui = SpreadsheetApp.getUi();
-
-  // ============================================================
-  // 1️⃣ Resolver Contexto (DOMÍNIO)
-  // ============================================================
-  let contexto = obterContextoDominio_();
+  const contexto = obterContextoDominio_();
 
   if (!contexto) {
     ui.alert("❌ Nenhum contexto ativo.");
     return;
   }
 
-  // 🔄 Sincroniza localidade ativa (se sua função ainda for necessária)
-  contexto = sincronizarLocalidadeAtiva_(contexto);
-
-  if (!contexto.pastaLocalidadesId) {
-    ui.alert("❌ Contexto inválido.");
-    return;
-  }
-
-  // ============================================================
-  // 2️⃣ Validar Pasta Ativa
-  // ============================================================
-  const pastaId = contexto.localidadeAtivaId;
-  const pastaNome = contexto.localidadeAtivaNome;
-
-  if (!pastaId) {
-    ui.alert("⚠️ Nenhuma pasta de fotos selecionada.");
-    return;
-  }
-
-  try {
-    DriveApp.getFolderById(pastaId);
-  } catch (e) {
-    ui.alert("⚠️ A pasta selecionada não existe ou está inacessível.");
-    return;
-  }
-
-  // ============================================================
-  // 3️⃣ Validar Planilhas (ADMIN + GERAL)
-  // ============================================================
-  const planilhaAdminId = contexto.planilhaAdminId;
-  const planilhaGeralId = resolverPlanilhaGeralId_(); // 🔥 Sempre global
-
-  if (!planilhaAdminId || !planilhaGeralId) {
-    ui.alert("❌ Planilhas obrigatórias não configuradas.");
-    return;
-  }
-
-  const adminFormatada = validarPlanilhaFormatada_(planilhaAdminId);
-  const geralPronta = validarPlanilhaGeralPronta_(planilhaGeralId);
-
-  if (!adminFormatada || !geralPronta) {
-
-    let mensagem = "⚠️ Antes de processar imagens, formate:\n\n";
-
-    if (!adminFormatada) {
-      mensagem += "• Planilha ADMIN\n";
+  // CLIENTE sempre enfileira para processamento privilegiado.
+  if (contexto.tipo === 'CLIENTE') {
+    try {
+      enfileirarProcessamentoImagensCliente_(contexto);
+    } catch (e) {
+      Logger.log('[INVENTARIO][FILA][ERRO] ' + e.message);
     }
-
-    if (!geralPronta) {
-      mensagem += "• Planilha GERAL (nome GERAL:..., dados e formatação)\n";
-    }
-
-    mensagem += "\nUse o menu correspondente para formatar.";
-
-    ui.alert("Formatação Necessária", mensagem, ui.ButtonSet.OK);
     return;
   }
 
-  // ============================================================
-  // 4️⃣ Confirmação do Usuário
-  // ============================================================
-  const confirmar = ui.alert(
-    "🚀 Processar Fotos",
-    `Processar imagens da pasta:\n"${pastaNome}"?`,
-    ui.ButtonSet.YES_NO
-  );
-
-  if (confirmar !== ui.Button.YES) return;
-
-  // ============================================================
-  // 5️⃣ Montar Contexto Vision (Contrato Oficial)
-  // ============================================================
-  let contextoVision;
-
   try {
+    const preparacao = prepararProcessamentoVisionSemUi_(contexto);
 
-    contextoVision = montarContextoVision_({
-      ...contexto,
-      planilhaGeralId: planilhaGeralId // 🔥 Força ID global
-    });
-
-    Logger.log("=============== CONTEXTO VISION ===============");
-    Logger.log("Tipo Contexto: " + contexto.tipo);
-    Logger.log("planilhaContextoId: " + contextoVision.planilhaContextoId);
-    Logger.log("planilhaGeralId: " + contextoVision.planilhaGeralId);
-    Logger.log("pastaTrabalhoId: " + contextoVision.pastaTrabalhoId);
-    Logger.log("pastaTrabalhoNome: " + contextoVision.pastaTrabalhoNome);
-    Logger.log("corDestaque: " + contextoVision.corDestaque);
-    Logger.log("================================================");
-
-  } catch (e) {
-    ui.alert("❌ Erro de configuração:\n\n" + e.message);
-    return;
-  }
-
-  // ============================================================
-  // 6️⃣ Delegar para Vision
-  // ============================================================
-  try {
-
-    const resultado = vision.batchProcessarPastaCompleta(
-      pastaId,
-      contextoVision
+    const confirmar = ui.alert(
+      "🚀 Processar Fotos",
+      `Processar imagens da pasta:\n"${preparacao.pastaNome}"?`,
+      ui.ButtonSet.YES_NO
     );
+    if (confirmar !== ui.Button.YES) return;
 
-    Logger.log("[INVENTARIO] Processamento concluído.");
-    Logger.log("[INVENTARIO] Resultado: " + JSON.stringify(resultado));
+    const exec = executarProcessamentoVisionComPreparo_(preparacao, {
+      origem: 'MENU_ADMIN'
+    });
+    const resultado = exec && exec.resultado ? exec.resultado : {};
 
     ui.alert(
       "🏁 Processamento Finalizado",
-      `Total: ${resultado.total}\n` +
-      `✅ Sucesso: ${resultado.sucesso}\n` +
-      `❌ Erros: ${resultado.erro}`,
+      `Total: ${resultado.total || 0}\n` +
+      `✅ Sucesso: ${resultado.sucesso || 0}\n` +
+      `❌ Erros: ${resultado.erro || 0}`,
       ui.ButtonSet.OK
     );
-
   } catch (e) {
-
     ui.alert(
       "❌ Erro no Processamento",
       e.message,
       ui.ButtonSet.OK
     );
   }
+}
+
+function prepararProcessamentoVisionSemUi_(contextoEntrada) {
+  let contexto = contextoEntrada;
+
+  contexto = sincronizarLocalidadeAtiva_(contexto);
+
+  if (!contexto || !contexto.pastaLocalidadesId) {
+    throw new Error('Contexto inválido.');
+  }
+
+  const pastaId = contexto.localidadeAtivaId;
+  const pastaNome = contexto.localidadeAtivaNome;
+  if (!pastaId) {
+    throw new Error('Nenhuma pasta de fotos selecionada.');
+  }
+
+  try {
+    DriveApp.getFolderById(pastaId);
+  } catch (e) {
+    throw new Error('A pasta selecionada não existe ou está inacessível.');
+  }
+
+  const planilhaAdminId = contexto.planilhaAdminId;
+  const planilhaGeralId = contexto.planilhaGeralId || resolverPlanilhaGeralId_();
+  if (!planilhaAdminId || !planilhaGeralId) {
+    throw new Error('Planilhas obrigatórias não configuradas.');
+  }
+
+  const adminFormatada = validarPlanilhaFormatada_(planilhaAdminId);
+  const geralPronta = validarPlanilhaGeralPronta_(planilhaGeralId);
+  if (!adminFormatada || !geralPronta) {
+    const faltantes = [];
+    if (!adminFormatada) faltantes.push('ADMIN');
+    if (!geralPronta) faltantes.push('GERAL (nome, dados e formatação)');
+    throw new Error('Antes de processar imagens, formate: ' + faltantes.join(' e ') + '.');
+  }
+
+  const contextoVision = montarContextoVision_({
+    ...contexto,
+    planilhaGeralId: planilhaGeralId
+  });
+
+  Logger.log("=============== CONTEXTO VISION ===============");
+  Logger.log("Tipo Contexto: " + contexto.tipo);
+  Logger.log("planilhaContextoId: " + contextoVision.planilhaContextoId);
+  Logger.log("planilhaGeralId: " + contextoVision.planilhaGeralId);
+  Logger.log("pastaTrabalhoId: " + contextoVision.pastaTrabalhoId);
+  Logger.log("pastaTrabalhoNome: " + contextoVision.pastaTrabalhoNome);
+  Logger.log("corDestaque: " + contextoVision.corDestaque);
+  Logger.log("================================================");
+
+  return {
+    contexto: contexto,
+    pastaId: pastaId,
+    pastaNome: pastaNome,
+    planilhaAdminId: planilhaAdminId,
+    planilhaGeralId: planilhaGeralId,
+    contextoVision: contextoVision
+  };
+}
+
+function executarProcessamentoVisionSemUi_(contexto, opcoes) {
+  const preparacao = prepararProcessamentoVisionSemUi_(contexto);
+  return executarProcessamentoVisionComPreparo_(preparacao, opcoes || {});
+}
+
+function executarProcessamentoVisionComPreparo_(preparacao, opcoes) {
+  const op = opcoes || {};
+  const planilhaAdminId = preparacao.planilhaAdminId;
+  const linhaControleAntes = capturarUltimaLinhaControleProcessamento_(planilhaAdminId);
+  let resultado;
+
+  try {
+    resultado = vision.batchProcessarPastaCompleta(
+      preparacao.pastaId,
+      preparacao.contextoVision
+    );
+
+    Logger.log("[INVENTARIO] Processamento concluído.");
+    Logger.log("[INVENTARIO] Resultado: " + JSON.stringify(resultado));
+  } finally {
+    if (op.operadorEmail) {
+      try {
+        atualizarOperadorControleProcessamento_(
+          planilhaAdminId,
+          linhaControleAntes,
+          op.operadorEmail,
+          op.requestId
+        );
+      } catch (eAtualizar) {
+        Logger.log('[INVENTARIO][CONTROLE][OPERADOR][AVISO] ' + eAtualizar.message);
+      }
+    }
+  }
+
+  return {
+    resultado: resultado || {},
+    linhaControleAntes: linhaControleAntes
+  };
+}
+
+function capturarUltimaLinhaControleProcessamento_(planilhaAdminId) {
+  if (!planilhaAdminId) return 1;
+  try {
+    const ss = SpreadsheetApp.openById(planilhaAdminId);
+    const sheet = ss.getSheetByName('__CONTROLE_PROCESSAMENTO__');
+    if (!sheet) return 1;
+    return sheet.getLastRow();
+  } catch (e) {
+    return 1;
+  }
+}
+
+function atualizarOperadorControleProcessamento_(planilhaAdminId, linhaAntes, operadorEmail, requestId) {
+  const operador = normalizarEmailProcessamento_(operadorEmail);
+  if (!planilhaAdminId || !operador) return;
+
+  const ss = SpreadsheetApp.openById(planilhaAdminId);
+  const sheet = ss.getSheetByName('__CONTROLE_PROCESSAMENTO__');
+  if (!sheet) return;
+
+  const ultimaLinha = sheet.getLastRow();
+  const inicio = Math.max(2, Number(linhaAntes || 1) + 1);
+  if (ultimaLinha < inicio) return;
+
+  const qtd = ultimaLinha - inicio + 1;
+  const executor = normalizarEmailProcessamento_(Session.getEffectiveUser().getEmail());
+
+  const rangeOperador = sheet.getRange(inicio, 13, qtd, 1);
+  const atuaisOperador = rangeOperador.getValues();
+
+  let houveAlteracaoOperador = false;
+  const novosOperador = atuaisOperador.map(item => {
+    const atual = normalizarEmailProcessamento_(item[0]);
+    if (!atual || atual === executor) {
+      houveAlteracaoOperador = true;
+      return [operador];
+    }
+    return [item[0]];
+  });
+
+  if (houveAlteracaoOperador) {
+    rangeOperador.setValues(novosOperador);
+  }
+
+  if (requestId) {
+    const marcador = 'FILA:' + requestId;
+    const rangeObs = sheet.getRange(inicio, 14, qtd, 1);
+    const atuaisObs = rangeObs.getValues();
+    let houveAlteracaoObs = false;
+
+    const novasObs = atuaisObs.map(item => {
+      const atual = String(item[0] || '').trim();
+      if (!atual) {
+        houveAlteracaoObs = true;
+        return [marcador];
+      }
+      if (atual.indexOf(marcador) !== -1) {
+        return [atual];
+      }
+      return [atual + ' | ' + marcador];
+    });
+
+    if (houveAlteracaoObs) {
+      rangeObs.setValues(novasObs);
+    }
+  }
+}
+
+function normalizarEmailProcessamento_(email) {
+  return String(email || '').trim().toLowerCase();
 }

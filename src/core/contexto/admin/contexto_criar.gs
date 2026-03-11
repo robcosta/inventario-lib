@@ -48,6 +48,78 @@ function garantirCapaPrimeiraAdmin_(ss, subtitulo) {
   layoutRodapeInstitucional_(capa, 12);
 }
 
+function obterTextoPassoAPassoTriggerFilaAdmin_() {
+  return [
+    '1. No menu da ADMIN, abra: ⚙️ Worker da Fila > ⏱️ Instalar Trigger (1 min).',
+    '2. Autorize as permissões solicitadas pelo Apps Script.',
+    '3. Execute: ▶️ Processar Fila Agora (teste rápido).',
+    '4. Na CLIENTE, rode "🖼️ Processar Imagem" e confirme o status em "📣 Verificar Status do Processamento".'
+  ].join('\n');
+}
+
+function obterTituloLembreteTriggerFilaAdmin_() {
+  return '⚠️ AÇÃO OBRIGATÓRIA: CONFIGURAR TRIGGER DO WORKER DA FILA';
+}
+
+function aplicarLembreteTriggerFilaNaCapaAdmin_(ss) {
+  if (!ss) return;
+
+  const capa = ss.getSheetByName('CAPA');
+  if (!capa) return;
+
+  const bloco = capa.getRange('B10:F13');
+  bloco.breakApart();
+  bloco.clearContent().clearFormat();
+
+  const titulo = capa.getRange('B10:F10');
+  titulo
+    .merge()
+    .setValue(obterTituloLembreteTriggerFilaAdmin_())
+    .setFontFamily('Arial')
+    .setFontSize(10)
+    .setFontWeight('bold')
+    .setFontColor('#4a2f00')
+    .setBackground('#ffd966')
+    .setHorizontalAlignment('left')
+    .setVerticalAlignment('middle');
+
+  const corpo = capa.getRange('B11:F13');
+  corpo
+    .merge()
+    .setValue(obterTextoPassoAPassoTriggerFilaAdmin_())
+    .setFontFamily('Arial')
+    .setFontSize(9)
+    .setFontColor('#333333')
+    .setBackground('#fff4cc')
+    .setWrap(true)
+    .setHorizontalAlignment('left')
+    .setVerticalAlignment('top');
+
+  capa.setRowHeights(10, 4, 24);
+}
+
+function capaTemLembreteTriggerFilaAdmin_(ss) {
+  if (!ss) return false;
+
+  const capa = ss.getSheetByName('CAPA');
+  if (!capa) return false;
+
+  const tituloAtual = String(capa.getRange('B10').getValue() || '').trim();
+  return tituloAtual === obterTituloLembreteTriggerFilaAdmin_();
+}
+
+function limparLembreteTriggerFilaNaCapaAdmin_(ss) {
+  if (!ss) return;
+
+  const capa = ss.getSheetByName('CAPA');
+  if (!capa) return;
+  if (!capaTemLembreteTriggerFilaAdmin_(ss)) return;
+
+  const bloco = capa.getRange('B10:F13');
+  bloco.breakApart();
+  bloco.clearContent().clearFormat();
+}
+
 function removerAbasEmBrancoAdmin_(ss) {
   const folhas = ss.getSheets();
   const preservar = {
@@ -416,6 +488,7 @@ function criarContextoTrabalho_() {
     ssAdmin.rename('ADMIN: ' + nomeContexto);
 
     garantirCapaPrimeiraAdmin_(ssAdmin, nomeContexto);
+    aplicarLembreteTriggerFilaNaCapaAdmin_(ssAdmin);
     removerAbasEmBrancoAdmin_(ssAdmin);
 
     const fileAdmin = DriveApp.getFileById(ssAdmin.getId());
@@ -532,7 +605,8 @@ function criarContextoTrabalho_() {
 
     ui.alert(
       '✅ Contexto "' + nomeContexto + '" criado com sucesso!\n\n' +
-      '🎉 ADMIN, CLIENTE e RELATÓRIO prontos para uso.'
+      '🎉 ADMIN, CLIENTE e RELATÓRIO prontos para uso.\n\n' +
+      '⚠️ Na CAPA da ADMIN há um lembrete com o passo a passo para instalar o trigger do Worker da Fila.'
     );
 
     Logger.log('[FLUXO][CRIAR_CONTEXTO] FIM');

@@ -54,6 +54,10 @@ function processarImagens() {
   inventario.processarImagens(); // teste/manual
 }
 
+function clientVerificarStatusProcessamento() {
+  inventario.clientVerificarStatusProcessamento();
+}
+
 /* ============================================================
  * PROXIES — ARIR PLANILHA ADMIN
  * ============================================================ */

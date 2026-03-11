@@ -97,6 +97,18 @@ function processarImagens() {
   inventario.processarImagens();
 }
 
+function processarFilaImagensPendentes() {
+  inventario.processarFilaImagensPendentes();
+}
+
+function instalarTriggerFilaProcessamento() {
+  inventario.instalarTriggerFilaProcessamento();
+}
+
+function removerTriggerFilaProcessamento() {
+  inventario.removerTriggerFilaProcessamento();
+}
+
 
 /* ============================================================
  * PROXIES — PLANILHA ADMIN

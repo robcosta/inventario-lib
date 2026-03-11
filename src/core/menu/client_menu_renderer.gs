@@ -54,6 +54,7 @@ function renderMenuClient_(contextoOverride) {
 
     // Vision
     .addItem('🖼️ Processar Imagem', 'processarImagens')
+    .addItem('📣 Verificar Status do Processamento', 'clientVerificarStatusProcessamento')
     .addSeparator()
 
     // Planilhas

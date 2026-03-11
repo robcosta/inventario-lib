@@ -144,9 +144,21 @@ function adminRenderMenu_() {
         .addItem('🚚 Instalar Templates em Outro Drive', 'instalarTemplatesOutroDrive')
         .addItem('🧪 Testar Planilha Geral', 'runTestsPlanilhaGeral')
     )
+    .addSubMenu(
+      ui.createMenu('⚙️ Worker da Fila')
+        .addItem('▶️ Processar Fila Agora', 'processarFilaImagensPendentes')
+        .addItem('⏱️ Instalar Trigger (1 min)', 'instalarTriggerFilaProcessamento')
+        .addItem('🧹 Remover Trigger', 'removerTriggerFilaProcessamento')
+    )
 
     // Versão
     .addItem('ℹ️ Versão', 'mostrarVersaoSistema')
 
     .addToUi();
+
+  try {
+    verificarLembreteTriggerFilaNoContextoAdmin_(ss);
+  } catch (e) {
+    Logger.log('[MENU][ADMIN][LEMBRETE_TRIGGER][AVISO] ' + e.message);
+  }
 }
