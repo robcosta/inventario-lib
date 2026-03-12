@@ -27,6 +27,32 @@ function Write-Step([string]$Text) {
   Write-Host "[consolidado] $Text" -ForegroundColor Cyan
 }
 
+function Normalize-HtmlServiceCallsToRoot(
+  [string]$GsContent
+) {
+  if ([string]::IsNullOrEmpty($GsContent)) {
+    return $GsContent
+  }
+
+  $pattern = '(?<prefix>HtmlService\.(?:createTemplateFromFile|createHtmlOutputFromFile)\s*\(\s*["''])(?<path>[^"'']+)(?<suffix>["'']\s*\))'
+
+  return [System.Text.RegularExpressions.Regex]::Replace(
+    $GsContent,
+    $pattern,
+    {
+      param($match)
+
+      $pathOriginal = $match.Groups['path'].Value
+      if ($pathOriginal -notmatch '[/\\]') {
+        return $match.Value
+      }
+
+      $nomeArquivo = [System.IO.Path]::GetFileName($pathOriginal)
+      return $match.Groups['prefix'].Value + $nomeArquivo + $match.Groups['suffix'].Value
+    }
+  )
+}
+
 function New-InventarioConsolidado(
   [string]$SourceRootParam,
   [string]$OutputRootParam,
@@ -70,6 +96,7 @@ function New-InventarioConsolidado(
   foreach ($file in $gsFiles) {
     $relativePath = $file.FullName.Substring($sourceRootResolved.Length).TrimStart("\")
     $conteudo = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+    $conteudo = Normalize-HtmlServiceCallsToRoot -GsContent $conteudo
     $conteudo = $conteudo.TrimEnd("`r", "`n")
 
     $linhas.Add("/** >>> BEGIN FILE: $relativePath >>> */")
@@ -86,10 +113,21 @@ function New-InventarioConsolidado(
 
   Write-Step "Exportando arquivos nao-.gs em separado"
   $exportedNonGsCount = 0
-  $pastaCsvCore = (Join-Path $sourceRootResolved 'core\compartilhado\csv').TrimEnd('\')
+  $mapaHtmlNaRaiz = @{}
 
   foreach ($file in $nonGsFiles) {
-    if ($file.FullName.StartsWith($pastaCsvCore, [System.StringComparison]::OrdinalIgnoreCase)) {
+    if ($file.Extension -ieq '.html') {
+      $destinoNome = $file.Name
+      $origemAtual = $file.FullName
+
+      if ($mapaHtmlNaRaiz.ContainsKey($destinoNome) -and $mapaHtmlNaRaiz[$destinoNome] -ne $origemAtual) {
+        throw "Conflito de nome de HTML na raiz do consolidado: '$destinoNome' (`"$origemAtual`" vs `"$($mapaHtmlNaRaiz[$destinoNome])`")."
+      }
+
+      $mapaHtmlNaRaiz[$destinoNome] = $origemAtual
+      $destinationFile = Join-Path $OutputRootParam $destinoNome
+      Copy-Item -Path $file.FullName -Destination $destinationFile -Force
+      $exportedNonGsCount++
       continue
     }
 
@@ -102,13 +140,6 @@ function New-InventarioConsolidado(
     }
 
     Copy-Item -Path $file.FullName -Destination $destinationFile -Force
-    $exportedNonGsCount++
-  }
-
-  # csv_upload.html deve ficar na raiz de consolidacao.
-  $csvUploadSource = Join-Path $sourceRootResolved 'core\compartilhado\csv\csv_upload.html'
-  if (Test-Path -Path $csvUploadSource -PathType Leaf) {
-    Copy-Item -Path $csvUploadSource -Destination (Join-Path $OutputRootParam 'csv_upload.html') -Force
     $exportedNonGsCount++
   }
 
