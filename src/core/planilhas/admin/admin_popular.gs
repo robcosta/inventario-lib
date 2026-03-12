@@ -104,6 +104,9 @@ function popularPlanilhaAdminPorId_(spreadsheetId, pastaCsvAdminId) {
   SpreadsheetApp.flush();
 
   removerAbasVaziasPorId_(spreadsheetId);
+  organizarOrdemAbasEstruturais_(planilha, {
+    abaAtivaFinal: 'CAPA'
+  });
 
   return { novos, atualizados };
 }

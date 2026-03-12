@@ -68,7 +68,6 @@ function renderizarPlanilhaCliente_(contexto, ssOverride) {
   }
 
   ss.setActiveSheet(sheet);
-  ss.moveActiveSheet(1);
   sheet.clear();
   sheet.setHiddenGridlines(true);
 
@@ -136,6 +135,10 @@ function renderizarPlanilhaCliente_(contexto, ssOverride) {
     ) {
       ss.deleteSheet(s);
     }
+  });
+
+  organizarOrdemAbasEstruturais_(ss, {
+    abaAtivaFinal: 'CAPA'
   });
 }
 

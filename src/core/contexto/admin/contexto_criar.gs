@@ -29,7 +29,6 @@ function garantirCapaPrimeiraAdmin_(ss, subtitulo) {
   }
 
   ss.setActiveSheet(capa);
-  ss.moveActiveSheet(1);
 
   capa.clear();
   capa.setHiddenGridlines(true);
@@ -46,6 +45,9 @@ function garantirCapaPrimeiraAdmin_(ss, subtitulo) {
     .setVerticalAlignment('middle');
 
   layoutRodapeInstitucional_(capa, 12);
+  organizarOrdemAbasEstruturais_(ss, {
+    abaAtivaFinal: 'CAPA'
+  });
 }
 
 function obterTextoPassoAPassoTriggerFilaAdmin_() {

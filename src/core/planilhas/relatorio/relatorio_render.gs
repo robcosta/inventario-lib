@@ -112,39 +112,14 @@ function relatorioRenderAbaManual_(ss) {
 }
 
 function ordenarAbasRelatorio_(ss) {
-  if (!ss) return;
-
-  const ordem = [
-    'CAPA',
-    'MANUAL',
-    'Visão Geral',
-    'Bens Pendentes',
-    'Bens Encontrados',
-    'Bens de Outra Localidade',
-    'Bens para Nova Etiqueta'
-  ];
-
-  let posicao = 1;
-  ordem.forEach(nome => {
-    try {
-      const sheet = ss.getSheetByName(nome);
-      if (!sheet) return;
-      ss.setActiveSheet(sheet);
-      ss.moveActiveSheet(posicao);
-      posicao++;
-    } catch (e) {}
+  organizarOrdemAbasEstruturais_(ss, {
+    abasPrioritarias: [
+      'Visão Geral',
+      'Bens Pendentes',
+      'Bens Encontrados',
+      'Bens de Outra Localidade',
+      'Bens para Nova Etiqueta'
+    ],
+    abaAtivaFinal: 'CAPA'
   });
-
-  try {
-    const controle = ss.getSheetByName('__CONTROLE_PROCESSAMENTO__');
-    if (controle) {
-      ss.setActiveSheet(controle);
-      ss.moveActiveSheet(ss.getSheets().length);
-    }
-  } catch (e) {}
-
-  try {
-    const capa = ss.getSheetByName('CAPA');
-    if (capa) ss.setActiveSheet(capa);
-  } catch (e) {}
 }

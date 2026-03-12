@@ -68,31 +68,7 @@ function adminRenderAbaManual_(spreadsheetId) {
 }
 
 function ordenarAbasAdminPadrao_(ss) {
-  if (!ss) return;
-
-  try {
-    const capa = ss.getSheetByName('CAPA');
-    if (capa) {
-      ss.setActiveSheet(capa);
-      ss.moveActiveSheet(1);
-    }
-
-    const manual = ss.getSheetByName('MANUAL');
-    if (manual) {
-      ss.setActiveSheet(manual);
-      ss.moveActiveSheet(2);
-    }
-
-    const controle = ss.getSheetByName('__CONTROLE_PROCESSAMENTO__');
-    if (controle) {
-      ss.setActiveSheet(controle);
-      ss.moveActiveSheet(ss.getSheets().length);
-    }
-
-    if (capa) {
-      ss.setActiveSheet(capa);
-    }
-  } catch (e) {
-    Logger.log('[ADMIN][ABAS][ORDENACAO][ERRO] ' + e.message);
-  }
+  organizarOrdemAbasEstruturais_(ss, {
+    abaAtivaFinal: 'CAPA'
+  });
 }

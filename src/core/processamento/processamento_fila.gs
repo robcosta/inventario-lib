@@ -502,6 +502,10 @@ function obterOuCriarAbaFilaProcessamento_(ssCliente) {
     sheet.setHiddenGridlines(true);
   }
 
+  organizarOrdemAbasEstruturais_(ssCliente, {
+    abaAtivaFinal: 'CAPA'
+  });
+
   return sheet;
 }
 
