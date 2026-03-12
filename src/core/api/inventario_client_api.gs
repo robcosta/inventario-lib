@@ -19,7 +19,7 @@
  * Renderiza menu CLIENT
  */
 function clientRenderMenu() {
-  renderMenuClient_();
+  clientRenderMenu_();
 }
 
 
@@ -63,6 +63,14 @@ function clientExecutarDiagnostico() {
 
 function clientVerificarStatusProcessamento() {
   clientVerificarStatusProcessamento_();
+}
+
+function clientAbrirPainelStatusProcessamento() {
+  clientAbrirPainelStatusProcessamento_();
+}
+
+function clientConsultarStatusProcessamentoPainel() {
+  return clientConsultarStatusProcessamentoPainel_();
 }
 
 /**

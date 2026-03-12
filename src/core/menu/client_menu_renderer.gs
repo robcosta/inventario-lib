@@ -4,7 +4,7 @@
  * ============================================================
  */
 
-function renderMenuClient_(contextoOverride) {
+function clientRenderMenu_(contextoOverride) {
 
   const ui = SpreadsheetApp.getUi();
 
@@ -55,6 +55,7 @@ function renderMenuClient_(contextoOverride) {
     // Vision
     .addItem('🖼️ Processar Imagem', 'processarImagens')
     .addItem('📣 Verificar Status do Processamento', 'clientVerificarStatusProcessamento')
+    .addItem('🖥️ Acompanhar Processamento', 'clientAbrirPainelStatusProcessamento')
     .addSeparator()
 
     // Planilhas

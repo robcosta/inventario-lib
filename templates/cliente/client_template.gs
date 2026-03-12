@@ -58,6 +58,14 @@ function clientVerificarStatusProcessamento() {
   inventario.clientVerificarStatusProcessamento();
 }
 
+function clientAbrirPainelStatusProcessamento() {
+  inventario.clientAbrirPainelStatusProcessamento();
+}
+
+function clientConsultarStatusProcessamentoPainel() {
+  return inventario.clientConsultarStatusProcessamentoPainel();
+}
+
 /* ============================================================
  * PROXIES — ARIR PLANILHA ADMIN
  * ============================================================ */

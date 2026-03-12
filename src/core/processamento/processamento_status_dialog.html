@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body {
+        margin: 0;
+        padding: 14px;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        color: #1f2937;
+        background: #f8fafc;
+      }
+
+      .card {
+        background: #ffffff;
+        border: 1px solid #dbe3ee;
+        border-radius: 8px;
+        padding: 12px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .title {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .pill {
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .pill-pendente { background: #fff7ed; color: #9a3412; }
+      .pill-processando { background: #eff6ff; color: #1d4ed8; }
+      .pill-sucesso { background: #ecfdf5; color: #166534; }
+      .pill-erro { background: #fef2f2; color: #991b1b; }
+      .pill-indefinido { background: #f3f4f6; color: #374151; }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .item {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #f9fafb;
+        padding: 8px;
+      }
+
+      .label {
+        font-size: 11px;
+        color: #6b7280;
+      }
+
+      .value {
+        margin-top: 2px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .message {
+        margin-top: 10px;
+        border: 1px dashed #d1d5db;
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 8px;
+        white-space: pre-wrap;
+      }
+
+      .footer {
+        margin-top: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      button {
+        border: 1px solid #2563eb;
+        color: #ffffff;
+        background: #2563eb;
+        border-radius: 6px;
+        font-size: 12px;
+        padding: 7px 10px;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        border-color: #cbd5e1;
+        color: #334155;
+        background: #ffffff;
+      }
+
+      .small {
+        color: #64748b;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="header">
+        <div class="title">Fila de Processamento</div>
+        <span id="pill" class="pill pill-indefinido">CARREGANDO</span>
+      </div>
+
+      <div class="grid">
+        <div class="item">
+          <div class="label">Solicitacao</div>
+          <div id="requestId" class="value">-</div>
+        </div>
+        <div class="item">
+          <div class="label">Ultima atualizacao</div>
+          <div id="updatedAt" class="value">-</div>
+        </div>
+        <div class="item">
+          <div class="label">Total</div>
+          <div id="total" class="value">0</div>
+        </div>
+        <div class="item">
+          <div class="label">Sucesso / Erro</div>
+          <div id="okErro" class="value">0 / 0</div>
+        </div>
+      </div>
+
+      <div id="message" class="message">Aguardando dados...</div>
+
+      <div class="footer">
+        <div id="autoInfo" class="small">Atualizacao automatica ativa.</div>
+        <div>
+          <button class="secondary" onclick="atualizarAgora()">Atualizar agora</button>
+          <button onclick="fechar()">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const INTERVALO_MS = Number('<?= intervaloPollingMs ?>') || 4000;
+      let timer = null;
+
+      function statusClass(status) {
+        const s = String(status || '').toUpperCase();
+        if (s === 'PENDENTE') return 'pill-pendente';
+        if (s === 'PROCESSANDO') return 'pill-processando';
+        if (s === 'SUCESSO') return 'pill-sucesso';
+        if (s === 'ERRO') return 'pill-erro';
+        return 'pill-indefinido';
+      }
+
+      function formatDate(iso) {
+        if (!iso) return '-';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return String(iso);
+        return d.toLocaleString('pt-BR');
+      }
+
+      function setLoading(msg) {
+        const pill = document.getElementById('pill');
+        pill.className = 'pill pill-indefinido';
+        pill.textContent = 'ATUALIZANDO';
+        document.getElementById('message').textContent = msg || 'Atualizando...';
+      }
+
+      function renderStatus(data) {
+        const ok = !!(data && data.ok);
+        const encontrado = !!(data && data.encontrado);
+        const status = String((data && data.status) || '').toUpperCase();
+
+        const pill = document.getElementById('pill');
+        pill.className = 'pill ' + statusClass(status);
+        pill.textContent = status || (ok ? 'SEM REGISTRO' : 'ERRO');
+
+        document.getElementById('requestId').textContent = encontrado ? (data.requestId || '-') : '-';
+        document.getElementById('updatedAt').textContent = formatDate(new Date().toISOString());
+        document.getElementById('total').textContent = encontrado ? String(data.total || 0) : '0';
+        document.getElementById('okErro').textContent = encontrado
+          ? (String(data.sucesso || 0) + ' / ' + String(data.erro || 0))
+          : '0 / 0';
+
+        let msg = (data && data.mensagem) ? String(data.mensagem) : 'Sem detalhes.';
+        if (encontrado && data.iniciadoEm) {
+          msg += '\n\nIniciado: ' + formatDate(data.iniciadoEm);
+        }
+        if (encontrado && data.finalizadoEm) {
+          msg += '\nFinalizado: ' + formatDate(data.finalizadoEm);
+        }
+        if (encontrado && data.processadoPor) {
+          msg += '\nProcessado por: ' + data.processadoPor;
+        }
+        if (encontrado && data.mensagemErro) {
+          msg += '\n\nErro:\n' + data.mensagemErro;
+        }
+
+        document.getElementById('message').textContent = msg;
+
+        if (status === 'SUCESSO' || status === 'ERRO') {
+          document.getElementById('autoInfo').textContent = 'Processo finalizado. Atualizacao automatica pausada.';
+          stopPolling();
+        } else {
+          document.getElementById('autoInfo').textContent =
+            'Atualizacao automatica a cada ' + Math.round(INTERVALO_MS / 1000) + 's.';
+        }
+      }
+
+      function renderFailure(err) {
+        const msg = err && err.message ? err.message : String(err || 'Falha ao consultar status.');
+        const pill = document.getElementById('pill');
+        pill.className = 'pill pill-erro';
+        pill.textContent = 'ERRO';
+        document.getElementById('message').textContent = msg;
+      }
+
+      function consultarStatus() {
+        setLoading('Consultando status da fila...');
+        google.script.run
+          .withSuccessHandler(renderStatus)
+          .withFailureHandler(renderFailure)
+          .clientConsultarStatusProcessamentoPainel();
+      }
+
+      function startPolling() {
+        stopPolling();
+        consultarStatus();
+        timer = setInterval(consultarStatus, INTERVALO_MS);
+      }
+
+      function stopPolling() {
+        if (!timer) return;
+        clearInterval(timer);
+        timer = null;
+      }
+
+      function atualizarAgora() {
+        consultarStatus();
+      }
+
+      function fechar() {
+        stopPolling();
+        google.script.host.close();
+      }
+
+      window.addEventListener('load', startPolling);
+      window.addEventListener('beforeunload', stopPolling);
+    </script>
+  </body>
+</html>

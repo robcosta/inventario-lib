@@ -85,7 +85,7 @@ function clientAtualizarInformacoes_() {
   // 5️⃣ Re-renderizar menu
   // ==========================================================
   try {
-    renderMenuClient_(contexto);
+    clientRenderMenu_(contexto);
   } catch (e) {
     Logger.log('[CLIENTE][MENU][ERRO] ' + e.message);
   }

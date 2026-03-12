@@ -30,12 +30,18 @@ function abrirPastaNoNavegador_(pastaId) {
 
   const url = `https://drive.google.com/drive/folders/${pastaId}`;
 
-  const html = HtmlService.createHtmlOutput(`
-    <script>
-      window.open('${url}', '_blank');
-      google.script.host.close();
-    </script>
-  `).setWidth(10).setHeight(10);
+  const htmlConteudo =
+    '<script>' +
+    '(function abrirPasta(){' +
+    'var url=' + JSON.stringify(url) + ';' +
+    "window.open(url, '_blank');" +
+    'google.script.host.close();' +
+    '})();' +
+    '</script>';
+
+  const html = HtmlService.createHtmlOutput(htmlConteudo)
+    .setWidth(10)
+    .setHeight(10);
 
   SpreadsheetApp
     .getUi()

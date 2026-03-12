@@ -7,6 +7,7 @@
 const FILA_PROCESSAMENTO_ABA = '__FILA_PROCESSAMENTO__';
 const CHAVE_LEMBRETE_TRIGGER_FILA_ULTIMO_AVISO = 'LEMBRETE_TRIGGER_FILA_ULTIMO_AVISO';
 const INTERVALO_MINIMO_LEMBRETE_TRIGGER_MIN = 240;
+const INTERVALO_PAINEL_STATUS_FILA_MS = 4000;
 
 const FILA_STATUS = {
   PENDENTE: 'PENDENTE',
@@ -204,6 +205,81 @@ function notificarResultadosFilaProcessamentoCliente_(contexto) {
 
   marcarSolicitacaoNotificada_(fila, pendenteNotificacao.rowNumber);
   return pendenteNotificacao;
+}
+
+function clientAbrirPainelStatusProcessamento_() {
+  const contexto = obterContextoDominio_();
+  if (!contexto || contexto.tipo !== 'CLIENTE') {
+    toast_('Esta ação está disponível apenas no contexto CLIENTE.', 'Inventário', 5);
+    return;
+  }
+
+  const template = HtmlService.createTemplateFromFile(
+    'core/processamento/processamento_status_dialog'
+  );
+  template.intervaloPollingMs = INTERVALO_PAINEL_STATUS_FILA_MS;
+
+  const html = template
+    .evaluate()
+    .setWidth(520)
+    .setHeight(420);
+
+  SpreadsheetApp
+    .getUi()
+    .showModelessDialog(html, 'Acompanhamento do Processamento');
+}
+
+function clientConsultarStatusProcessamentoPainel_() {
+  const contexto = obterContextoDominio_();
+
+  if (!contexto || contexto.tipo !== 'CLIENTE') {
+    return {
+      ok: false,
+      encontrado: false,
+      mensagem: 'Contexto CLIENTE não encontrado para acompanhamento.'
+    };
+  }
+
+  const fila = obterAbaFilaClientePorContexto_(contexto);
+  if (!fila) {
+    return {
+      ok: true,
+      encontrado: false,
+      mensagem: 'Nenhuma solicitação de processamento registrada.'
+    };
+  }
+
+  const emailsUsuario = obterEmailsUsuarioAtualFila_();
+  const req = obterUltimaSolicitacaoDoUsuario_(fila, emailsUsuario);
+  if (!req) {
+    return {
+      ok: true,
+      encontrado: false,
+      mensagem: 'Nenhuma solicitação encontrada para o usuário atual.'
+    };
+  }
+
+  const finalizado = req.status === FILA_STATUS.SUCESSO || req.status === FILA_STATUS.ERRO;
+  if (finalizado && !req.notificadoEm) {
+    marcarSolicitacaoNotificada_(fila, req.rowNumber);
+  }
+
+  return {
+    ok: true,
+    encontrado: true,
+    requestId: req.requestId,
+    status: req.status,
+    criadoEm: req.criadoEm,
+    iniciadoEm: req.iniciadoEm,
+    finalizadoEm: req.finalizadoEm,
+    total: req.total || 0,
+    sucesso: req.sucesso || 0,
+    erro: req.erro || 0,
+    mensagemErro: req.mensagemErro || '',
+    processadoPor: req.processadoPor || '',
+    finalizado: finalizado,
+    mensagem: formatarMensagemStatusFila_(req)
+  };
 }
 
 function processarFilaImagensPendentes_() {

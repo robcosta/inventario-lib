@@ -30,14 +30,18 @@ function abrirPlanilhaNoNavegador_(spreadsheetId) {
 
   const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/view`;
 
-  const html = HtmlService.createHtmlOutput(`
-    <script>
-      (function abrirPlanilha() {
-        window.open('${url}', '_blank');
-        google.script.host.close();
-      })();
-    </script>
-  `).setWidth(10).setHeight(10);
+  const htmlConteudo =
+    '<script>' +
+    '(function abrirPlanilha(){' +
+    'var url=' + JSON.stringify(url) + ';' +
+    "window.open(url, '_blank');" +
+    'google.script.host.close();' +
+    '})();' +
+    '</script>';
+
+  const html = HtmlService.createHtmlOutput(htmlConteudo)
+    .setWidth(10)
+    .setHeight(10);
 
   SpreadsheetApp
     .getUi()
