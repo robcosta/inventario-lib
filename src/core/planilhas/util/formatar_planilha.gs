@@ -651,7 +651,7 @@ function desfazerTodasMesclasDaAba_(sheet) {
 
 /**
  * Remove fisicamente linhas sem nenhum dado (todas as colunas vazias).
- * A exclusao e feita de baixo para cima em blocos contiguos para manter performance.
+ * A exclusao e feita em bloco unico apos compactacao dos dados para manter performance.
  */
 function removerLinhasTotalmenteEmBrancoDaAba_(sheet) {
   if (!sheet) return;
@@ -659,43 +659,43 @@ function removerLinhasTotalmenteEmBrancoDaAba_(sheet) {
   const lastRow = sheet.getLastRow();
   const lastCol = sheet.getLastColumn();
   if (lastRow < 1 || lastCol < 1) return;
-  const chunkSize = 500;
-  const linhasVazias = [];
+  const dados = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+  const linhasComDados = [];
+  let houveRemocao = false;
 
-  for (let inicio = 1; inicio <= lastRow; inicio += chunkSize) {
-    const qtd = Math.min(chunkSize, lastRow - inicio + 1);
-    const bloco = sheet.getRange(inicio, 1, qtd, lastCol).getValues();
+  for (let i = 0; i < dados.length; i++) {
+    const linha = dados[i];
+    const linhaVazia = linha.every(function(celula) {
+      if (celula === null || celula === undefined) return true;
+      if (celula instanceof Date && !isNaN(celula.getTime())) return false;
+      return String(celula).trim() === '';
+    });
 
-    for (let i = 0; i < bloco.length; i++) {
-      const linhaVazia = bloco[i].every(function(celula) {
-        if (celula === null || celula === undefined) return true;
-        if (celula instanceof Date && !isNaN(celula.getTime())) return false;
-        return String(celula).trim() === '';
-      });
-
-      if (linhaVazia) {
-        linhasVazias.push(inicio + i);
-      }
-    }
-  }
-
-  if (!linhasVazias.length) return;
-
-  let fim = linhasVazias[linhasVazias.length - 1];
-  let inicio = fim;
-
-  for (let i = linhasVazias.length - 2; i >= 0; i--) {
-    const linhaAtual = linhasVazias[i];
-
-    if (linhaAtual === inicio - 1) {
-      inicio = linhaAtual;
+    if (linhaVazia) {
+      houveRemocao = true;
       continue;
     }
 
-    sheet.deleteRows(inicio, fim - inicio + 1);
-    inicio = linhaAtual;
-    fim = linhaAtual;
+    linhasComDados.push(linha);
   }
 
-  sheet.deleteRows(inicio, fim - inicio + 1);
+  if (!houveRemocao) return;
+
+  if (!linhasComDados.length) {
+    sheet.getRange(1, 1, lastRow, lastCol).clearContent();
+    if (lastRow > 1) {
+      sheet.deleteRows(2, lastRow - 1);
+    }
+    return;
+  }
+
+  sheet.getRange(1, 1, linhasComDados.length, lastCol).setValues(linhasComDados);
+
+  const inicioExclusao = linhasComDados.length + 1;
+  const qtdExcluir = lastRow - linhasComDados.length;
+
+  if (qtdExcluir > 0) {
+    sheet.getRange(inicioExclusao, 1, qtdExcluir, lastCol).clearContent();
+    sheet.deleteRows(inicioExclusao, qtdExcluir);
+  }
 }
