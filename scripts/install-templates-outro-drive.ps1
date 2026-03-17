@@ -1,3 +1,18 @@
+<#
+COMO EXECUTAR:
+.\scripts\install-templates-outro-drive.ps1
+
+COM PARAMETROS (opcional):
+.\scripts\install-templates-outro-drive.ps1 `
+  -LibraryId "13LzSWJkOGp1hqkzU2IhEX2uUjN9vPwNCvJ1S3pGcKisBaOfvsCu8LH6n" `
+  -LibraryVersion 0 `
+  -DevelopmentMode `
+  -Prefix "[HML]"
+
+OBS:
+Este script nao possui modo -WhatIf. Rode primeiro em ambiente de teste.
+#>
+
 param(
   [string]$LibraryId = "13LzSWJkOGp1hqkzU2IhEX2uUjN9vPwNCvJ1S3pGcKisBaOfvsCu8LH6n",
   [int]$LibraryVersion = 0,

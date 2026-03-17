@@ -1,15 +1,15 @@
 <#
-COMO RODAR - INVENTARIO
-1) Abra PowerShell em C:\projects\inventario
-2) Execute:
-   .\scripts\gerar-inventario-consolidado.ps1
+COMO EXECUTAR:
+.\scripts\gerar-inventario-consolidado.ps1
 
 COM PARAMETROS (opcional):
 .\scripts\gerar-inventario-consolidado.ps1 `
-  -SourceRoot "C:\projects\inventario\src" `
+  -SourceRoot "C:\projects\dev\inventario\src" `
   -OutputRoot "C:\projects\consolidados" `
   -OutputFileName "inventario_consolidado.gs"
 
+OBS:
+Este script nao possui modo -WhatIf.
 Se a execucao de script estiver bloqueada:
 powershell -ExecutionPolicy Bypass -File .\scripts\gerar-inventario-consolidado.ps1
 #>
