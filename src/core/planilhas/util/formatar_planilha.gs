@@ -43,6 +43,9 @@ function formatarPlanilha_(spreadsheetId) {
     sheet.setHiddenGridlines(true);
     const colunasLayout = 7;
 
+    // Preserva destaques aplicados por processamento para não perder cores em reformatacoes.
+    const destaquesPorTombamento = capturarDestaquesPorTombamento_(sheet, colunasLayout);
+
     const blocos = {
       localidade: [],
       unidade: [],
@@ -129,6 +132,12 @@ function formatarPlanilha_(spreadsheetId) {
     } catch (e) {
       Logger.log('[FORMATAR][CABECALHO][ERRO] ' + e.message);
     }
+
+    try {
+      restaurarDestaquesPorTombamento_(sheet, destaquesPorTombamento, colunasLayout);
+    } catch (e) {
+      Logger.log('[FORMATAR][DESTAQUES][ERRO] ' + e.message);
+    }
   });
 
   reconstruirCapaAdminAposFormatacao_(ss, contexto);
@@ -143,6 +152,65 @@ function formatarPlanilha_(spreadsheetId) {
   }
 
   ss.toast('Formatação concluída com sucesso', '✅ Concluído', 6);
+}
+
+function capturarDestaquesPorTombamento_(sheet, colunasLayout) {
+  if (!sheet) return {};
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 1) return {};
+
+  const totalCols = Math.min(Math.max(colunasLayout || 7, 1), sheet.getLastColumn());
+  if (totalCols < 1) return {};
+
+  const valoresColunaA = sheet.getRange(1, 1, lastRow, 1).getValues();
+  const fundos = sheet.getRange(1, 1, lastRow, totalCols).getBackgrounds();
+  const mapa = {};
+
+  for (let i = 0; i < lastRow; i++) {
+    const tombamento = extrairTombamentoAdmin_(valoresColunaA[i][0]);
+    if (!tombamento) continue;
+
+    const linhaFundos = fundos[i] || [];
+    const possuiDestaque = linhaFundos.some(cor => {
+      const normalizada = normalizarCorHex_(cor);
+      return !!normalizada && normalizada !== '#ffffff';
+    });
+
+    if (possuiDestaque) {
+      mapa[tombamento] = linhaFundos.slice(0, totalCols);
+    }
+  }
+
+  return mapa;
+}
+
+function restaurarDestaquesPorTombamento_(sheet, mapaDestaques, colunasLayout) {
+  if (!sheet || !mapaDestaques) return;
+
+  const tombamentos = Object.keys(mapaDestaques);
+  if (!tombamentos.length) return;
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 1) return;
+
+  const totalCols = Math.min(Math.max(colunasLayout || 7, 1), sheet.getLastColumn());
+  if (totalCols < 1) return;
+
+  const valoresColunaA = sheet.getRange(1, 1, lastRow, 1).getValues();
+
+  for (let i = 0; i < lastRow; i++) {
+    const tombamento = extrairTombamentoAdmin_(valoresColunaA[i][0]);
+    if (!tombamento) continue;
+
+    const fundos = mapaDestaques[tombamento];
+    if (!fundos || !fundos.length) continue;
+
+    const linhaFundos = fundos.slice(0, totalCols);
+    while (linhaFundos.length < totalCols) linhaFundos.push('#ffffff');
+
+    sheet.getRange(i + 1, 1, 1, totalCols).setBackgrounds([linhaFundos]);
+  }
 }
 
 function reconstruirCapaAdminAposFormatacao_(ss, contexto) {
@@ -436,7 +504,7 @@ function reorganizarLinhaPatrimonioAdmin_(row, mapa, colunas, ehAdmin) {
   nova[2] = aq || '';
   nova[3] = marca || '';
   nova[4] = sit || '';
-  nova[5] = ehAdmin ? '' : (loc || '');
+  nova[5] = loc || '';
   nova[6] = termoRegex.test(String(termo || '').trim()) ? termo : '';
 
   for (let c = 7; c < colunas; c++) {
@@ -560,6 +628,26 @@ function normalizarColunasExcedentes_(sheet, colunasLayout) {
   }
 
   if (maxCols <= colunasLayout) return;
+
+  const colunasExcedentes = maxCols - colunasLayout;
+  if (colunasExcedentes > 0) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 0) {
+      const dadosExcedentes = sheet.getRange(1, colunasLayout + 1, lastRow, colunasExcedentes).getValues();
+      const haDadosExcedentes = dadosExcedentes.some(linha =>
+        linha.some(celula => {
+          if (celula === null || celula === undefined) return false;
+          if (celula instanceof Date && !isNaN(celula.getTime())) return true;
+          return String(celula).trim() !== '';
+        })
+      );
+
+      if (haDadosExcedentes) {
+        Logger.log('[FORMATAR][COLUNAS][AVISO] Colunas excedentes com dados detectadas. Exclusao ignorada para preservar dados.');
+        return;
+      }
+    }
+  }
 
   try {
     desfazerMesclasQueTocamExcedente_(sheet, colunasLayout, maxCols);
