@@ -134,3 +134,114 @@ function repararContextoAdmin_() {
     'Ele foi recadastrado no sistema.'
   );
 }
+
+/**
+ * Repara o contexto ADMIN sem UI (modo worker / silencioso).
+ * - Usa apenas o ID da planilha ADMIN.
+ * - Reconstrói as pastas obrigatórias e persiste em ScriptProperties.
+ * - Retorna o contexto reconstruído ou null em caso de falha.
+ */
+function repararContextoAdminSilencioso_(planilhaAdminId) {
+  const id = String(planilhaAdminId || '').trim();
+  if (!id) return null;
+
+  try {
+    const ss = SpreadsheetApp.openById(id);
+    const nomePlanilha = ss.getName();
+    const nomeContexto = nomePlanilha.replace(/^ADMIN:\s*/i, '').trim() || nomePlanilha;
+
+    const fileAdmin = DriveApp.getFileById(id);
+    const paisPlanilha = fileAdmin.getParents();
+    if (!paisPlanilha.hasNext()) return null;
+    const pastaPlanilhas = paisPlanilha.next();
+
+    const paisContexto = pastaPlanilhas.getParents();
+    if (!paisContexto.hasNext()) return null;
+    const pastaContexto = paisContexto.next();
+
+    // 🌍 Reconstrói hierarquia global (quando possível)
+    let pastaContextosGlobal = null;
+    let pastaRaiz = null;
+    const paisContextoMae = pastaContexto.getParents();
+    if (paisContextoMae.hasNext()) {
+      pastaContextosGlobal = paisContextoMae.next();
+      const paisRaiz = pastaContextosGlobal.getParents();
+      if (paisRaiz.hasNext()) {
+        pastaRaiz = paisRaiz.next();
+      }
+    }
+
+    if (pastaRaiz) {
+      const pastaGeral = obterOuCriarSubpasta_(pastaRaiz, 'GERAL');
+      const pastaCSVGeral = obterOuCriarSubpasta_(pastaGeral, 'CSV_GERAL');
+      atualizarSistemaGlobal_({
+        pastaRaizId: pastaRaiz.getId(),
+        pastaContextoId: pastaContextosGlobal ? pastaContextosGlobal.getId() : undefined,
+        pastaGeralId: pastaGeral.getId(),
+        pastaCSVGeralId: pastaCSVGeral.getId()
+      });
+    }
+
+    const pastaCSVAdmin = obterOuCriarSubpasta_(pastaPlanilhas, 'CSV_ADMIN');
+    const pastaLocalidades = obterOuCriarSubpasta_(pastaContexto, 'LOCALIDADES');
+
+    // Localizar planilhas CLIENTE e RELATÓRIO
+    let planilhaClienteId = null;
+    let planilhaRelatorioId = null;
+    let fallbackPrimeiraPlanilhaId = null;
+
+    const filesLocalidades = pastaLocalidades.getFilesByType(MimeType.GOOGLE_SHEETS);
+    while (filesLocalidades.hasNext()) {
+      const file = filesLocalidades.next();
+      const nome = String(file.getName() || '').toUpperCase();
+
+      if (!fallbackPrimeiraPlanilhaId) {
+        fallbackPrimeiraPlanilhaId = file.getId();
+      }
+
+      if (!planilhaClienteId && nome.startsWith('CLIENTE:')) {
+        planilhaClienteId = file.getId();
+        continue;
+      }
+
+      if (
+        !planilhaRelatorioId &&
+        (
+          nome.startsWith('RELATÓRIOS:') ||
+          nome.startsWith('RELATÓRIOS:') ||
+          nome.startsWith('RELATORIO:') ||
+          nome.startsWith('RELATORIOS:')
+        )
+      ) {
+        planilhaRelatorioId = file.getId();
+        continue;
+      }
+    }
+
+    // Fallback legado: se só existir uma planilha na pasta LOCALIDADES
+    if (!planilhaClienteId && !planilhaRelatorioId && fallbackPrimeiraPlanilhaId) {
+      planilhaClienteId = fallbackPrimeiraPlanilhaId;
+    }
+
+    const contextoAdmin = {
+      nome: nomeContexto,
+      planilhaAdminId: id,
+      planilhaClienteId,
+      planilhaRelatorioId,
+      planilhaGeralId: typeof resolverPlanilhaGeralIdSeguro_ === 'function'
+        ? resolverPlanilhaGeralIdSeguro_()
+        : resolverPlanilhaGeralId_(),
+      pastaContextoId: pastaContexto.getId(),
+      pastaPlanilhasId: pastaPlanilhas.getId(),
+      pastaCSVAdminId: pastaCSVAdmin.getId(),
+      pastaLocalidadesId: pastaLocalidades.getId()
+    };
+
+    salvarContextoAdmin_(id, contextoAdmin);
+    return contextoAdmin;
+
+  } catch (e) {
+    Logger.log('[CONTEXTO][REPARAR][SILENCIOSO] ' + e.message);
+    return null;
+  }
+}

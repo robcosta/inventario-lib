@@ -1051,6 +1051,13 @@ function processarUmaSincronizacaoLocalidadesPorContexto_(contextoAdmin) {
     return { sincronizados: 0, erros: 0 };
   }
 
+  // Repara o contexto ADMIN de forma silenciosa para garantir
+  // que novas pastas criadas no CLIENTE sejam reconhecidas.
+  const reparado = repararContextoAdminSilencioso_(contextoAdmin.planilhaAdminId);
+  if (reparado) {
+    contextoAdmin = { ...contextoAdmin, ...reparado };
+  }
+
   const processorEmail = String(Session.getEffectiveUser().getEmail() || '').trim().toLowerCase();
   marcarSolicitacaoSyncProcessando_(filaSync, solicitacao.rowNumber, processorEmail);
 
