@@ -22,13 +22,15 @@ function aplicarLocalidadeAtiva_(ctx, novaLocalidade) {
 
   if (tipo === 'ADMIN') {
 
-    atualizarContextoAdmin_(atualizacoes);
+    const contextoAtualizado = atualizarContextoAdmin_(atualizacoes);
     atualizarLegendasPlanilhaAdmin_(contexto);
+    return contextoAtualizado;
 
   } else if (tipo === 'CLIENTE') {
 
     const contextoAtualizado = atualizarContextoCliente_(atualizacoes);
     clienteMontarInformacoes_(contextoAtualizado, true);
+    return contextoAtualizado;
 
   } else {
 

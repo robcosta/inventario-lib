@@ -300,7 +300,7 @@ function obterPastasVivas_(contexto) {
   }
 
   // 🔹 ÚNICO ponto onde a cor é definida
-  const mapaCores = obterMapaCoresPorContexto_(lista);
+  const mapaCores = obterMapaCoresPorContexto_(contexto, lista);
 
   lista.forEach(p => {
     p.cor = mapaCores[p.id];

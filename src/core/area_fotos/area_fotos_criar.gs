@@ -36,7 +36,11 @@ function criarNovaPastaFotos_() {
     contador++;
   }
 
-  if (contador >= CORES_DESTAQUE_LISTA.length) {
+  const limiteLocalidades = (typeof LIMITE_MAX_LOCALIDADES_CONTEXTO === 'number' && LIMITE_MAX_LOCALIDADES_CONTEXTO > 0)
+    ? LIMITE_MAX_LOCALIDADES_CONTEXTO
+    : 8;
+
+  if (contador >= limiteLocalidades) {
     ui.alert(
       "⚠️ Limite de Pastas Atingido",
       "Este contexto já possui 8 pastas.\n\n" +
@@ -122,17 +126,50 @@ function criarNovaPastaFotos_() {
   const novaPasta = pastaRaiz.createFolder(nome);
 
   // 🔥 REGRA CENTRAL (AGORA DOMÍNIO)
-  aplicarLocalidadeAtiva_(contexto, {
+  const contextoAtualizado = aplicarLocalidadeAtiva_(contexto, {
     id: novaPasta.getId(),
     nome: nome
   });
+
+  let syncRequestId = '';
+
+  if (contexto.tipo === 'CLIENTE') {
+    try {
+      const sync = solicitarSincronizacaoLocalidadesCliente_(contextoAtualizado || contexto, {
+        motivo: 'CRIAR_PASTA'
+      });
+
+      if (sync && sync.requestId) {
+        syncRequestId = sync.requestId;
+        SpreadsheetApp.getActiveSpreadsheet().toast(
+          `Sincronização da ADMIN solicitada (#${sync.requestId}).`,
+          '⏳ Sincronização',
+          7
+        );
+      }
+    } catch (e) {
+      Logger.log('[AREA_FOTOS][SYNC][AVISO] ' + e.message);
+    }
+  }
 
   // ============================================================
   // 5️⃣ Abrir?
   // ============================================================
 
+  let mensagemFinal = `✅ Pasta criada e definida como ativa:\n\n${nome}`;
+
+  if (contexto.tipo === 'CLIENTE') {
+    mensagemFinal += '\n\n⏳ A sincronização da ADMIN foi iniciada.';
+    if (syncRequestId) {
+      mensagemFinal += `\nSolicitação: #${syncRequestId}`;
+    }
+    mensagemFinal += '\nO processamento de imagens ficará liberado após a sincronização.';
+  }
+
+  mensagemFinal += '\n\nDeseja abrir a pasta agora?';
+
   const abrir = ui.alert(
-    `✅ Pasta criada e definida como ativa:\n\n${nome}\n\nDeseja abrir a pasta agora?`,
+    mensagemFinal,
     ui.ButtonSet.YES_NO
   );
 

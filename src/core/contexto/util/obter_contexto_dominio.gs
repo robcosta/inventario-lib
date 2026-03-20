@@ -105,6 +105,15 @@ function normalizarContexto_(dados, tipo, origem) {
     localidadeAtivaId: dados.localidadeAtivaId || null,
     localidadeAtivaNome: dados.localidadeAtivaNome || null,
 
+    mapaCoresPastas: dados.mapaCoresPastas || {},
+    coresBanidasPastas: Array.isArray(dados.coresBanidasPastas) ? dados.coresBanidasPastas : [],
+
+    syncLocalidadesStatus: dados.syncLocalidadesStatus || null,
+    syncLocalidadesVersaoAtual: dados.syncLocalidadesVersaoAtual || null,
+    syncLocalidadesVersaoSincronizada: dados.syncLocalidadesVersaoSincronizada || null,
+    syncLocalidadesErro: dados.syncLocalidadesErro || null,
+    syncLocalidadesAtualizadoEm: dados.syncLocalidadesAtualizadoEm || null,
+
     emailOperador: dados.emailOperador || null,
     criadoEm: dados.criadoEm || null,
     ultimaAtualizacao: dados.ultimaAtualizacao || null

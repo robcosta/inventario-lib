@@ -5,6 +5,7 @@
  */
 
 const FILA_PROCESSAMENTO_ABA = '__FILA_PROCESSAMENTO__';
+const FILA_SINCRONIZACAO_ABA = '__FILA_SINCRONIZACAO__';
 const CHAVE_LEMBRETE_TRIGGER_FILA_ULTIMO_AVISO = 'LEMBRETE_TRIGGER_FILA_ULTIMO_AVISO';
 const INTERVALO_MINIMO_LEMBRETE_TRIGGER_MIN = 240;
 const INTERVALO_PAINEL_STATUS_FILA_MS = 4000;
@@ -62,6 +63,53 @@ const FILA_COL = {
   PROCESSADO_POR: 20
 };
 
+const FILA_SYNC_STATUS = {
+  PENDENTE: 'PENDENTE',
+  PROCESSANDO: 'PROCESSANDO',
+  SUCESSO: 'SUCESSO',
+  ERRO: 'ERRO'
+};
+
+const FILA_SYNC_CABECALHO = [
+  'REQUEST_ID',
+  'STATUS',
+  'CRIADO_EM_ISO',
+  'INICIADO_EM_ISO',
+  'FINALIZADO_EM_ISO',
+  'SOLICITANTE_EMAIL',
+  'CONTEXTO_NOME',
+  'PLANILHA_ADMIN_ID',
+  'PLANILHA_CLIENTE_ID',
+  'PASTA_LOCALIDADES_ID',
+  'VERSAO_LOCALIDADES',
+  'VERSAO_SINCRONIZADA',
+  'MENSAGEM_ERRO',
+  'MAPA_CORES_JSON',
+  'CORES_BANIDAS_JSON',
+  'PROCESSADO_POR',
+  'NOTIFICADO_EM_ISO'
+];
+
+const FILA_SYNC_COL = {
+  REQUEST_ID: 1,
+  STATUS: 2,
+  CRIADO_EM: 3,
+  INICIADO_EM: 4,
+  FINALIZADO_EM: 5,
+  SOLICITANTE_EMAIL: 6,
+  CONTEXTO_NOME: 7,
+  PLANILHA_ADMIN_ID: 8,
+  PLANILHA_CLIENTE_ID: 9,
+  PASTA_LOCALIDADES_ID: 10,
+  VERSAO_LOCALIDADES: 11,
+  VERSAO_SINCRONIZADA: 12,
+  MENSAGEM_ERRO: 13,
+  MAPA_CORES_JSON: 14,
+  CORES_BANIDAS_JSON: 15,
+  PROCESSADO_POR: 16,
+  NOTIFICADO_EM: 17
+};
+
 function enfileirarProcessamentoImagensCliente_(contextoEntrada) {
   const ui = SpreadsheetApp.getUi();
   const ssAtiva = SpreadsheetApp.getActiveSpreadsheet();
@@ -69,6 +117,23 @@ function enfileirarProcessamentoImagensCliente_(contextoEntrada) {
   let contexto = contextoEntrada;
   try {
     contexto = sincronizarLocalidadeAtiva_(contexto);
+
+    const validacaoSync = garantirSincronizacaoLocalidadesClienteProntaParaProcessamento_(contexto);
+    if (!validacaoSync.ok) {
+      const msg = validacaoSync.mensagem || 'Sincronização de localidades pendente.';
+      ui.alert('⏳ Sincronização Necessária', msg, ui.ButtonSet.OK);
+      toast_(msg, '⏳ Sincronização', 8);
+      return {
+        enfileirado: false,
+        bloqueadoSincronizacao: true,
+        detalhesSincronizacao: validacaoSync
+      };
+    }
+
+    if (validacaoSync.contexto) {
+      contexto = validacaoSync.contexto;
+    }
+
     const pre = prepararProcessamentoVisionSemUi_(contexto);
 
     const confirmar = ui.alert(
@@ -286,21 +351,27 @@ function processarFilaImagensPendentes_() {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(1000)) {
     Logger.log('[FILA][WORKER] Outro worker já está em execução.');
-    return { processados: 0, erros: 0, bloqueado: true };
+    return { processados: 0, erros: 0, sincronizados: 0, errosSincronizacao: 0, bloqueado: true };
   }
 
   const inicio = Date.now();
   let totalProcessados = 0;
   let totalErros = 0;
+  let totalSincronizados = 0;
+  let totalErrosSync = 0;
 
   try {
     const contextos = resolverContextosAdminParaWorker_();
     if (!contextos.length) {
       Logger.log('[FILA][WORKER] Nenhum contexto ADMIN disponível para processamento.');
-      return { processados: 0, erros: 0, contextos: 0 };
+      return { processados: 0, erros: 0, sincronizados: 0, errosSincronizacao: 0, contextos: 0 };
     }
 
     contextos.forEach(ctx => {
+      const parcialSync = processarUmaSincronizacaoLocalidadesPorContexto_(ctx);
+      totalSincronizados += parcialSync.sincronizados || 0;
+      totalErrosSync += parcialSync.erros || 0;
+
       const parcial = processarUmaSolicitacaoFilaPorContexto_(ctx);
       totalProcessados += parcial.processados || 0;
       totalErros += parcial.erros || 0;
@@ -308,12 +379,16 @@ function processarFilaImagensPendentes_() {
 
     Logger.log(
       '[FILA][WORKER] Concluído. contextos=' + contextos.length +
+      ', sincronizados=' + totalSincronizados +
+      ', errosSync=' + totalErrosSync +
       ', processados=' + totalProcessados +
       ', erros=' + totalErros +
       ', tempo_ms=' + (Date.now() - inicio)
     );
 
     return {
+      sincronizados: totalSincronizados,
+      errosSincronizacao: totalErrosSync,
       processados: totalProcessados,
       erros: totalErros,
       contextos: contextos.length,
@@ -432,6 +507,8 @@ function processarUmaSolicitacaoFilaPorContexto_(contextoAdmin) {
   marcarSolicitacaoProcessando_(fila, solicitacao.rowNumber, processorEmail, solicitacao.tentativas + 1);
 
   try {
+    sincronizarContextoAdminLocalidades_(contextoAdmin, { atualizarLegenda: false });
+
     const contextoExecucao = {
       ...contextoAdmin,
       tipo: 'ADMIN',
@@ -738,4 +815,478 @@ function registrarDataLembreteTriggerFila_(data) {
   const props = PropertiesService.getDocumentProperties();
   const valor = (data instanceof Date ? data : new Date()).toISOString();
   props.setProperty(CHAVE_LEMBRETE_TRIGGER_FILA_ULTIMO_AVISO, valor);
+}
+
+function solicitarSincronizacaoLocalidadesCliente_(contextoEntrada, opcoes) {
+  const contexto = contextoEntrada || obterContextoDominio_();
+  const cfg = opcoes || {};
+
+  if (!contexto || contexto.tipo !== 'CLIENTE') {
+    throw new Error('Sincronização de localidades disponível apenas no contexto CLIENTE.');
+  }
+
+  const versaoAtual = String(
+    cfg.versaoLocalidades || calcularVersaoLocalidadesDoDrive_(contexto) || ''
+  ).trim();
+
+  if (!versaoAtual) {
+    throw new Error('Não foi possível calcular a versão atual das pastas de localidades.');
+  }
+
+  const planilhaClienteId = String(contexto.planilhaClienteId || SpreadsheetApp.getActiveSpreadsheet().getId() || '').trim();
+  if (!planilhaClienteId) {
+    throw new Error('Planilha CLIENTE não identificada para fila de sincronização.');
+  }
+
+  const ssCliente = SpreadsheetApp.openById(planilhaClienteId);
+  const filaSync = obterOuCriarAbaFilaSincronizacao_(ssCliente);
+  const emailsUsuario = obterEmailsUsuarioAtualFila_();
+  const solicitanteEmail = emailsUsuario[0] || 'DESCONHECIDO';
+
+  const aberta = obterSolicitacaoSyncAbertaPorVersao_(filaSync, versaoAtual);
+  if (aberta) {
+    const contextoAtualizado = atualizarEstadoSincronizacaoLocalidadesCliente_(
+      contexto,
+      {
+        syncLocalidadesStatus: aberta.status,
+        syncLocalidadesVersaoAtual: versaoAtual,
+        syncLocalidadesErro: '',
+        syncLocalidadesAtualizadoEm: new Date().toISOString()
+      }
+    );
+
+    return {
+      enfileirado: false,
+      requestId: aberta.requestId,
+      status: aberta.status,
+      versaoLocalidades: versaoAtual,
+      contexto: contextoAtualizado
+    };
+  }
+
+  const requestId = gerarRequestIdFila_();
+  const agoraIso = new Date().toISOString();
+
+  filaSync.appendRow([
+    requestId,
+    FILA_SYNC_STATUS.PENDENTE,
+    agoraIso,
+    '',
+    '',
+    solicitanteEmail,
+    contexto.nome || '',
+    contexto.planilhaAdminId || '',
+    planilhaClienteId,
+    contexto.pastaLocalidadesId || '',
+    versaoAtual,
+    '',
+    '',
+    '',
+    '',
+    '',
+    ''
+  ]);
+
+  const contextoAtualizado = atualizarEstadoSincronizacaoLocalidadesCliente_(
+    contexto,
+    {
+      syncLocalidadesStatus: FILA_SYNC_STATUS.PENDENTE,
+      syncLocalidadesVersaoAtual: versaoAtual,
+      syncLocalidadesErro: '',
+      syncLocalidadesAtualizadoEm: new Date().toISOString()
+    }
+  );
+
+  return {
+    enfileirado: true,
+    requestId: requestId,
+    status: FILA_SYNC_STATUS.PENDENTE,
+    versaoLocalidades: versaoAtual,
+    contexto: contextoAtualizado
+  };
+}
+
+function garantirSincronizacaoLocalidadesClienteProntaParaProcessamento_(contextoEntrada) {
+  let contexto = contextoEntrada || obterContextoDominio_();
+  if (!contexto || contexto.tipo !== 'CLIENTE') {
+    return { ok: true, contexto: contexto };
+  }
+
+  const versaoAtual = String(calcularVersaoLocalidadesDoDrive_(contexto) || '').trim();
+  if (!versaoAtual) {
+    return {
+      ok: false,
+      contexto: contexto,
+      mensagem: 'Não foi possível validar as pastas de localidades no Drive.'
+    };
+  }
+
+  if (
+    contexto.syncLocalidadesStatus === FILA_SYNC_STATUS.SUCESSO &&
+    contexto.syncLocalidadesVersaoSincronizada === versaoAtual
+  ) {
+    return { ok: true, contexto: contexto };
+  }
+
+  let filaSync = null;
+  try {
+    filaSync = obterAbaFilaSincronizacaoClientePorContexto_(contexto);
+  } catch (e) {}
+
+  const ultimaDaVersao = filaSync
+    ? obterUltimaSolicitacaoSyncPorVersao_(filaSync, versaoAtual)
+    : null;
+
+  if (ultimaDaVersao && ultimaDaVersao.status === FILA_SYNC_STATUS.SUCESSO) {
+    const patch = {
+      syncLocalidadesStatus: FILA_SYNC_STATUS.SUCESSO,
+      syncLocalidadesVersaoAtual: versaoAtual,
+      syncLocalidadesVersaoSincronizada: ultimaDaVersao.versaoSincronizada || versaoAtual,
+      syncLocalidadesErro: '',
+      syncLocalidadesAtualizadoEm: new Date().toISOString()
+    };
+
+    const mapa = parseJsonSeguroFila_(ultimaDaVersao.mapaCoresJson, {});
+    const banidas = parseJsonSeguroFila_(ultimaDaVersao.coresBanidasJson, []);
+
+    if (mapa && typeof mapa === 'object') {
+      patch.mapaCoresPastas = mapa;
+    }
+    if (Array.isArray(banidas)) {
+      patch.coresBanidasPastas = banidas;
+    }
+
+    contexto = atualizarEstadoSincronizacaoLocalidadesCliente_(contexto, patch);
+    return { ok: true, contexto: contexto };
+  }
+
+  if (
+    ultimaDaVersao &&
+    (ultimaDaVersao.status === FILA_SYNC_STATUS.PENDENTE ||
+      ultimaDaVersao.status === FILA_SYNC_STATUS.PROCESSANDO)
+  ) {
+    contexto = atualizarEstadoSincronizacaoLocalidadesCliente_(
+      contexto,
+      {
+        syncLocalidadesStatus: ultimaDaVersao.status,
+        syncLocalidadesVersaoAtual: versaoAtual,
+        syncLocalidadesErro: '',
+        syncLocalidadesAtualizadoEm: new Date().toISOString()
+      }
+    );
+
+    return {
+      ok: false,
+      contexto: contexto,
+      requestId: ultimaDaVersao.requestId,
+      mensagem:
+        `A sincronização da ADMIN ainda não terminou (solicitação #${ultimaDaVersao.requestId}). ` +
+        'Aguarde alguns instantes e tente novamente.'
+    };
+  }
+
+  const fila = solicitarSincronizacaoLocalidadesCliente_(
+    contexto,
+    {
+      versaoLocalidades: versaoAtual,
+      motivo: 'PRE_PROCESSAMENTO'
+    }
+  );
+
+  return {
+    ok: false,
+    contexto: fila.contexto || contexto,
+    requestId: fila.requestId || null,
+    mensagem:
+      'A sincronização da ADMIN foi iniciada e precisa finalizar antes do processamento. ' +
+      (fila.requestId ? `Solicitação #${fila.requestId}.` : '')
+  };
+}
+
+function atualizarEstadoSincronizacaoLocalidadesCliente_(contexto, patch) {
+  if (!contexto || contexto.tipo !== 'CLIENTE') return contexto;
+  if (!patch || typeof patch !== 'object') return contexto;
+
+  const chaves = Object.keys(patch);
+  let alterou = false;
+  chaves.forEach(chave => {
+    const antes = JSON.stringify(contexto[chave] === undefined ? null : contexto[chave]);
+    const depois = JSON.stringify(patch[chave] === undefined ? null : patch[chave]);
+    if (antes !== depois) alterou = true;
+  });
+
+  if (!alterou) return contexto;
+
+  try {
+    return atualizarContextoCliente_(patch);
+  } catch (e) {
+    Logger.log('[SYNC][CLIENTE][PERSISTENCIA][AVISO] ' + e.message);
+    return {
+      ...contexto,
+      ...patch
+    };
+  }
+}
+
+function processarUmaSincronizacaoLocalidadesPorContexto_(contextoAdmin) {
+  if (!contextoAdmin || !contextoAdmin.planilhaClienteId) {
+    return { sincronizados: 0, erros: 0 };
+  }
+
+  let ssCliente;
+  try {
+    ssCliente = SpreadsheetApp.openById(contextoAdmin.planilhaClienteId);
+  } catch (e) {
+    Logger.log('[SYNC][WORKER] Falha ao abrir planilha CLIENTE: ' + e.message);
+    return { sincronizados: 0, erros: 1 };
+  }
+
+  const filaSync = ssCliente.getSheetByName(FILA_SINCRONIZACAO_ABA);
+  if (!filaSync) {
+    return { sincronizados: 0, erros: 0 };
+  }
+
+  const solicitacao = obterProximaSolicitacaoSyncPendente_(filaSync);
+  if (!solicitacao) {
+    return { sincronizados: 0, erros: 0 };
+  }
+
+  const processorEmail = String(Session.getEffectiveUser().getEmail() || '').trim().toLowerCase();
+  marcarSolicitacaoSyncProcessando_(filaSync, solicitacao.rowNumber, processorEmail);
+
+  try {
+    const resultado = sincronizarContextoAdminLocalidades_(contextoAdmin, {
+      atualizarLegenda: true
+    });
+
+    marcarSolicitacaoSyncSucesso_(filaSync, solicitacao.rowNumber, resultado, processorEmail);
+    return { sincronizados: 1, erros: 0 };
+  } catch (e) {
+    marcarSolicitacaoSyncErro_(filaSync, solicitacao.rowNumber, e, processorEmail);
+    return { sincronizados: 0, erros: 1 };
+  }
+}
+
+function sincronizarContextoAdminLocalidades_(contextoAdmin, opcoes) {
+  if (!contextoAdmin || !contextoAdmin.pastaLocalidadesId) {
+    throw new Error('Contexto ADMIN inválido para sincronização de localidades.');
+  }
+
+  const cfg = opcoes || {};
+  const planilhaAdminId = String(contextoAdmin.planilhaAdminId || '').trim();
+  if (!planilhaAdminId) {
+    throw new Error('Planilha ADMIN não informada para sincronização.');
+  }
+
+  // Força sincronização do mapa de cores (imutável e com banimento).
+  const pastas = obterPastasVivas_(contextoAdmin) || [];
+
+  if (cfg.atualizarLegenda !== false) {
+    atualizarLegendasPlanilhaAdmin_(contextoAdmin);
+  }
+
+  const versaoLocalidades = calcularVersaoLocalidadesDoDrive_(contextoAdmin);
+  const contextoSalvo = lerContextoAdminPorPlanilhaIdFila_(planilhaAdminId) || contextoAdmin;
+  const mapaCores = (contextoSalvo && contextoSalvo.mapaCoresPastas) ? contextoSalvo.mapaCoresPastas : {};
+  const coresBanidas = (contextoSalvo && contextoSalvo.coresBanidasPastas) ? contextoSalvo.coresBanidasPastas : [];
+
+  if (contextoAdminComCamposMinimos_(contextoSalvo)) {
+    const base = { ...contextoSalvo };
+    delete base.tipo;
+    delete base.origem;
+
+    salvarContextoAdmin_(planilhaAdminId, {
+      ...base,
+      syncLocalidadesStatus: FILA_SYNC_STATUS.SUCESSO,
+      syncLocalidadesVersaoAtual: versaoLocalidades,
+      syncLocalidadesVersaoSincronizada: versaoLocalidades,
+      syncLocalidadesErro: '',
+      syncLocalidadesAtualizadoEm: new Date().toISOString(),
+      ultimaAtualizacao: new Date().toISOString()
+    });
+  }
+
+  return {
+    versaoLocalidades: versaoLocalidades,
+    versaoSincronizada: versaoLocalidades,
+    totalPastas: pastas.length,
+    mapaCoresPastas: mapaCores,
+    coresBanidasPastas: coresBanidas
+  };
+}
+
+function lerContextoAdminPorPlanilhaIdFila_(planilhaAdminId) {
+  const id = String(planilhaAdminId || '').trim();
+  if (!id) return null;
+
+  try {
+    const chave = CONTEXTO_KEYS.PREFIXO + id;
+    const raw = PropertiesService.getScriptProperties().getProperty(chave);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    Logger.log('[SYNC][WORKER][CTX][AVISO] ' + e.message);
+    return null;
+  }
+}
+
+function obterOuCriarAbaFilaSincronizacao_(ssCliente) {
+  let sheet = ssCliente.getSheetByName(FILA_SINCRONIZACAO_ABA);
+  if (!sheet) {
+    sheet = ssCliente.insertSheet(FILA_SINCRONIZACAO_ABA);
+  }
+
+  const precisaCabecalho =
+    sheet.getLastRow() < 1 ||
+    String(sheet.getRange(1, 1).getValue() || '').trim() !== FILA_SYNC_CABECALHO[0];
+
+  if (precisaCabecalho) {
+    sheet.clear();
+    sheet.getRange(1, 1, 1, FILA_SYNC_CABECALHO.length).setValues([FILA_SYNC_CABECALHO]);
+    sheet.getRange(1, 1, 1, FILA_SYNC_CABECALHO.length)
+      .setFontFamily('Arial')
+      .setFontSize(10)
+      .setFontWeight('bold')
+      .setBackground('#455a64')
+      .setFontColor('#ffffff')
+      .setHorizontalAlignment('left');
+
+    sheet.setFrozenRows(1);
+    sheet.setHiddenGridlines(true);
+  }
+
+  organizarOrdemAbasEstruturais_(ssCliente, {
+    abaAtivaFinal: 'CAPA'
+  });
+
+  return sheet;
+}
+
+function obterAbaFilaSincronizacaoClientePorContexto_(contexto) {
+  if (!contexto || !contexto.planilhaClienteId) return null;
+
+  try {
+    const ssCliente = SpreadsheetApp.openById(contexto.planilhaClienteId);
+    return ssCliente.getSheetByName(FILA_SINCRONIZACAO_ABA);
+  } catch (e) {
+    return null;
+  }
+}
+
+function obterProximaSolicitacaoSyncPendente_(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+
+  const dados = sheet.getRange(2, 1, lastRow - 1, FILA_SYNC_CABECALHO.length).getValues();
+  for (let i = 0; i < dados.length; i++) {
+    const req = mapearLinhaFilaSync_(dados[i], i + 2);
+    if (req.status === FILA_SYNC_STATUS.PENDENTE) return req;
+  }
+
+  return null;
+}
+
+function obterSolicitacaoSyncAbertaPorVersao_(sheet, versaoLocalidades) {
+  const versao = String(versaoLocalidades || '').trim();
+  if (!versao) return null;
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+
+  const dados = sheet.getRange(2, 1, lastRow - 1, FILA_SYNC_CABECALHO.length).getValues();
+  for (let i = dados.length - 1; i >= 0; i--) {
+    const req = mapearLinhaFilaSync_(dados[i], i + 2);
+    if (req.versaoLocalidades !== versao) continue;
+    if (req.status === FILA_SYNC_STATUS.PENDENTE || req.status === FILA_SYNC_STATUS.PROCESSANDO) {
+      return req;
+    }
+  }
+
+  return null;
+}
+
+function obterUltimaSolicitacaoSyncPorVersao_(sheet, versaoLocalidades) {
+  const versao = String(versaoLocalidades || '').trim();
+  if (!versao) return null;
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+
+  const dados = sheet.getRange(2, 1, lastRow - 1, FILA_SYNC_CABECALHO.length).getValues();
+  for (let i = dados.length - 1; i >= 0; i--) {
+    const req = mapearLinhaFilaSync_(dados[i], i + 2);
+    if (req.versaoLocalidades === versao) {
+      return req;
+    }
+  }
+
+  return null;
+}
+
+function mapearLinhaFilaSync_(row, rowNumber) {
+  function col(idx) {
+    return row[idx - 1];
+  }
+
+  return {
+    rowNumber: rowNumber,
+    requestId: String(col(FILA_SYNC_COL.REQUEST_ID) || '').trim(),
+    status: String(col(FILA_SYNC_COL.STATUS) || '').trim().toUpperCase(),
+    criadoEm: String(col(FILA_SYNC_COL.CRIADO_EM) || '').trim(),
+    iniciadoEm: String(col(FILA_SYNC_COL.INICIADO_EM) || '').trim(),
+    finalizadoEm: String(col(FILA_SYNC_COL.FINALIZADO_EM) || '').trim(),
+    solicitanteEmail: String(col(FILA_SYNC_COL.SOLICITANTE_EMAIL) || '').trim().toLowerCase(),
+    contextoNome: String(col(FILA_SYNC_COL.CONTEXTO_NOME) || '').trim(),
+    planilhaAdminId: String(col(FILA_SYNC_COL.PLANILHA_ADMIN_ID) || '').trim(),
+    planilhaClienteId: String(col(FILA_SYNC_COL.PLANILHA_CLIENTE_ID) || '').trim(),
+    pastaLocalidadesId: String(col(FILA_SYNC_COL.PASTA_LOCALIDADES_ID) || '').trim(),
+    versaoLocalidades: String(col(FILA_SYNC_COL.VERSAO_LOCALIDADES) || '').trim(),
+    versaoSincronizada: String(col(FILA_SYNC_COL.VERSAO_SINCRONIZADA) || '').trim(),
+    mensagemErro: String(col(FILA_SYNC_COL.MENSAGEM_ERRO) || '').trim(),
+    mapaCoresJson: String(col(FILA_SYNC_COL.MAPA_CORES_JSON) || '').trim(),
+    coresBanidasJson: String(col(FILA_SYNC_COL.CORES_BANIDAS_JSON) || '').trim(),
+    processadoPor: String(col(FILA_SYNC_COL.PROCESSADO_POR) || '').trim(),
+    notificadoEm: String(col(FILA_SYNC_COL.NOTIFICADO_EM) || '').trim()
+  };
+}
+
+function marcarSolicitacaoSyncProcessando_(sheet, rowNumber, processorEmail) {
+  sheet.getRange(rowNumber, FILA_SYNC_COL.STATUS).setValue(FILA_SYNC_STATUS.PROCESSANDO);
+  sheet.getRange(rowNumber, FILA_SYNC_COL.INICIADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_SYNC_COL.FINALIZADO_EM).setValue('');
+  sheet.getRange(rowNumber, FILA_SYNC_COL.MENSAGEM_ERRO).setValue('');
+  sheet.getRange(rowNumber, FILA_SYNC_COL.PROCESSADO_POR).setValue(processorEmail || '');
+}
+
+function marcarSolicitacaoSyncSucesso_(sheet, rowNumber, resultado, processorEmail) {
+  const mapaJson = serializarResumoFila_(resultado && resultado.mapaCoresPastas ? resultado.mapaCoresPastas : {});
+  const banidasJson = serializarResumoFila_(resultado && resultado.coresBanidasPastas ? resultado.coresBanidasPastas : []);
+
+  sheet.getRange(rowNumber, FILA_SYNC_COL.STATUS).setValue(FILA_SYNC_STATUS.SUCESSO);
+  sheet.getRange(rowNumber, FILA_SYNC_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_SYNC_COL.VERSAO_SINCRONIZADA).setValue(resultado.versaoSincronizada || resultado.versaoLocalidades || '');
+  sheet.getRange(rowNumber, FILA_SYNC_COL.MENSAGEM_ERRO).setValue('');
+  sheet.getRange(rowNumber, FILA_SYNC_COL.MAPA_CORES_JSON).setValue(mapaJson);
+  sheet.getRange(rowNumber, FILA_SYNC_COL.CORES_BANIDAS_JSON).setValue(banidasJson);
+  sheet.getRange(rowNumber, FILA_SYNC_COL.PROCESSADO_POR).setValue(processorEmail || '');
+  sheet.getRange(rowNumber, FILA_SYNC_COL.NOTIFICADO_EM).setValue('');
+}
+
+function marcarSolicitacaoSyncErro_(sheet, rowNumber, erro, processorEmail) {
+  const mensagem = (erro && erro.message) ? erro.message : String(erro || 'Erro desconhecido');
+
+  sheet.getRange(rowNumber, FILA_SYNC_COL.STATUS).setValue(FILA_SYNC_STATUS.ERRO);
+  sheet.getRange(rowNumber, FILA_SYNC_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_SYNC_COL.MENSAGEM_ERRO).setValue(mensagem);
+  sheet.getRange(rowNumber, FILA_SYNC_COL.PROCESSADO_POR).setValue(processorEmail || '');
+  sheet.getRange(rowNumber, FILA_SYNC_COL.NOTIFICADO_EM).setValue('');
+}
+
+function parseJsonSeguroFila_(texto, fallback) {
+  const bruto = String(texto || '').trim();
+  if (!bruto) return fallback;
+  try {
+    return JSON.parse(bruto);
+  } catch (e) {
+    return fallback;
+  }
 }
