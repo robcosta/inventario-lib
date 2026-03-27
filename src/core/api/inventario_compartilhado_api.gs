@@ -24,6 +24,10 @@ function abrirPastaFotosAtual() {
   abrirPastaFotosAtual_();
 }
 
+function deletarPastaFotos() {
+  deletarPastaFotos_();
+}
+
 /* ============================================================
  * PROCESSAMENTO DE IMAGENS (VISION)
  * ============================================================ */

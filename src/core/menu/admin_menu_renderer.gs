@@ -90,6 +90,7 @@ function adminRenderMenu_() {
       ui.createMenu('📂 Área de Fotos')
         .addItem('📂 Abrir Pasta Atual', 'abrirPastaFotosAtual')
         .addItem('🔁 Trocar Pasta', 'trocarPastaFotos')
+        .addItem('🗑️ Deletar Pasta', 'deletarPastaFotos')
         .addItem('➕ Criar Nova Pasta', 'criarNovaPastaFotos')
     )
     .addSeparator()

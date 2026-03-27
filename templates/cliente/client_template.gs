@@ -42,6 +42,10 @@ function trocarPastaFotos() {
   inventario.trocarPastaFotos();
 }
 
+function deletarPastaFotos() {
+  inventario.deletarPastaFotos();
+}
+
 function abrirPastaFotosAtual() {
   inventario.abrirPastaFotosAtual();
 }

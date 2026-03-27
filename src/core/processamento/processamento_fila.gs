@@ -110,6 +110,45 @@ const FILA_SYNC_COL = {
   NOTIFICADO_EM: 17
 };
 
+// Fila de criação de pastas solicitada pelo CLIENTE (processada pelo ADMIN)
+const FILA_CRIAR_PASTA_ABA = '__FILA_CRIAR_PASTA__';
+const FILA_CRIAR_PASTA_STATUS = {
+  PENDENTE: 'PENDENTE',
+  PROCESSANDO: 'PROCESSANDO',
+  SUCESSO: 'SUCESSO',
+  ERRO: 'ERRO'
+};
+const FILA_CRIAR_PASTA_CABECALHO = [
+  'REQUEST_ID',
+  'STATUS',
+  'CRIADO_EM_ISO',
+  'INICIADO_EM_ISO',
+  'FINALIZADO_EM_ISO',
+  'SOLICITANTE_EMAIL',
+  'NOME_PASTA',
+  'CONTEXTO_NOME',
+  'PLANILHA_ADMIN_ID',
+  'PLANILHA_CLIENTE_ID',
+  'PASTA_LOCALIDADES_ID',
+  'MENSAGEM_ERRO',
+  'PASTA_ID_CRIADA'
+];
+const FILA_CRIAR_PASTA_COL = {
+  REQUEST_ID: 1,
+  STATUS: 2,
+  CRIADO_EM: 3,
+  INICIADO_EM: 4,
+  FINALIZADO_EM: 5,
+  SOLICITANTE_EMAIL: 6,
+  NOME_PASTA: 7,
+  CONTEXTO_NOME: 8,
+  PLANILHA_ADMIN_ID: 9,
+  PLANILHA_CLIENTE_ID: 10,
+  PASTA_LOCALIDADES_ID: 11,
+  MENSAGEM_ERRO: 12,
+  PASTA_ID_CRIADA: 13
+};
+
 function enfileirarProcessamentoImagensCliente_(contextoEntrada) {
   const ui = SpreadsheetApp.getUi();
   const ssAtiva = SpreadsheetApp.getActiveSpreadsheet();
@@ -357,6 +396,8 @@ function processarFilaImagensPendentes_() {
   const inicio = Date.now();
   let totalProcessados = 0;
   let totalErros = 0;
+  let totalCriadas = 0;
+  let totalErrosCriacao = 0;
   let totalSincronizados = 0;
   let totalErrosSync = 0;
 
@@ -372,6 +413,10 @@ function processarFilaImagensPendentes_() {
       totalSincronizados += parcialSync.sincronizados || 0;
       totalErrosSync += parcialSync.erros || 0;
 
+      const parcialCriacao = processarUmaSolicitacaoCriarPastaPorContexto_(ctx);
+      totalCriadas += parcialCriacao.criadas || 0;
+      totalErrosCriacao += parcialCriacao.erros || 0;
+
       const parcial = processarUmaSolicitacaoFilaPorContexto_(ctx);
       totalProcessados += parcial.processados || 0;
       totalErros += parcial.erros || 0;
@@ -383,6 +428,8 @@ function processarFilaImagensPendentes_() {
       ', errosSync=' + totalErrosSync +
       ', processados=' + totalProcessados +
       ', erros=' + totalErros +
+      ', criadas=' + totalCriadas +
+      ', errosCriacao=' + totalErrosCriacao +
       ', tempo_ms=' + (Date.now() - inicio)
     );
 
@@ -391,6 +438,8 @@ function processarFilaImagensPendentes_() {
       errosSincronizacao: totalErrosSync,
       processados: totalProcessados,
       erros: totalErros,
+      criadas: totalCriadas,
+      errosCriacao: totalErrosCriacao,
       contextos: contextos.length,
       tempo_ms: Date.now() - inicio
     };
@@ -404,8 +453,8 @@ function instalarTriggerFilaProcessamento_() {
   const handler = 'processarFilaImagensPendentes';
 
   try {
-    const existentes = ScriptApp.getProjectTriggers()
-      .filter(t => t.getHandlerFunction() === handler);
+    const existentes = obterTriggersProjetoSeguro_()
+      .filter(t => t.getHandlerFunction && t.getHandlerFunction() === handler);
     existentes.forEach(t => ScriptApp.deleteTrigger(t));
 
     ScriptApp.newTrigger(handler)
@@ -430,8 +479,8 @@ function removerTriggerFilaProcessamento_() {
     processarFilaImagensPendentes_: true
   };
 
-  const triggers = ScriptApp.getProjectTriggers()
-    .filter(t => handlers[t.getHandlerFunction()]);
+  const triggers = obterTriggersProjetoSeguro_()
+    .filter(t => t.getHandlerFunction && handlers[t.getHandlerFunction()]);
 
   triggers.forEach(t => ScriptApp.deleteTrigger(t));
 
@@ -446,8 +495,8 @@ function existeTriggerFilaProcessamento_() {
     processarFilaImagensPendentes_: true
   };
 
-  const triggers = ScriptApp.getProjectTriggers();
-  return triggers.some(t => handlers[t.getHandlerFunction()]);
+  const triggers = obterTriggersProjetoSeguro_();
+  return triggers.some(t => t.getHandlerFunction && handlers[t.getHandlerFunction()]);
 }
 
 function verificarLembreteTriggerFilaNoContextoAdmin_(ss) {
@@ -478,6 +527,15 @@ function verificarLembreteTriggerFilaNoContextoAdmin_(ss) {
     8
   );
   registrarDataLembreteTriggerFila_(new Date());
+}
+
+function obterTriggersProjetoSeguro_() {
+  try {
+    return ScriptApp.getProjectTriggers();
+  } catch (e) {
+    Logger.log('[TRIGGER][PERM] ' + e.message);
+    return [];
+  }
 }
 
 function processarUmaSolicitacaoFilaPorContexto_(contextoAdmin) {
@@ -1296,4 +1354,193 @@ function parseJsonSeguroFila_(texto, fallback) {
   } catch (e) {
     return fallback;
   }
+}
+
+/* ============================================================
+ * FILA DE CRIAÇÃO DE PASTA (CLIENTE -> ADMIN)
+ * ============================================================ */
+function obterOuCriarAbaFilaCriarPasta_(ssCliente) {
+  let sheet = ssCliente.getSheetByName(FILA_CRIAR_PASTA_ABA);
+  if (!sheet) {
+    sheet = ssCliente.insertSheet(FILA_CRIAR_PASTA_ABA);
+  }
+
+  const precisaCabecalho =
+    sheet.getLastRow() < 1 ||
+    String(sheet.getRange(1, 1).getValue() || '').trim() !== FILA_CRIAR_PASTA_CABECALHO[0];
+
+  if (precisaCabecalho) {
+    sheet.clear();
+    sheet.getRange(1, 1, 1, FILA_CRIAR_PASTA_CABECALHO.length).setValues([FILA_CRIAR_PASTA_CABECALHO]);
+    sheet.getRange(1, 1, 1, FILA_CRIAR_PASTA_CABECALHO.length)
+      .setFontFamily('Arial')
+      .setFontSize(10)
+      .setFontWeight('bold')
+      .setBackground('#1f2937')
+      .setFontColor('#ffffff')
+      .setHorizontalAlignment('left');
+
+    sheet.setFrozenRows(1);
+    sheet.setHiddenGridlines(true);
+  }
+
+  organizarOrdemAbasEstruturais_(ssCliente, { abaAtivaFinal: 'CAPA' });
+  return sheet;
+}
+
+function enfileirarCriacaoPastaPorCliente_(contexto, nomePasta) {
+  if (!contexto || contexto.tipo !== 'CLIENTE') {
+    throw new Error('Fila de criação de pasta é exclusiva do CLIENTE.');
+  }
+
+  const planilhaClienteId = String(contexto.planilhaClienteId || SpreadsheetApp.getActiveSpreadsheet().getId() || '').trim();
+  if (!planilhaClienteId) {
+    throw new Error('Planilha CLIENTE não identificada para fila de criação.');
+  }
+
+  const ssCliente = SpreadsheetApp.openById(planilhaClienteId);
+  const fila = obterOuCriarAbaFilaCriarPasta_(ssCliente);
+  const emailsUsuario = obterEmailsUsuarioAtualFila_();
+  const solicitanteEmail = emailsUsuario[0] || 'DESCONHECIDO';
+
+  const requestId = gerarRequestIdFila_();
+  const agoraIso = new Date().toISOString();
+
+  fila.appendRow([
+    requestId,
+    FILA_CRIAR_PASTA_STATUS.PENDENTE,
+    agoraIso,
+    '',
+    '',
+    solicitanteEmail,
+    nomePasta,
+    contexto.nome || '',
+    contexto.planilhaAdminId || '',
+    planilhaClienteId,
+    contexto.pastaLocalidadesId || '',
+    '',
+    ''
+  ]);
+
+  return { requestId };
+}
+
+function processarUmaSolicitacaoCriarPastaPorContexto_(contextoAdmin) {
+  if (!contextoAdmin || !contextoAdmin.planilhaClienteId || !contextoAdmin.pastaLocalidadesId) {
+    return { criadas: 0, erros: 0 };
+  }
+
+  let ssCliente;
+  try {
+    ssCliente = SpreadsheetApp.openById(contextoAdmin.planilhaClienteId);
+  } catch (e) {
+    Logger.log('[FILA][CRIAR_PASTA] Falha ao abrir CLIENTE: ' + e.message);
+    return { criadas: 0, erros: 1 };
+  }
+
+  const fila = ssCliente.getSheetByName(FILA_CRIAR_PASTA_ABA);
+  if (!fila) return { criadas: 0, erros: 0 };
+
+  const solicitacao = obterProximaSolicitacaoCriarPastaPendente_(fila);
+  if (!solicitacao) return { criadas: 0, erros: 0 };
+
+  const processorEmail = String(Session.getEffectiveUser().getEmail() || '').trim().toLowerCase();
+  marcarCriarPastaProcessando_(fila, solicitacao.rowNumber, processorEmail);
+
+  try {
+    const pastaRaiz = DriveApp.getFolderById(contextoAdmin.pastaLocalidadesId);
+    const nova = pastaRaiz.createFolder(solicitacao.nomePasta);
+
+    // Atualiza mapa de cores
+    obterPastasVivas_(contextoAdmin);
+
+    // Enfileira sincronização para CLIENTE refletir nova cor/mapa
+    try {
+      const filaSync = obterOuCriarAbaFilaSincronizacao_(ssCliente);
+      const versao = calcularVersaoLocalidadesDoDrive_(contextoAdmin);
+      const reqIdSync = gerarRequestIdFila_();
+      const agoraIso = new Date().toISOString();
+      filaSync.appendRow([
+        reqIdSync,
+        FILA_SYNC_STATUS.PENDENTE,
+        agoraIso,
+        '',
+        '',
+        processorEmail || '',
+        contextoAdmin.nome || '',
+        contextoAdmin.planilhaAdminId || '',
+        contextoAdmin.planilhaClienteId || '',
+        contextoAdmin.pastaLocalidadesId || '',
+        versao,
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+      ]);
+    } catch (eSync) {
+      Logger.log('[FILA][CRIAR_PASTA][SYNC][AVISO] ' + eSync.message);
+    }
+
+    marcarCriarPastaSucesso_(fila, solicitacao.rowNumber, nova.getId(), processorEmail);
+    return { criadas: 1, erros: 0 };
+  } catch (e) {
+    marcarCriarPastaErro_(fila, solicitacao.rowNumber, e, processorEmail);
+    return { criadas: 0, erros: 1 };
+  }
+}
+
+function obterProximaSolicitacaoCriarPastaPendente_(sheet) {
+  if (!sheet || sheet.getLastRow() < 2) return null;
+
+  const dados = sheet.getRange(2, 1, sheet.getLastRow() - 1, FILA_CRIAR_PASTA_CABECALHO.length).getValues();
+  for (let i = 0; i < dados.length; i++) {
+    const req = mapearLinhaFilaCriarPasta_(dados[i], i + 2);
+    if (req.status === FILA_CRIAR_PASTA_STATUS.PENDENTE) return req;
+  }
+  return null;
+}
+
+function mapearLinhaFilaCriarPasta_(row, rowNumber) {
+  function col(idx) { return row[idx - 1]; }
+
+  return {
+    rowNumber,
+    requestId: String(col(FILA_CRIAR_PASTA_COL.REQUEST_ID) || '').trim(),
+    status: String(col(FILA_CRIAR_PASTA_COL.STATUS) || '').trim().toUpperCase(),
+    criadoEm: String(col(FILA_CRIAR_PASTA_COL.CRIADO_EM) || '').trim(),
+    iniciadoEm: String(col(FILA_CRIAR_PASTA_COL.INICIADO_EM) || '').trim(),
+    finalizadoEm: String(col(FILA_CRIAR_PASTA_COL.FINALIZADO_EM) || '').trim(),
+    solicitanteEmail: String(col(FILA_CRIAR_PASTA_COL.SOLICITANTE_EMAIL) || '').trim().toLowerCase(),
+    nomePasta: String(col(FILA_CRIAR_PASTA_COL.NOME_PASTA) || '').trim(),
+    contextoNome: String(col(FILA_CRIAR_PASTA_COL.CONTEXTO_NOME) || '').trim(),
+    planilhaAdminId: String(col(FILA_CRIAR_PASTA_COL.PLANILHA_ADMIN_ID) || '').trim(),
+    planilhaClienteId: String(col(FILA_CRIAR_PASTA_COL.PLANILHA_CLIENTE_ID) || '').trim(),
+    pastaLocalidadesId: String(col(FILA_CRIAR_PASTA_COL.PASTA_LOCALIDADES_ID) || '').trim(),
+    mensagemErro: String(col(FILA_CRIAR_PASTA_COL.MENSAGEM_ERRO) || '').trim(),
+    pastaCriadaId: String(col(FILA_CRIAR_PASTA_COL.PASTA_ID_CRIADA) || '').trim()
+  };
+}
+
+function marcarCriarPastaProcessando_(sheet, rowNumber, processorEmail) {
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.STATUS).setValue(FILA_CRIAR_PASTA_STATUS.PROCESSANDO);
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.INICIADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.FINALIZADO_EM).setValue('');
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.MENSAGEM_ERRO).setValue('');
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.PASTA_ID_CRIADA).setValue('');
+}
+
+function marcarCriarPastaSucesso_(sheet, rowNumber, pastaId, processorEmail) {
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.STATUS).setValue(FILA_CRIAR_PASTA_STATUS.SUCESSO);
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.MENSAGEM_ERRO).setValue('');
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.PASTA_ID_CRIADA).setValue(pastaId || '');
+}
+
+function marcarCriarPastaErro_(sheet, rowNumber, erro, processorEmail) {
+  const mensagem = (erro && erro.message) ? erro.message : String(erro || 'Erro desconhecido');
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.STATUS).setValue(FILA_CRIAR_PASTA_STATUS.ERRO);
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.MENSAGEM_ERRO).setValue(mensagem);
 }

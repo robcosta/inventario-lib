@@ -123,6 +123,25 @@ function criarNovaPastaFotos_() {
   // 4️⃣ Criar pasta
   // ============================================================
 
+  // ADMIN cria direto; CLIENTE apenas enfileira para o ADMIN criar
+  if (contexto.tipo === 'CLIENTE') {
+    try {
+      const req = enfileirarCriacaoPastaPorCliente_(contexto, nome);
+      ui.alert(
+        "📨 Pedido enviado ao ADMIN",
+        `A criação da pasta "${nome}" foi solicitada.\n\n` +
+        `Request: #${req.requestId}\n` +
+        "Quando o ADMIN processar a fila, a pasta será criada por ele.\n\n" +
+        "Após criada, sincronize as informações e prossiga normalmente.",
+        ui.ButtonSet.OK
+      );
+      return;
+    } catch (e) {
+      ui.alert("❌ Não foi possível solicitar a criação ao ADMIN.\n\n" + e.message);
+      return;
+    }
+  }
+
   const novaPasta = pastaRaiz.createFolder(nome);
 
   // 🔥 REGRA CENTRAL (AGORA DOMÍNIO)
@@ -131,40 +150,11 @@ function criarNovaPastaFotos_() {
     nome: nome
   });
 
-  let syncRequestId = '';
-
-  if (contexto.tipo === 'CLIENTE') {
-    try {
-      const sync = solicitarSincronizacaoLocalidadesCliente_(contextoAtualizado || contexto, {
-        motivo: 'CRIAR_PASTA'
-      });
-
-      if (sync && sync.requestId) {
-        syncRequestId = sync.requestId;
-        SpreadsheetApp.getActiveSpreadsheet().toast(
-          `Sincronização da ADMIN solicitada (#${sync.requestId}).`,
-          '⏳ Sincronização',
-          7
-        );
-      }
-    } catch (e) {
-      Logger.log('[AREA_FOTOS][SYNC][AVISO] ' + e.message);
-    }
-  }
-
   // ============================================================
   // 5️⃣ Abrir?
   // ============================================================
 
   let mensagemFinal = `✅ Pasta criada e definida como ativa:\n\n${nome}`;
-
-  if (contexto.tipo === 'CLIENTE') {
-    mensagemFinal += '\n\n⏳ A sincronização da ADMIN foi iniciada.';
-    if (syncRequestId) {
-      mensagemFinal += `\nSolicitação: #${syncRequestId}`;
-    }
-    mensagemFinal += '\nO processamento de imagens ficará liberado após a sincronização.';
-  }
 
   mensagemFinal += '\n\nDeseja abrir a pasta agora?';
 
