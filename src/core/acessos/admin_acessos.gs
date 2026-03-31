@@ -158,12 +158,12 @@ function inferirNivelAcessoConsolidado_(recursosPorChave) {
     eh('PASTA_SISTEMA', 'reader');
   const perfilOperador =
     eh('PASTA_CONTEXTO', 'writer') &&
-    eh('PLANILHA_GERAL', 'reader') &&
+    eh('PASTA_GERAL', 'reader') &&
     eh('PASTA_SISTEMA', 'reader');
   const perfilCliente =
     eh('PASTA_LOCALIDADES', 'writer') &&
     eh('PLANILHA_ADMIN', 'reader') &&
-    eh('PLANILHA_GERAL', 'reader') &&
+    eh('PASTA_GERAL', 'reader') &&
     eh('PASTA_SISTEMA', 'reader');
 
   if (perfilSupervisor) return 'SUPERVISOR';
@@ -559,9 +559,10 @@ function gerenciarAcessosOperador_() {
     return;
   }
 
-  const planilhaGeralId = resolverPlanilhaGeralId_();
-  if (!planilhaGeralId) {
-    ui.alert('Planilha Geral não encontrada.');
+  const sistemaGlobal = obterSistemaGlobal_();
+  const pastaGeralId = contexto.pastaGeralId || (sistemaGlobal && sistemaGlobal.pastaGeralId);
+  if (!pastaGeralId) {
+    ui.alert('Pasta GERAL não encontrada.');
     return;
   }
   const raiz = obterPastaInventario_();
@@ -577,7 +578,7 @@ function gerenciarAcessosOperador_() {
     contexto.nome,
     'OPERADOR',
     '• Editor na pasta do CONTEXTO\n' +
-    '• Leitor na planilha GERAL\n' +
+    '• Leitor na pasta GERAL\n' +
     '• Leitor na pasta _SISTEMA (bibliotecas)\n' +
     '• Pode conceder apenas acesso CLIENTE'
   );
@@ -587,7 +588,7 @@ function gerenciarAcessosOperador_() {
   try {
     aplicarPermissoes_(email, [
       { id: contexto.pastaContextoId, role: 'writer' },
-      { id: planilhaGeralId, role: 'reader' },
+      { id: pastaGeralId, role: 'reader' },
       { id: pastaSistema.getId(), role: 'reader' }
     ], 'ACESSOS-OPERADOR');
 
@@ -598,7 +599,7 @@ function gerenciarAcessosOperador_() {
       'Contexto: ' + contexto.nome + '\n\n' +
       'Permissões:\n' +
       '• Editor na pasta do CONTEXTO\n' +
-      '• Leitor na planilha GERAL\n' +
+      '• Leitor na pasta GERAL\n' +
       '• Leitor na pasta _SISTEMA (bibliotecas)',
       'ACESSOS-OPERADOR'
     );
@@ -616,7 +617,7 @@ function gerenciarAcessosOperador_() {
  * ============================================================
  * - Editor na Pasta LOCALIDADES
  * - Leitor na Planilha ADMIN
- * - Leitor na Planilha GERAL
+ * - Leitor na Pasta GERAL
  * - Leitor na pasta _SISTEMA (bibliotecas)
  */
 function gerenciarAcessosCliente_() {
@@ -633,9 +634,10 @@ function gerenciarAcessosCliente_() {
     return;
   }
 
-  const planilhaGeralId = resolverPlanilhaGeralId_();
-  if (!planilhaGeralId) {
-    ui.alert('Planilha Geral não encontrada.');
+  const sistemaGlobal = obterSistemaGlobal_();
+  const pastaGeralId = contexto.pastaGeralId || (sistemaGlobal && sistemaGlobal.pastaGeralId);
+  if (!pastaGeralId) {
+    ui.alert('Pasta GERAL não encontrada.');
     return;
   }
   const raiz = obterPastaInventario_();
@@ -652,7 +654,7 @@ function gerenciarAcessosCliente_() {
     'CLIENTE',
     '• Editor na pasta LOCALIDADES\n' +
     '• Leitor na planilha ADMIN\n' +
-    '• Leitor na planilha GERAL\n' +
+    '• Leitor na pasta GERAL\n' +
     '• Leitor na pasta _SISTEMA (bibliotecas)'
   );
 
@@ -662,20 +664,20 @@ function gerenciarAcessosCliente_() {
     aplicarPermissoes_(email, [
       { id: contexto.pastaLocalidadesId, role: 'writer' },
       { id: contexto.planilhaAdminId, role: 'reader' },
-      { id: planilhaGeralId, role: 'reader' },
+      { id: pastaGeralId, role: 'reader' },
       { id: pastaSistema.getId(), role: 'reader' }
     ], 'ACESSOS-CLIENTE');
 
     const urlPlanilhaCliente = obterUrlArquivoSeguro_(contexto.planilhaClienteId);
     const urlPlanilhaAdmin = obterUrlArquivoSeguro_(contexto.planilhaAdminId);
-    const urlPlanilhaGeral = obterUrlArquivoSeguro_(planilhaGeralId);
+    const urlPastaGeral = obterUrlPastaSeguro_(pastaGeralId);
     const urlPastaLocalidades = obterUrlPastaSeguro_(contexto.pastaLocalidadesId);
     const urlPastaSistema = obterUrlPastaSeguro_(pastaSistema.getId());
 
     const blocoLinks = 'Links de acesso:\n' +
       '• Planilha CLIENTE: ' + (urlPlanilhaCliente || 'não encontrada no contexto') + '\n' +
       '• Planilha ADMIN: ' + (urlPlanilhaAdmin || '-') + '\n' +
-      '• Planilha GERAL: ' + (urlPlanilhaGeral || '-') + '\n' +
+      '• Pasta GERAL: ' + (urlPastaGeral || '-') + '\n' +
       '• Pasta LOCALIDADES: ' + (urlPastaLocalidades || '-') + '\n' +
       '• Pasta _SISTEMA: ' + (urlPastaSistema || '-');
 
@@ -687,7 +689,7 @@ function gerenciarAcessosCliente_() {
       'Permissões:\n' +
       '• Editor na pasta LOCALIDADES\n' +
       '• Leitor na planilha ADMIN\n' +
-      '• Leitor na planilha GERAL\n' +
+      '• Leitor na pasta GERAL\n' +
       '• Leitor na pasta _SISTEMA (bibliotecas)\n\n' +
       blocoLinks,
       'ACESSOS-CLIENTE'
