@@ -57,9 +57,12 @@ function deletarPastaFotos_() {
   const pastaId = pasta.getId();
   const pastaNome = pasta.getName();
 
+  // Lista arquivos de imagem para contagem e log
+  const arquivosImagens = listarArquivosImagemDaPasta_(pasta);
+
   // Contagens
-  const totalImagens = contarImagensNaPasta_(pasta);
-  const processadas = contarImagensProcessadasNaPasta_(pastaId, contexto.planilhaAdminId);
+  const totalImagens = arquivosImagens.length;
+  const processadas = contarImagensProcessadasNaPasta_(pastaId, contexto.planilhaAdminId, arquivosImagens);
 
   // Regra de bloqueio para CLIENTE
   if (contexto.tipo === 'CLIENTE' && processadas > 0) {
@@ -136,6 +139,13 @@ function deletarPastaFotos_() {
       ui.ButtonSet.OK
     );
     return;
+  }
+
+  // Registra no CONTROLE os bens (imagens) deletados.
+  try {
+    registrarBensDeletadosControle_(contexto.planilhaAdminId, arquivosImagens, pastaNome);
+  } catch (e) {
+    Logger.log('[AREA_FOTOS][DELETE][CONTROLE][AVISO] ' + e.message);
   }
 
   // Atualiza contexto (limpa localidade ativa)
@@ -256,26 +266,30 @@ function contarImagensNaPasta_(pasta) {
  * Conta quantas imagens da pasta já aparecem como processadas no CONTROLE.
  * Critério: status diferente de ERRO ou PENDENTE.
  */
-function contarImagensProcessadasNaPasta_(pastaId, planilhaAdminId) {
+function contarImagensProcessadasNaPasta_(pastaId, planilhaAdminId, arquivosImagensOpcional) {
   const id = String(pastaId || '').trim();
   const planilhaId = String(planilhaAdminId || '').trim();
 
   if (!id || !planilhaId) return 0;
 
-  let pasta;
-  try {
-    pasta = DriveApp.getFolderById(id);
-  } catch (e) {
-    return 0;
-  }
-
   const fileIds = {};
-  const it = pasta.getFiles();
-  while (it.hasNext()) {
-    const fileId = String(it.next().getId() || '').trim();
-    if (fileId) fileIds[fileId] = true;
-  }
-  const idsNaPasta = Object.keys(fileIds);
+  const idsNaPasta = Array.isArray(arquivosImagensOpcional) && arquivosImagensOpcional.length
+    ? arquivosImagensOpcional.map(f => String(f.id || '').trim()).filter(Boolean)
+    : (function() {
+        try {
+          const pasta = DriveApp.getFolderById(id);
+          const it = pasta.getFiles();
+          while (it.hasNext()) {
+            const fileId = String(it.next().getId() || '').trim();
+            if (fileId) fileIds[fileId] = true;
+          }
+          return Object.keys(fileIds);
+        } catch (e) {
+          return [];
+        }
+      })();
+
+  idsNaPasta.forEach(fid => { if (fid) fileIds[fid] = true; });
   if (!idsNaPasta.length) return 0;
 
   let sheet;
@@ -302,6 +316,68 @@ function contarImagensProcessadasNaPasta_(pastaId, planilhaAdminId) {
   }
 
   return Object.keys(processadas).length;
+}
+
+/**
+ * Retorna lista de imagens (id + nome) dentro da pasta.
+ */
+function listarArquivosImagemDaPasta_(pasta) {
+  const lista = [];
+  if (!pasta) return lista;
+
+  const it = pasta.getFiles();
+  while (it.hasNext()) {
+    const f = it.next();
+    const mime = String(f.getMimeType() || '').toLowerCase();
+    if (!mime.startsWith('image/')) continue;
+    lista.push({
+      id: String(f.getId() || '').trim(),
+      nome: String(f.getName() || '').trim()
+    });
+  }
+  return lista;
+}
+
+/**
+ * Registra no __CONTROLE_PROCESSAMENTO__ da ADMIN os bens (imagens) removidos junto com a pasta.
+ */
+function registrarBensDeletadosControle_(planilhaAdminId, arquivosImagens, pastaNome) {
+  const planilhaId = String(planilhaAdminId || '').trim();
+  if (!planilhaId) return;
+  if (!Array.isArray(arquivosImagens) || !arquivosImagens.length) return;
+
+  let sheet;
+  try {
+    sheet = SpreadsheetApp.openById(planilhaId).getSheetByName('__CONTROLE_PROCESSAMENTO__');
+  } catch (e) {
+    return;
+  }
+  if (!sheet) return;
+
+  const agora = new Date();
+  const email = String(Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail() || '').trim();
+  const linhas = arquivosImagens.map(arq => [
+    agora,
+    arq.id || '',
+    arq.nome || '',
+    arq.nome || '',
+    'DELETADO',
+    'ADMIN',
+    '',
+    'PASTA',
+    pastaNome || '',
+    'DELETE_PASTA',
+    'REMOVIDO',
+    0,
+    email,
+    'Pasta de fotos deletada'
+  ]);
+
+  try {
+    sheet.getRange(sheet.getLastRow() + 1, 1, linhas.length, linhas[0].length).setValues(linhas);
+  } catch (e) {
+    Logger.log('[AREA_FOTOS][DELETE][CONTROLE][ERRO] ' + e.message);
+  }
 }
 
 /**
@@ -361,8 +437,18 @@ function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocal
 
     let alterouBg = false;
     let alterouVal = false;
+    // Quando um bem ocupa mais de uma linha (continuações com coluna A vazia),
+    // propagamos a limpeza para as linhas imediatamente abaixo do tombamento.
+    let propagarBemAtual = false;
 
     for (let i = 0; i < fundos.length; i++) {
+      const valorColA = valores[i] ? String(valores[i][0] || '').trim() : '';
+
+      // Se iniciou um novo bloco (coluna A preenchida), encerra propagação anterior.
+      if (propagarBemAtual && valorColA) {
+        propagarBemAtual = false;
+      }
+
       let linhaTemCorAlvo = false;
       for (let j = 0; j < fundos[i].length; j++) {
         const corCel = normalizarCorHexLocalidades_(fundos[i][j]);
@@ -376,8 +462,16 @@ function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocal
       const localizacaoBruta = valores[i] ? valores[i][colLoc - 1] : '';
       const localizacaoNormalizada = normalizarTexto(localizacaoBruta);
       const linhaPorNome = !!(alvoNome && localizacaoNormalizada && localizacaoNormalizada === alvoNome);
+      const devePropagar = propagarBemAtual && !valorColA; // continuações do mesmo bem
 
-      if (linhaPorNome && !linhaTemCorAlvo && fundos[i]) {
+      if (devePropagar && fundos[i]) {
+        for (let j = 0; j < fundos[i].length; j++) {
+          if (fundos[i][j] !== '#ffffff') {
+            fundos[i][j] = '#ffffff';
+            alterouBg = true;
+          }
+        }
+      } else if (linhaPorNome && !linhaTemCorAlvo && fundos[i]) {
         for (let j = 0; j < fundos[i].length; j++) {
           if (fundos[i][j] !== '#ffffff') {
             fundos[i][j] = '#ffffff';
@@ -386,10 +480,15 @@ function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocal
         }
       }
 
-      const deveLimparLoc = linhaTemCorAlvo || linhaPorNome;
+      const deveLimparLoc = linhaTemCorAlvo || linhaPorNome || devePropagar;
       if (deveLimparLoc && valores[i] && valores[i][colLoc - 1] !== '') {
         valores[i][colLoc - 1] = '';
         alterouVal = true;
+      }
+
+      // Ativa propagação a partir da linha do tombamento que sofreu limpeza.
+      if ((linhaTemCorAlvo || linhaPorNome) && valorColA) {
+        propagarBemAtual = true;
       }
     }
 

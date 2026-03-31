@@ -155,6 +155,13 @@ function executarProcessamentoVisionComPreparo_(preparacao, opcoes) {
     }
   }
 
+  // Preenche coluna Localização na ADMIN usando a cor de destaque aplicada.
+  try {
+    preencherLocalizacaoAdminPorCor_(preparacao.contexto);
+  } catch (ePreencher) {
+    Logger.log('[INVENTARIO][LOCALIZACAO][AVISO] ' + ePreencher.message);
+  }
+
   return {
     resultado: resultado || {},
     linhaControleAntes: linhaControleAntes
@@ -227,6 +234,77 @@ function atualizarOperadorControleProcessamento_(planilhaAdminId, linhaAntes, op
       rangeObs.setValues(novasObs);
     }
   }
+}
+
+/**
+ * Preenche a coluna Localização na ADMIN a partir da cor de destaque
+ * (uma cor por localidade). Só escreve quando a célula está vazia.
+ */
+function preencherLocalizacaoAdminPorCor_(contexto) {
+  if (!contexto || !contexto.planilhaAdminId) return;
+
+  let pastas = [];
+  try {
+    pastas = obterPastasVivas_(contexto) || [];
+  } catch (e) {
+    return;
+  }
+
+  const mapaCorParaNome = {};
+  pastas.forEach(p => {
+    const cor = normalizarCorHexLocalidades_(p && p.cor);
+    if (cor) {
+      mapaCorParaNome[cor] = p.nome || '';
+    }
+  });
+
+  if (!Object.keys(mapaCorParaNome).length) return;
+
+  const ss = SpreadsheetApp.openById(contexto.planilhaAdminId);
+  const sheets = ss.getSheets();
+
+  sheets.forEach(sheet => {
+    const nome = sheet.getName();
+    if (nome === '__CONTROLE_PROCESSAMENTO__' || nome === 'CAPA' || nome === 'MANUAL') return;
+
+    const range = sheet.getDataRange();
+    const valores = range.getValues();
+    if (!valores.length) return;
+
+    const fundos = range.getBackgrounds();
+    const colLoc = Math.min(Math.max(6, 1), sheet.getLastColumn());
+
+    let alterou = false;
+    const novaColLoc = [];
+
+    for (let i = 0; i < valores.length; i++) {
+      let atual = valores[i][colLoc - 1];
+      const atualTrim = String(atual || '').trim();
+      const colA = String(valores[i][0] || '').trim();
+
+      // Só preenche na linha do tombamento (coluna A preenchida). Continuações permanecem vazias.
+      if (!atualTrim && colA && i > 0) {
+        let corLinha = '';
+        for (let j = 0; j < fundos[i].length; j++) {
+          const cor = normalizarCorHexLocalidades_(fundos[i][j]);
+          if (cor && cor !== '#ffffff') {
+            corLinha = cor;
+            break;
+          }
+        }
+        const nomeLocalidade = corLinha ? mapaCorParaNome[corLinha] : '';
+        if (nomeLocalidade) {
+          atual = nomeLocalidade;
+          alterou = true;
+        }
+      }
+      novaColLoc.push([atual]);
+    }
+
+    if (alterou) {
+      sheet.getRange(1, colLoc, novaColLoc.length, 1).setValues(novaColLoc);
+    }
+  });
 }
 
 function normalizarEmailProcessamento_(email) {

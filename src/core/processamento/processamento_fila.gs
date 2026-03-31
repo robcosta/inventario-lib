@@ -899,7 +899,13 @@ function solicitarSincronizacaoLocalidadesCliente_(contextoEntrada, opcoes) {
   const ssCliente = SpreadsheetApp.openById(planilhaClienteId);
   const filaSync = obterOuCriarAbaFilaSincronizacao_(ssCliente);
   const emailsUsuario = obterEmailsUsuarioAtualFila_();
-  const solicitanteEmail = emailsUsuario[0] || 'DESCONHECIDO';
+  let solicitanteEmail = emailsUsuario[0] || 'DESCONHECIDO';
+  if (cfg.solicitanteEmail) {
+    solicitanteEmail = cfg.solicitanteEmail;
+  } else if (contexto.tipo !== 'CLIENTE' && contexto.emailOperador) {
+    solicitanteEmail = contexto.emailOperador;
+  }
+  solicitanteEmail = String(solicitanteEmail || 'DESCONHECIDO').trim().toLowerCase();
 
   const aberta = obterSolicitacaoSyncAbertaPorVersao_(filaSync, versaoAtual);
   if (aberta) {
