@@ -118,6 +118,11 @@ const FILA_CRIAR_PASTA_STATUS = {
   SUCESSO: 'SUCESSO',
   ERRO: 'ERRO'
 };
+
+function dataHoraPlanilha_() {
+  const tz = Session.getScriptTimeZone() || 'America/Sao_Paulo';
+  return Utilities.formatDate(new Date(), tz, 'dd/MM/yyyy HH:mm:ss');
+}
 const FILA_CRIAR_PASTA_CABECALHO = [
   'REQUEST_ID',
   'STATUS',
@@ -207,7 +212,7 @@ function enfileirarProcessamentoImagensCliente_(contextoEntrada) {
     }
 
     const requestId = gerarRequestIdFila_();
-    const agoraIso = new Date().toISOString();
+    const agoraIso = dataHoraPlanilha_();
 
     fila.appendRow([
       requestId,
@@ -741,7 +746,7 @@ function obterUltimaSolicitacaoFinalizadaNaoNotificada_(sheet, emailsUsuario) {
 
 function marcarSolicitacaoProcessando_(sheet, rowNumber, processorEmail, tentativas) {
   sheet.getRange(rowNumber, FILA_COL.STATUS).setValue(FILA_STATUS.PROCESSANDO);
-  sheet.getRange(rowNumber, FILA_COL.INICIADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_COL.INICIADO_EM).setValue(dataHoraPlanilha_());
   sheet.getRange(rowNumber, FILA_COL.FINALIZADO_EM).setValue('');
   sheet.getRange(rowNumber, FILA_COL.MENSAGEM_ERRO).setValue('');
   sheet.getRange(rowNumber, FILA_COL.RESULTADO_JSON).setValue('');
@@ -751,7 +756,7 @@ function marcarSolicitacaoProcessando_(sheet, rowNumber, processorEmail, tentati
 
 function marcarSolicitacaoSucesso_(sheet, rowNumber, resumo, processorEmail) {
   sheet.getRange(rowNumber, FILA_COL.STATUS).setValue(FILA_STATUS.SUCESSO);
-  sheet.getRange(rowNumber, FILA_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_COL.FINALIZADO_EM).setValue(dataHoraPlanilha_());
   sheet.getRange(rowNumber, FILA_COL.TOTAL).setValue(Number(resumo.total || 0));
   sheet.getRange(rowNumber, FILA_COL.SUCESSO).setValue(Number(resumo.sucesso || 0));
   sheet.getRange(rowNumber, FILA_COL.ERRO).setValue(Number(resumo.erro || 0));
@@ -765,7 +770,7 @@ function marcarSolicitacaoErro_(sheet, rowNumber, erro, processorEmail) {
   const mensagem = (erro && erro.message) ? erro.message : String(erro || 'Erro desconhecido');
 
   sheet.getRange(rowNumber, FILA_COL.STATUS).setValue(FILA_STATUS.ERRO);
-  sheet.getRange(rowNumber, FILA_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_COL.FINALIZADO_EM).setValue(dataHoraPlanilha_());
   sheet.getRange(rowNumber, FILA_COL.MENSAGEM_ERRO).setValue(mensagem);
   sheet.getRange(rowNumber, FILA_COL.RESULTADO_JSON).setValue('');
   sheet.getRange(rowNumber, FILA_COL.NOTIFICADO_EM).setValue('');
@@ -773,7 +778,7 @@ function marcarSolicitacaoErro_(sheet, rowNumber, erro, processorEmail) {
 }
 
 function marcarSolicitacaoNotificada_(sheet, rowNumber) {
-  sheet.getRange(rowNumber, FILA_COL.NOTIFICADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_COL.NOTIFICADO_EM).setValue(dataHoraPlanilha_());
 }
 
 function mapearLinhaFila_(row, rowNumber) {
@@ -929,7 +934,7 @@ function solicitarSincronizacaoLocalidadesCliente_(contextoEntrada, opcoes) {
   }
 
   const requestId = gerarRequestIdFila_();
-  const agoraIso = new Date().toISOString();
+  const agoraIso = dataHoraPlanilha_();
 
   filaSync.appendRow([
     requestId,
@@ -1322,7 +1327,7 @@ function mapearLinhaFilaSync_(row, rowNumber) {
 
 function marcarSolicitacaoSyncProcessando_(sheet, rowNumber, processorEmail) {
   sheet.getRange(rowNumber, FILA_SYNC_COL.STATUS).setValue(FILA_SYNC_STATUS.PROCESSANDO);
-  sheet.getRange(rowNumber, FILA_SYNC_COL.INICIADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_SYNC_COL.INICIADO_EM).setValue(dataHoraPlanilha_());
   sheet.getRange(rowNumber, FILA_SYNC_COL.FINALIZADO_EM).setValue('');
   sheet.getRange(rowNumber, FILA_SYNC_COL.MENSAGEM_ERRO).setValue('');
   sheet.getRange(rowNumber, FILA_SYNC_COL.PROCESSADO_POR).setValue(processorEmail || '');
@@ -1333,7 +1338,7 @@ function marcarSolicitacaoSyncSucesso_(sheet, rowNumber, resultado, processorEma
   const banidasJson = serializarResumoFila_(resultado && resultado.coresBanidasPastas ? resultado.coresBanidasPastas : []);
 
   sheet.getRange(rowNumber, FILA_SYNC_COL.STATUS).setValue(FILA_SYNC_STATUS.SUCESSO);
-  sheet.getRange(rowNumber, FILA_SYNC_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_SYNC_COL.FINALIZADO_EM).setValue(dataHoraPlanilha_());
   sheet.getRange(rowNumber, FILA_SYNC_COL.VERSAO_SINCRONIZADA).setValue(resultado.versaoSincronizada || resultado.versaoLocalidades || '');
   sheet.getRange(rowNumber, FILA_SYNC_COL.MENSAGEM_ERRO).setValue('');
   sheet.getRange(rowNumber, FILA_SYNC_COL.MAPA_CORES_JSON).setValue(mapaJson);
@@ -1346,7 +1351,7 @@ function marcarSolicitacaoSyncErro_(sheet, rowNumber, erro, processorEmail) {
   const mensagem = (erro && erro.message) ? erro.message : String(erro || 'Erro desconhecido');
 
   sheet.getRange(rowNumber, FILA_SYNC_COL.STATUS).setValue(FILA_SYNC_STATUS.ERRO);
-  sheet.getRange(rowNumber, FILA_SYNC_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_SYNC_COL.FINALIZADO_EM).setValue(dataHoraPlanilha_());
   sheet.getRange(rowNumber, FILA_SYNC_COL.MENSAGEM_ERRO).setValue(mensagem);
   sheet.getRange(rowNumber, FILA_SYNC_COL.PROCESSADO_POR).setValue(processorEmail || '');
   sheet.getRange(rowNumber, FILA_SYNC_COL.NOTIFICADO_EM).setValue('');
@@ -1410,7 +1415,7 @@ function enfileirarCriacaoPastaPorCliente_(contexto, nomePasta) {
   const solicitanteEmail = emailsUsuario[0] || 'DESCONHECIDO';
 
   const requestId = gerarRequestIdFila_();
-  const agoraIso = new Date().toISOString();
+  const agoraIso = dataHoraPlanilha_();
 
   fila.appendRow([
     requestId,
@@ -1465,7 +1470,7 @@ function processarUmaSolicitacaoCriarPastaPorContexto_(contextoAdmin) {
       const filaSync = obterOuCriarAbaFilaSincronizacao_(ssCliente);
       const versao = calcularVersaoLocalidadesDoDrive_(contextoAdmin);
       const reqIdSync = gerarRequestIdFila_();
-      const agoraIso = new Date().toISOString();
+      const agoraIso = dataHoraPlanilha_();
       filaSync.appendRow([
         reqIdSync,
         FILA_SYNC_STATUS.PENDENTE,
@@ -1531,7 +1536,7 @@ function mapearLinhaFilaCriarPasta_(row, rowNumber) {
 
 function marcarCriarPastaProcessando_(sheet, rowNumber, processorEmail) {
   sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.STATUS).setValue(FILA_CRIAR_PASTA_STATUS.PROCESSANDO);
-  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.INICIADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.INICIADO_EM).setValue(dataHoraPlanilha_());
   sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.FINALIZADO_EM).setValue('');
   sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.MENSAGEM_ERRO).setValue('');
   sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.PASTA_ID_CRIADA).setValue('');
@@ -1539,7 +1544,7 @@ function marcarCriarPastaProcessando_(sheet, rowNumber, processorEmail) {
 
 function marcarCriarPastaSucesso_(sheet, rowNumber, pastaId, processorEmail) {
   sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.STATUS).setValue(FILA_CRIAR_PASTA_STATUS.SUCESSO);
-  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.FINALIZADO_EM).setValue(dataHoraPlanilha_());
   sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.MENSAGEM_ERRO).setValue('');
   sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.PASTA_ID_CRIADA).setValue(pastaId || '');
 }
@@ -1547,6 +1552,6 @@ function marcarCriarPastaSucesso_(sheet, rowNumber, pastaId, processorEmail) {
 function marcarCriarPastaErro_(sheet, rowNumber, erro, processorEmail) {
   const mensagem = (erro && erro.message) ? erro.message : String(erro || 'Erro desconhecido');
   sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.STATUS).setValue(FILA_CRIAR_PASTA_STATUS.ERRO);
-  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.FINALIZADO_EM).setValue(new Date().toISOString());
+  sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.FINALIZADO_EM).setValue(dataHoraPlanilha_());
   sheet.getRange(rowNumber, FILA_CRIAR_PASTA_COL.MENSAGEM_ERRO).setValue(mensagem);
 }

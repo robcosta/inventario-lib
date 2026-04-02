@@ -114,8 +114,10 @@ function deletarPastaFotos_() {
     }
 
     try {
-      const planilhaGeralId = contexto.planilhaGeralId || resolverPlanilhaGeralId_();
-      if (planilhaGeralId) {
+      const planilhaGeralId = resolverPlanilhaGeralIdParaLimpeza_(contexto);
+      if (!planilhaGeralId) {
+        Logger.log('[AREA_FOTOS][DELETE][GERAL_DESTAQUE][AVISO] Planilha GERAL não encontrada para limpeza.');
+      } else {
         limparDestaquesELocalizacaoPorCorPlanilha_(planilhaGeralId, corLocalidade, null, contexto.localidadeAtivaNome);
       }
     } catch (e) {
@@ -354,10 +356,10 @@ function registrarBensDeletadosControle_(planilhaAdminId, arquivosImagens, pasta
   }
   if (!sheet) return;
 
-  const agora = new Date();
+  const dataHora = formatarDataHoraLocal_(new Date());
   const email = String(Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail() || '').trim();
   const linhas = arquivosImagens.map(arq => [
-    agora,
+    dataHora,
     arq.id || '',
     arq.nome || '',
     arq.nome || '',
@@ -378,6 +380,48 @@ function registrarBensDeletadosControle_(planilhaAdminId, arquivosImagens, pasta
   } catch (e) {
     Logger.log('[AREA_FOTOS][DELETE][CONTROLE][ERRO] ' + e.message);
   }
+}
+
+function formatarDataHoraLocal_(data) {
+  const tz = Session.getScriptTimeZone() || 'America/Sao_Paulo';
+  return Utilities.formatDate(data instanceof Date ? data : new Date(data), tz, 'dd/MM/yyyy HH:mm:ss');
+}
+
+/**
+ * Resolve o ID da planilha GERAL para limpeza, sem validar o padrão do nome.
+ */
+function resolverPlanilhaGeralIdParaLimpeza_(contexto) {
+  const candidatos = [];
+
+  if (contexto && contexto.planilhaGeralId) candidatos.push(contexto.planilhaGeralId);
+
+  try {
+    const sistema = typeof obterSistemaGlobal_ === 'function' ? obterSistemaGlobal_() : null;
+    if (sistema && sistema.planilhaGeralId) candidatos.push(sistema.planilhaGeralId);
+  } catch (e) {}
+
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const propId = props.getProperty('PLANILHA_GERAL_ID');
+    if (propId) candidatos.push(propId);
+  } catch (e) {}
+
+  // Fallback seguro (com validação de nome)
+  try {
+    const resolvido = resolverPlanilhaGeralIdSeguro_();
+    if (resolvido) candidatos.push(resolvido);
+  } catch (e) {}
+
+  for (let i = 0; i < candidatos.length; i++) {
+    const id = String(candidatos[i] || '').trim();
+    if (!id) continue;
+    try {
+      SpreadsheetApp.openById(id);
+      return id;
+    } catch (e) {}
+  }
+
+  return null;
 }
 
 /**

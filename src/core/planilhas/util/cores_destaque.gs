@@ -24,7 +24,7 @@ const LIMITE_MAX_LOCALIDADES_CONTEXTO = 8;
  * ============================================================
  * Regras:
  * - Cor é imutável por pasta (folderId -> cor)
- * - Cor de pasta excluída fica banida e nunca mais reaproveita
+ * - Cor de pasta excluída volta para o pool e pode ser reaproveitada
  * - Nunca repete cor entre pastas vivas no mesmo contexto
  * - Paleta é expansível (além das 8 cores-base), mas o contexto segue
  *   limitado a 8 pastas vivas.
@@ -66,12 +66,8 @@ function sincronizarMapaCoresPastasNoContexto_(contexto, pastasVivas) {
     vivosSet[String(p.id)] = true;
   });
 
-  // 1) Cores de pastas removidas passam a ser banidas.
-  Object.keys(mapaAnterior).forEach(folderId => {
-    if (vivosSet[folderId]) return;
-    const corRemovida = normalizarCorHexLocalidades_(mapaAnterior[folderId]);
-    if (corRemovida) banidasSet[corRemovida] = true;
-  });
+  // 1) Pastas removidas: cor volta para o pool (não é banida).
+  //    Mantemos apenas banidas que já existiam explicitamente.
 
   // 2) Preserva cor existente das pastas vivas (imutabilidade).
   ordenadas.forEach(pasta => {
