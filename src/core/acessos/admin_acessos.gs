@@ -623,44 +623,47 @@ function gerenciarAcessosOperador_() {
 function gerenciarAcessosCliente_() {
   const ui = SpreadsheetApp.getUi();
 
-  const contexto = obterContextoAtivo_();
-  if (!contexto) {
-    Logger.log('[ACESSOS-CLIENTE] Nenhum contexto ativo');
-    return;
-  }
-
-  if (!contexto.pastaLocalidadesId) {
-    Logger.log('[ACESSOS-CLIENTE] Pasta de localidades não encontrada');
-    return;
-  }
-
-  const sistemaGlobal = obterSistemaGlobal_();
-  const pastaGeralId = contexto.pastaGeralId || (sistemaGlobal && sistemaGlobal.pastaGeralId);
-  if (!pastaGeralId) {
-    ui.alert('Pasta GERAL não encontrada.');
-    return;
-  }
-  const raiz = obterPastaInventario_();
-  const pastaSistema = obterPastaSistema_(raiz);
-  if (!pastaSistema) {
-    ui.alert('Pasta _SISTEMA não encontrada.');
-    return;
-  }
-
-  const email = pedirEmailAcesso_(
-    ui,
-    'Gerenciar Acessos CLIENTE',
-    contexto.nome,
-    'CLIENTE',
-    '• Editor na pasta LOCALIDADES\n' +
-    '• Leitor na planilha ADMIN\n' +
-    '• Leitor na pasta GERAL\n' +
-    '• Leitor na pasta _SISTEMA (bibliotecas)'
-  );
-
-  if (!email) return;
-
   try {
+    const contexto = obterContextoAtivo_();
+    if (!contexto || !contexto.planilhaAdminId) {
+      Logger.log('[ACESSOS-CLIENTE] Nenhum contexto ativo');
+      ui.alert('Nenhum contexto ativo para gerenciar acessos CLIENTE.');
+      return;
+    }
+
+    if (!contexto.pastaLocalidadesId) {
+      Logger.log('[ACESSOS-CLIENTE] Pasta de localidades não encontrada');
+      ui.alert('Pasta LOCALIDADES não encontrada no contexto ativo.');
+      return;
+    }
+
+    const sistemaGlobal = obterSistemaGlobal_() || {};
+    const pastaGeralId = contexto.pastaGeralId || sistemaGlobal.pastaGeralId;
+    if (!pastaGeralId) {
+      ui.alert('Pasta GERAL não encontrada.');
+      return;
+    }
+
+    const raiz = obterPastaInventario_();
+    const pastaSistema = obterPastaSistema_(raiz);
+    if (!pastaSistema) {
+      ui.alert('Pasta _SISTEMA não encontrada.');
+      return;
+    }
+
+    const email = pedirEmailAcesso_(
+      ui,
+      'Gerenciar Acessos CLIENTE',
+      contexto.nome,
+      'CLIENTE',
+      '• Editor na pasta LOCALIDADES\n' +
+      '• Leitor na planilha ADMIN\n' +
+      '• Leitor na pasta GERAL\n' +
+      '• Leitor na pasta _SISTEMA (bibliotecas)'
+    );
+
+    if (!email) return;
+
     aplicarPermissoes_(email, [
       { id: contexto.pastaLocalidadesId, role: 'writer' },
       { id: contexto.planilhaAdminId, role: 'reader' },
@@ -697,8 +700,12 @@ function gerenciarAcessosCliente_() {
 
     ui.alert('✅ Acesso CLIENTE concedido para: ' + email);
   } catch (e) {
-    Logger.log('[ACESSOS-CLIENTE][ERRO] ' + e.message);
-    ui.alert('❌ Falha ao conceder acesso CLIENTE: ' + e.message);
+    const mensagem = (e && e.message) ? e.message : String(e);
+    Logger.log('[ACESSOS-CLIENTE][ERRO] ' + mensagem);
+    if (e && e.stack) {
+      Logger.log('[ACESSOS-CLIENTE][STACK] ' + e.stack);
+    }
+    ui.alert('❌ Falha ao executar "Gerenciar Acessos CLIENTE": ' + mensagem);
   }
 }
 

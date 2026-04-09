@@ -66,7 +66,15 @@ function gerenciarAcessosAdmin() {
 }
 
 function gerenciarAcessosCliente() {
-  inventario.gerenciarAcessosCliente();
+  try {
+    inventario.gerenciarAcessosCliente();
+  } catch (e) {
+    const mensagem = (e && e.message) ? e.message : String(e);
+    Logger.log('[ADMIN][ACESSOS-CLIENTE][ERRO] ' + mensagem);
+    SpreadsheetApp.getUi().alert(
+      'Erro ao executar "Gerenciar Acessos CLIENTE".\n\n' + mensagem
+    );
+  }
 }
 
 function gerenciarRetiradaAcessos() {
