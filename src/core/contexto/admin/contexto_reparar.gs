@@ -18,6 +18,7 @@ function repararContextoAdmin_() {
   }
 
   const nomeContexto = nomePlanilha.replace(/^ADMIN:\s*/i, '').trim();
+  const contextoAnterior = obterContextoAtivo_() || {};
 
   // 📂 PLANILHA → pasta PLANILHA
   const fileAdmin = DriveApp.getFileById(ss.getId());
@@ -119,7 +120,15 @@ function repararContextoAdmin_() {
     pastaContextoId: pastaContexto.getId(),
     pastaPlanilhasId: pastaPlanilhas.getId(),
     pastaCSVAdminId: pastaCSVAdmin.getId(),
-    pastaLocalidadesId: pastaLocalidades.getId()
+    pastaLocalidadesId: pastaLocalidades.getId(),
+    localidadeAtivaId: contextoAnterior.localidadeAtivaId || null,
+    localidadeAtivaNome: contextoAnterior.localidadeAtivaNome || null,
+    mapaCoresPastas: (contextoAnterior.mapaCoresPastas && typeof contextoAnterior.mapaCoresPastas === 'object')
+      ? contextoAnterior.mapaCoresPastas
+      : {},
+    coresBanidasPastas: Array.isArray(contextoAnterior.coresBanidasPastas)
+      ? contextoAnterior.coresBanidasPastas
+      : []
   };
 
 
@@ -146,6 +155,14 @@ function repararContextoAdminSilencioso_(planilhaAdminId) {
   if (!id) return null;
 
   try {
+    let contextoAnterior = null;
+    try {
+      const raw = PropertiesService
+        .getScriptProperties()
+        .getProperty(CONTEXTO_KEYS.PREFIXO + id);
+      contextoAnterior = raw ? JSON.parse(raw) : null;
+    } catch (eCtx) {}
+
     const ss = SpreadsheetApp.openById(id);
     const nomePlanilha = ss.getName();
     const nomeContexto = nomePlanilha.replace(/^ADMIN:\s*/i, '').trim() || nomePlanilha;
@@ -234,7 +251,15 @@ function repararContextoAdminSilencioso_(planilhaAdminId) {
       pastaContextoId: pastaContexto.getId(),
       pastaPlanilhasId: pastaPlanilhas.getId(),
       pastaCSVAdminId: pastaCSVAdmin.getId(),
-      pastaLocalidadesId: pastaLocalidades.getId()
+      pastaLocalidadesId: pastaLocalidades.getId(),
+      localidadeAtivaId: contextoAnterior ? (contextoAnterior.localidadeAtivaId || null) : null,
+      localidadeAtivaNome: contextoAnterior ? (contextoAnterior.localidadeAtivaNome || null) : null,
+      mapaCoresPastas: (contextoAnterior && contextoAnterior.mapaCoresPastas && typeof contextoAnterior.mapaCoresPastas === 'object')
+        ? contextoAnterior.mapaCoresPastas
+        : {},
+      coresBanidasPastas: (contextoAnterior && Array.isArray(contextoAnterior.coresBanidasPastas))
+        ? contextoAnterior.coresBanidasPastas
+        : []
     };
 
     salvarContextoAdmin_(id, contextoAdmin);

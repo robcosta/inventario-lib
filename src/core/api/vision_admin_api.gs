@@ -162,6 +162,24 @@ function executarProcessamentoVisionComPreparo_(preparacao, opcoes) {
     Logger.log('[INVENTARIO][LOCALIZACAO][AVISO] ' + ePreencher.message);
   }
 
+  // Garante consistência: destaque da localidade ativa sempre com a cor oficial da pasta.
+  try {
+    normalizarDestaqueAdminPorCorOficialDaLocalidadeAtiva_(preparacao.contexto);
+  } catch (eNormalizarCor) {
+    Logger.log('[INVENTARIO][DESTAQUE_COR][AVISO] ' + eNormalizarCor.message);
+  }
+
+  // Garante consistencia textual na GERAL:
+  // grava a localidade exatamente como o nome da pasta ativa (ex.: "04", nao "4").
+  try {
+    const resumoNorm = normalizarLocalizacaoGeralPorNomeDaPastaAtiva_(preparacao.contexto);
+    if (resumoNorm && resumoNorm.alteradas > 0) {
+      Logger.log('[INVENTARIO][LOCALIZACAO][GERAL] Linhas normalizadas: ' + resumoNorm.alteradas);
+    }
+  } catch (eNormGeral) {
+    Logger.log('[INVENTARIO][LOCALIZACAO][GERAL][AVISO] ' + eNormGeral.message);
+  }
+
   return {
     resultado: resultado || {},
     linhaControleAntes: linhaControleAntes
@@ -307,6 +325,193 @@ function preencherLocalizacaoAdminPorCor_(contexto) {
   });
 }
 
+function normalizarDestaqueAdminPorCorOficialDaLocalidadeAtiva_(contexto) {
+  if (!contexto || !contexto.planilhaAdminId || !contexto.localidadeAtivaId) return;
+
+  const normalizarTexto = (typeof normalizarTextoComparacao_ === 'function')
+    ? normalizarTextoComparacao_
+    : function(v) {
+        return String(v || '')
+          .toUpperCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+
+  let pastas = [];
+  try {
+    pastas = obterPastasVivas_(contexto) || [];
+  } catch (e) {
+    return;
+  }
+
+  const pastaAtiva = pastas.find(p => String(p.id || '').trim() === String(contexto.localidadeAtivaId || '').trim());
+  const corOficial = normalizarCorHexLocalidades_(pastaAtiva && pastaAtiva.cor);
+  const nomeLocalidade = normalizarTexto((pastaAtiva && pastaAtiva.nome) || contexto.localidadeAtivaNome || '');
+
+  if (!corOficial || !nomeLocalidade) return;
+
+  if (typeof corEhDaPaletaFixa_ === 'function' && !corEhDaPaletaFixa_(corOficial)) {
+    throw new Error('Cor oficial da localidade ativa está fora da paleta de 8 cores.');
+  }
+
+  const ss = SpreadsheetApp.openById(contexto.planilhaAdminId);
+  const sheets = ss.getSheets();
+
+  sheets.forEach(sheet => {
+    const nome = sheet.getName();
+    if (nome === '__CONTROLE_PROCESSAMENTO__' || nome === 'CAPA' || nome === 'MANUAL') return;
+
+    const range = sheet.getDataRange();
+    const valores = range.getValues();
+    if (!valores.length) return;
+
+    const fundos = range.getBackgrounds();
+    const totalCols = fundos[0] ? fundos[0].length : 0;
+    if (!totalCols) return;
+
+    let colLoc = Math.min(Math.max(6, 1), sheet.getLastColumn());
+    if (typeof detectarIndiceColunasInventario_ === 'function') {
+      try {
+        const idx = detectarIndiceColunasInventario_(valores);
+        if (idx && idx.localizacao >= 0 && idx.localizacao < sheet.getLastColumn()) {
+          colLoc = idx.localizacao + 1;
+        }
+      } catch (eIdx) {}
+    }
+
+    let alterou = false;
+
+    for (let i = 0; i < valores.length; i++) {
+      const localizacao = normalizarTexto(valores[i][colLoc - 1]);
+      if (!localizacao || localizacao !== nomeLocalidade) continue;
+
+      let linhaTemDestaque = false;
+      for (let j = 0; j < totalCols; j++) {
+        const corAtual = normalizarCorHexLocalidades_(fundos[i][j]);
+        if (corAtual && corAtual !== '#ffffff') {
+          linhaTemDestaque = true;
+          break;
+        }
+      }
+      if (!linhaTemDestaque) continue;
+
+      for (let j = 0; j < totalCols; j++) {
+        const corAtual = normalizarCorHexLocalidades_(fundos[i][j]);
+        if (!corAtual || corAtual === '#ffffff') continue;
+        if (corAtual !== corOficial) {
+          fundos[i][j] = corOficial;
+          alterou = true;
+        }
+      }
+    }
+
+    if (alterou) {
+      range.setBackgrounds(fundos);
+    }
+  });
+}
+
 function normalizarEmailProcessamento_(email) {
   return String(email || '').trim().toLowerCase();
+}
+
+function normalizarLocalizacaoGeralPorNomeDaPastaAtiva_(contexto) {
+  if (!contexto) return { alteradas: 0 };
+
+  const nomePasta = String(contexto.localidadeAtivaNome || '').trim();
+  if (!nomePasta) return { alteradas: 0 };
+
+  const planilhaGeralId = String(
+    contexto.planilhaGeralId ||
+    (typeof resolverPlanilhaGeralIdSeguro_ === 'function' ? resolverPlanilhaGeralIdSeguro_() : '') ||
+    ''
+  ).trim();
+  if (!planilhaGeralId) return { alteradas: 0 };
+
+  const ss = SpreadsheetApp.openById(planilhaGeralId);
+  const sheets = ss.getSheets();
+  let totalAlteradas = 0;
+
+  sheets.forEach(sheet => {
+    const nomeAba = String(sheet.getName() || '').toUpperCase();
+    if (nomeAba === 'CAPA' || nomeAba === 'MANUAL' || nomeAba === '__CONTROLE_PROCESSAMENTO__') return;
+
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    if (lastRow < 1 || lastCol < 1) return;
+
+    const range = sheet.getDataRange();
+    const valores = range.getValues();
+    if (!valores.length) return;
+
+    let colLoc = Math.min(Math.max(6, 1), sheet.getLastColumn());
+    let linhaInicialDados = 1;
+
+    if (typeof detectarIndiceColunasInventario_ === 'function') {
+      try {
+        const idx = detectarIndiceColunasInventario_(valores);
+        if (idx && idx.localizacao >= 0 && idx.localizacao < sheet.getLastColumn()) {
+          colLoc = idx.localizacao + 1;
+        }
+        if (idx && idx.headerRow >= 0) {
+          linhaInicialDados = idx.headerRow + 2; // 1-based, apos cabecalho
+        }
+      } catch (eIdx) {}
+    }
+
+    let alterou = false;
+    let alteradasAba = 0;
+    const novaCol = valores.map(r => [r[colLoc - 1]]);
+
+    for (let i = Math.max(0, linhaInicialDados - 1); i < valores.length; i++) {
+      const atual = valores[i] ? valores[i][colLoc - 1] : '';
+      const atualTxt = String(atual || '').trim();
+      if (!atualTxt) continue;
+
+      if (!localidadeTextoEquivalenteGeral_(atualTxt, nomePasta)) continue;
+      if (atualTxt === nomePasta) continue;
+
+      novaCol[i][0] = nomePasta;
+      alterou = true;
+      alteradasAba++;
+    }
+
+    if (alterou) {
+      sheet.getRange(1, colLoc, novaCol.length, 1).setValues(novaCol);
+      totalAlteradas += alteradasAba;
+    }
+  });
+
+  return { alteradas: totalAlteradas };
+}
+
+function normalizarTextoLocalidadeGeral_(valor) {
+  const normalizarTexto = (typeof normalizarTextoComparacao_ === 'function')
+    ? normalizarTextoComparacao_
+    : function(v) {
+        return String(v || '')
+          .toUpperCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+
+  const txt = normalizarTexto(valor);
+  if (!txt) return '';
+
+  if (/^\d+$/.test(txt)) {
+    const semZeros = txt.replace(/^0+/, '');
+    return semZeros || '0';
+  }
+
+  return txt;
+}
+
+function localidadeTextoEquivalenteGeral_(a, b) {
+  const na = normalizarTextoLocalidadeGeral_(a);
+  const nb = normalizarTextoLocalidadeGeral_(b);
+  return !!(na && nb && na === nb);
 }

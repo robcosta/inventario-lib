@@ -43,9 +43,14 @@ function montarContextoVision_(contexto) {
   // 🔹 Resolver cor oficial da pasta
   const pastas = obterPastasVivas_(contexto);
   const pastaAtiva = pastas.find(p => p.id === pastaId);
+  const corPastaAtiva = normalizarCorHexLocalidades_(pastaAtiva && pastaAtiva.cor);
 
-  if (!pastaAtiva || !pastaAtiva.cor) {
+  if (!pastaAtiva || !corPastaAtiva) {
     throw new Error('Não foi possível determinar a cor da pasta ativa.');
+  }
+
+  if (typeof corEhDaPaletaFixa_ === 'function' && !corEhDaPaletaFixa_(corPastaAtiva)) {
+    throw new Error('A pasta ativa possui cor fora da paleta oficial de 8 cores.');
   }
 
   // 🔍 LOG DE VERIFICAÇÃO FINAL
@@ -54,13 +59,13 @@ function montarContextoVision_(contexto) {
   Logger.log('planilhaGeralId: ' + planilhaGeralId);
   Logger.log('pastaTrabalhoId: ' + pastaId);
   Logger.log('pastaTrabalhoNome: ' + pastaNome);
-  Logger.log('corDestaque: ' + pastaAtiva.cor);
+  Logger.log('corDestaque: ' + corPastaAtiva);
   Logger.log('===================================================');
 
   return {
     planilhaContextoId: contexto.planilhaAdminId,
     planilhaGeralId: planilhaGeralId,
-    corDestaque: pastaAtiva.cor,
+    corDestaque: corPastaAtiva,
     ABA_CONTROLE: '__CONTROLE_PROCESSAMENTO__',
 
     // Adapter legado da Vision

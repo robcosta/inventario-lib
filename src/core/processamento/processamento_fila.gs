@@ -1462,8 +1462,16 @@ function processarUmaSolicitacaoCriarPastaPorContexto_(contextoAdmin) {
     const pastaRaiz = DriveApp.getFolderById(contextoAdmin.pastaLocalidadesId);
     const nova = pastaRaiz.createFolder(solicitacao.nomePasta);
 
-    // Atualiza mapa de cores
-    obterPastasVivas_(contextoAdmin);
+    // Atualiza mapa de cores e valida cor oficial da pasta criada.
+    const pastasComCor = obterPastasVivas_(contextoAdmin) || [];
+    const pastaCriada = pastasComCor.find(p => p && p.id === nova.getId());
+    const corCriada = normalizarCorHexLocalidades_(pastaCriada && pastaCriada.cor);
+    if (!corCriada) {
+      try {
+        nova.setTrashed(true);
+      } catch (eLixeira) {}
+      throw new Error('Pasta criada sem cor oficial. Operação revertida.');
+    }
 
     // Enfileira sincronização para CLIENTE refletir nova cor/mapa
     try {

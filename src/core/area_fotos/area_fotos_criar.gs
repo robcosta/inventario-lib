@@ -36,9 +36,7 @@ function criarNovaPastaFotos_() {
     contador++;
   }
 
-  const limiteLocalidades = (typeof LIMITE_MAX_LOCALIDADES_CONTEXTO === 'number' && LIMITE_MAX_LOCALIDADES_CONTEXTO > 0)
-    ? LIMITE_MAX_LOCALIDADES_CONTEXTO
-    : 8;
+  const limiteLocalidades = LIMITE_MAX_LOCALIDADES_CONTEXTO;
 
   if (contador >= limiteLocalidades) {
     ui.alert(
@@ -144,6 +142,29 @@ function criarNovaPastaFotos_() {
 
   const novaPasta = pastaRaiz.createFolder(nome);
 
+  let corDaNovaPasta = '';
+  try {
+    const pastasAtualizadas = obterPastasVivas_(contexto) || [];
+    const pastaCriada = pastasAtualizadas.find(p => p && p.id === novaPasta.getId());
+    corDaNovaPasta = normalizarCorHexLocalidades_(pastaCriada && pastaCriada.cor);
+
+    if (!corDaNovaPasta) {
+      throw new Error('Não foi possível atribuir cor oficial para a nova pasta.');
+    }
+  } catch (eCor) {
+    try {
+      novaPasta.setTrashed(true);
+    } catch (eLixeira) {}
+
+    ui.alert(
+      "❌ Falha ao criar pasta",
+      'A pasta foi revertida porque não foi possível atribuir uma das 8 cores oficiais.\n\n' +
+      eCor.message,
+      ui.ButtonSet.OK
+    );
+    return;
+  }
+
   // 🔥 REGRA CENTRAL (AGORA DOMÍNIO)
   const contextoAtualizado = aplicarLocalidadeAtiva_(contexto, {
     id: novaPasta.getId(),
@@ -154,7 +175,7 @@ function criarNovaPastaFotos_() {
   // 5️⃣ Abrir?
   // ============================================================
 
-  let mensagemFinal = `✅ Pasta criada e definida como ativa:\n\n${nome}`;
+  let mensagemFinal = `✅ Pasta criada e definida como ativa:\n\n${nome}\nCor: ${corDaNovaPasta}`;
 
   mensagemFinal += '\n\nDeseja abrir a pasta agora?';
 

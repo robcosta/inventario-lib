@@ -6,7 +6,7 @@
  * ✔ Compatível com ADMIN e CLIENTE
  * ✔ Bloqueia CLIENTE se já houver imagens processadas
  * ✔ Move pasta para a LIXEIRA (não apaga definitivamente)
- * ✔ Limpa destaques da cor da localidade nas planilhas ADMIN/GERAL
+ * ✔ Limpa destaques da localidade por texto nas planilhas ADMIN/GERAL
  * ✔ Cancela filas pendentes da pasta e atualiza contexto
  */
 function deletarPastaFotos_() {
@@ -95,8 +95,8 @@ function deletarPastaFotos_() {
   );
   if (confirmar !== ui.Button.YES) return;
 
-  // Cor (pode ser necessária para limpeza)
-  const corLocalidade = obterCorDaPastaNoContexto_(contexto, pastaId);
+  // Critério único de limpeza: texto da localidade.
+  const localidadeAlvoNome = String(contexto.localidadeAtivaNome || pastaNome || '').trim();
 
   // Cancela filas pendentes dessa pasta
   try {
@@ -105,24 +105,32 @@ function deletarPastaFotos_() {
     Logger.log('[AREA_FOTOS][DELETE][FILA][AVISO] ' + e.message);
   }
 
-  // Limpa destaques + coluna F (Localização) nas planilhas
-  if (corLocalidade) {
+  // Limpa destaques + coluna Localização nas planilhas (por nome da localidade)
+  if (localidadeAlvoNome) {
     try {
-      limparDestaquesELocalizacaoPorCorPlanilha_(contexto.planilhaAdminId, corLocalidade, null, contexto.localidadeAtivaNome);
+      limparDestaquesELocalizacaoPorCorPlanilha_(contexto.planilhaAdminId, null, null, localidadeAlvoNome);
     } catch (e) {
       Logger.log('[AREA_FOTOS][DELETE][ADMIN_DESTAQUE][AVISO] ' + e.message);
     }
 
     try {
-      const planilhaGeralId = resolverPlanilhaGeralIdParaLimpeza_(contexto);
-      if (!planilhaGeralId) {
-        Logger.log('[AREA_FOTOS][DELETE][GERAL_DESTAQUE][AVISO] Planilha GERAL não encontrada para limpeza.');
+      const planilhasGeraisIds = listarPlanilhasGeraisParaLimpeza_(contexto);
+      if (!planilhasGeraisIds.length) {
+        Logger.log('[AREA_FOTOS][DELETE][GERAL_DESTAQUE][AVISO] Nenhuma planilha GERAL encontrada para limpeza.');
       } else {
-        limparDestaquesELocalizacaoPorCorPlanilha_(planilhaGeralId, corLocalidade, null, contexto.localidadeAtivaNome);
+        planilhasGeraisIds.forEach(id => {
+          try {
+            limparDestaquesELocalizacaoPorCorPlanilha_(id, null, null, localidadeAlvoNome);
+          } catch (eLimpeza) {
+            Logger.log('[AREA_FOTOS][DELETE][GERAL_DESTAQUE][AVISO] Falha ao limpar GERAL ' + id + ': ' + eLimpeza.message);
+          }
+        });
       }
     } catch (e) {
       Logger.log('[AREA_FOTOS][DELETE][GERAL_DESTAQUE][AVISO] ' + e.message);
     }
+  } else {
+    Logger.log('[AREA_FOTOS][DELETE][LIMPEZA][AVISO] Nome da localidade alvo vazio; limpeza de destaques/localizacao ignorada.');
   }
 
   // Deleta (lixeira) a pasta — com fallback Drive API (suporta Shared Drives)
@@ -473,7 +481,131 @@ function resolverPlanilhaGeralIdParaLimpeza_(contexto) {
     return candidatoFallbackContemGeral;
   }
 
+  // 5) Redescoberta por estrutura de pastas (fallback mais resiliente).
+  try {
+    const sistema = typeof obterSistemaGlobal_ === 'function' ? (obterSistemaGlobal_() || {}) : {};
+    const pastaGeral = (typeof resolverPastaGeralFallback_ === 'function')
+      ? resolverPastaGeralFallback_(sistema)
+      : null;
+
+    if (pastaGeral) {
+      // 5.1) Candidata valida por regra oficial.
+      if (typeof localizarPlanilhaGeralNaPasta_ === 'function') {
+        const candidataOficial = localizarPlanilhaGeralNaPasta_(pastaGeral);
+        if (candidataOficial) {
+          const idOficial = String(candidataOficial.getId() || '').trim();
+          if (idOficial && !idsBloqueados[idOficial]) {
+            Logger.log('[AREA_FOTOS][DELETE][GERAL_ID] Selecionada por redescoberta de pasta: ' + idOficial + ' (' + candidataOficial.getName() + ')');
+            return idOficial;
+          }
+        }
+      }
+
+      // 5.2) Fallback por nome contendo "GERAL" dentro da pasta GERAL.
+      const arquivos = pastaGeral.getFilesByType(MimeType.GOOGLE_SHEETS);
+      let melhorFallback = null;
+      while (arquivos.hasNext()) {
+        const arq = arquivos.next();
+        const id = String(arq.getId() || '').trim();
+        if (!id || idsBloqueados[id]) continue;
+
+        const nome = String(arq.getName() || '').trim().toUpperCase();
+        if (nome.indexOf('GERAL') === -1) continue;
+
+        if (!melhorFallback || arq.getLastUpdated() > melhorFallback.getLastUpdated()) {
+          melhorFallback = arq;
+        }
+      }
+
+      if (melhorFallback) {
+        const idFallback = String(melhorFallback.getId() || '').trim();
+        Logger.log('[AREA_FOTOS][DELETE][GERAL_ID][AVISO] Fallback estrutural por nome contendo "GERAL": ' + idFallback);
+        return idFallback;
+      }
+    }
+  } catch (e) {
+    Logger.log('[AREA_FOTOS][DELETE][GERAL_ID][AVISO] Redescoberta estrutural falhou: ' + e.message);
+  }
+
   return null;
+}
+
+function listarPlanilhasGeraisParaLimpeza_(contexto) {
+  const ids = [];
+  const adicionados = {};
+  const idsBloqueados = {};
+
+  function bloquear(id) {
+    const normalizado = String(id || '').trim();
+    if (normalizado) idsBloqueados[normalizado] = true;
+  }
+
+  if (contexto) {
+    bloquear(contexto.planilhaAdminId);
+    bloquear(contexto.planilhaClienteId);
+    bloquear(contexto.planilhaRelatorioId);
+  }
+
+  function adicionar(id, origem) {
+    const normalizado = String(id || '').trim();
+    if (!normalizado || adicionados[normalizado] || idsBloqueados[normalizado]) return;
+    try {
+      const ss = SpreadsheetApp.openById(normalizado);
+      const nome = String(ss.getName() || '').trim();
+      const nomeUpper = nome.toUpperCase();
+      const nomeValido = (typeof nomePlanilhaGeralValido_ === 'function')
+        ? nomePlanilhaGeralValido_(nome)
+        : /^GERAL:\s*\S+/i.test(nome);
+
+      if (!nomeValido && nomeUpper.indexOf('GERAL') === -1) return;
+
+      adicionados[normalizado] = true;
+      ids.push(normalizado);
+      Logger.log('[AREA_FOTOS][DELETE][GERAL_ID] Candidata para limpeza: ' + normalizado + ' (' + nome + ') via ' + (origem || 'DESCONHECIDO'));
+    } catch (e) {}
+  }
+
+  // 1) Resolver dedicado de delecao.
+  try { adicionar(resolverPlanilhaGeralIdParaLimpeza_(contexto), 'RESOLVER_DELECAO'); } catch (e) {}
+  // 2) Resolver seguro global.
+  try { adicionar(resolverPlanilhaGeralIdSeguro_(), 'RESOLVER_SEGURO'); } catch (e) {}
+  // 3) Sistema global.
+  try {
+    const sistema = typeof obterSistemaGlobal_ === 'function' ? (obterSistemaGlobal_() || {}) : {};
+    adicionar(sistema.planilhaGeralId, 'SISTEMA_GLOBAL');
+  } catch (e) {}
+  // 4) Script properties.
+  try {
+    const props = PropertiesService.getScriptProperties();
+    adicionar(props.getProperty('PLANILHA_GERAL_ID'), 'SCRIPT_PROPERTIES');
+  } catch (e) {}
+  // 5) Contexto.
+  if (contexto) adicionar(contexto.planilhaGeralId, 'CONTEXTO');
+
+  // 6) Redescoberta estrutural na pasta GERAL.
+  try {
+    const sistema = typeof obterSistemaGlobal_ === 'function' ? (obterSistemaGlobal_() || {}) : {};
+    const pastaGeral = (typeof resolverPastaGeralFallback_ === 'function')
+      ? resolverPastaGeralFallback_(sistema)
+      : null;
+
+    if (pastaGeral) {
+      if (typeof localizarPlanilhaGeralNaPasta_ === 'function') {
+        const oficial = localizarPlanilhaGeralNaPasta_(pastaGeral);
+        if (oficial) adicionar(oficial.getId(), 'PASTA_GERAL_OFICIAL');
+      }
+
+      const arquivos = pastaGeral.getFilesByType(MimeType.GOOGLE_SHEETS);
+      while (arquivos.hasNext()) {
+        const arq = arquivos.next();
+        const nome = String(arq.getName() || '').toUpperCase();
+        if (nome.indexOf('GERAL') === -1) continue;
+        adicionar(arq.getId(), 'PASTA_GERAL_SCAN');
+      }
+    }
+  } catch (e) {}
+
+  return ids;
 }
 
 /**
@@ -501,10 +633,11 @@ function obterCorDaPastaNoContexto_(contexto, pastaId) {
 }
 
 /**
- * Limpa a cor informada em todas as abas (exceto técnicas) e apaga coluna F (Localização) das linhas destacadas.
+ * Limpa destaques por nome da localidade em todas as abas (exceto técnicas)
+ * e apaga o valor da coluna de localização das linhas correspondentes.
  */
 function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocalizacao, localidadeNome) {
-  const alvo = normalizarCorHexLocalidades_(corHex);
+  // corHex mantido por compatibilidade de assinatura; limpeza usa apenas texto da localidade.
   const normalizarTexto = (typeof normalizarTextoComparacao_ === 'function')
     ? normalizarTextoComparacao_
     : function(v) {
@@ -515,9 +648,9 @@ function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocal
           .replace(/\s+/g, ' ')
           .trim();
       };
-  const alvoNome = normalizarTexto(localidadeNome || '');
+  const alvoNome = normalizarLocalidadeTextoParaLimpeza_(localidadeNome || '');
 
-  if (!planilhaId || (!alvo && !alvoNome)) return;
+  if (!planilhaId || !alvoNome) return;
 
   const ss = SpreadsheetApp.openById(planilhaId);
   const sheets = ss.getSheets();
@@ -532,7 +665,8 @@ function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocal
     const colLoc = resolverColunaLocalizacaoParaLimpeza_(
       valores,
       sheet.getLastColumn(),
-      colLocalizacao
+      colLocalizacao,
+      localidadeNome
     );
     if (!colLoc) return;
 
@@ -552,31 +686,19 @@ function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocal
         propagarBemAtual = false;
       }
 
-      let linhaTemCorAlvo = false;
-      for (let j = 0; j < fundos[i].length; j++) {
-        const corCel = normalizarCorHexLocalidades_(fundos[i][j]);
-        if (alvo && corCel && corCel === alvo) {
-          fundos[i][j] = '#ffffff';
-          alterouBg = true;
-          linhasComAlteracaoBg[i] = true;
-          linhaTemCorAlvo = true;
-        }
-      }
-
       const localizacaoBruta = valores[i] ? valores[i][colLoc - 1] : '';
-      const localizacaoNormalizada = normalizarTexto(localizacaoBruta);
-      const linhaPorNome = !!(alvoNome && localizacaoNormalizada && localizacaoNormalizada === alvoNome);
+      const linhaPorNomeNaColuna = !!(alvoNome && localidadeTextoEhIgualParaLimpeza_(localizacaoBruta, localidadeNome));
+      const linhaPorNomeEmQualquerColuna = !!(
+        alvoNome &&
+        valores[i] &&
+        valores[i].some(c => {
+          return localidadeTextoEhIgualParaLimpeza_(c, localidadeNome);
+        })
+      );
+      const linhaPorNome = linhaPorNomeNaColuna || linhaPorNomeEmQualquerColuna;
       const devePropagar = propagarBemAtual && !valorColA; // continuações do mesmo bem
 
-      if (devePropagar && fundos[i]) {
-        for (let j = 0; j < fundos[i].length; j++) {
-          if (fundos[i][j] !== '#ffffff') {
-            fundos[i][j] = '#ffffff';
-            alterouBg = true;
-            linhasComAlteracaoBg[i] = true;
-          }
-        }
-      } else if (linhaPorNome && !linhaTemCorAlvo && fundos[i]) {
+      if ((devePropagar || linhaPorNome) && fundos[i]) {
         for (let j = 0; j < fundos[i].length; j++) {
           if (fundos[i][j] !== '#ffffff') {
             fundos[i][j] = '#ffffff';
@@ -586,7 +708,7 @@ function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocal
         }
       }
 
-      const deveLimparLoc = linhaTemCorAlvo || linhaPorNome || devePropagar;
+      const deveLimparLoc = linhaPorNome || devePropagar;
       if (deveLimparLoc && valores[i] && valores[i][colLoc - 1] !== '') {
         valores[i][colLoc - 1] = '';
         alterouVal = true;
@@ -594,7 +716,7 @@ function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocal
       }
 
       // Ativa propagação a partir da linha do tombamento que sofreu limpeza.
-      if ((linhaTemCorAlvo || linhaPorNome) && valorColA) {
+      if (linhaPorNome && valorColA) {
         propagarBemAtual = true;
       }
     }
@@ -634,7 +756,37 @@ function limparDestaquesELocalizacaoPorCorPlanilha_(planilhaId, corHex, colLocal
   });
 }
 
-function resolverColunaLocalizacaoParaLimpeza_(valores, totalColunas, colLocalizacao) {
+function normalizarLocalidadeTextoParaLimpeza_(valor) {
+  const normalizarTexto = (typeof normalizarTextoComparacao_ === 'function')
+    ? normalizarTextoComparacao_
+    : function(v) {
+        return String(v || '')
+          .toUpperCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+
+  const txt = normalizarTexto(valor);
+  if (!txt) return '';
+
+  // Equivalencia para codigos numericos de localidade: 04 == 4.
+  if (/^\d+$/.test(txt)) {
+    const semZeros = txt.replace(/^0+/, '');
+    return semZeros || '0';
+  }
+
+  return txt;
+}
+
+function localidadeTextoEhIgualParaLimpeza_(valorLinha, valorAlvo) {
+  const linha = normalizarLocalidadeTextoParaLimpeza_(valorLinha);
+  const alvo = normalizarLocalidadeTextoParaLimpeza_(valorAlvo);
+  return !!(linha && alvo && linha === alvo);
+}
+
+function resolverColunaLocalizacaoParaLimpeza_(valores, totalColunas, colLocalizacao, localidadeNome) {
   const limiteCols = Math.max(1, Number(totalColunas || 0));
   const forcada = Number(colLocalizacao || 0);
 
@@ -662,13 +814,40 @@ function resolverColunaLocalizacaoParaLimpeza_(valores, totalColunas, colLocaliz
           .trim();
       };
 
-  const amostraLinhas = Math.min((valores || []).length, 20);
+  const amostraLinhas = Math.min((valores || []).length, 120);
   for (let i = 0; i < amostraLinhas; i++) {
     const row = Array.isArray(valores[i]) ? valores[i] : [];
     for (let j = 0; j < row.length; j++) {
-      if (normalizarTexto(row[j]).indexOf('LOCALIZACAO') !== -1) {
+      const cab = normalizarTexto(row[j]);
+      if (cab.indexOf('LOCALIZACAO') !== -1 || cab.indexOf('LOCALIDADE') !== -1) {
         return j + 1;
       }
+    }
+  }
+
+  // Fallback por dados: identifica coluna com mais ocorrencias da localidade alvo.
+  const alvoNome = normalizarLocalidadeTextoParaLimpeza_(localidadeNome || '');
+  if (alvoNome) {
+    const maxLinhasDados = Math.min((valores || []).length, 2000);
+    let melhorColuna = -1;
+    let melhorScore = 0;
+
+    for (let col = 0; col < limiteCols; col++) {
+      let score = 0;
+      for (let lin = 0; lin < maxLinhasDados; lin++) {
+        const row = Array.isArray(valores[lin]) ? valores[lin] : [];
+        const txt = normalizarLocalidadeTextoParaLimpeza_(row[col]);
+        if (!txt) continue;
+        if (txt === alvoNome) score++;
+      }
+      if (score > melhorScore) {
+        melhorScore = score;
+        melhorColuna = col;
+      }
+    }
+
+    if (melhorColuna >= 0 && melhorScore > 0) {
+      return melhorColuna + 1;
     }
   }
 

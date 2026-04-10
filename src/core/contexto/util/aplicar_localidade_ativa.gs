@@ -13,7 +13,8 @@ function aplicarLocalidadeAtiva_(ctx, novaLocalidade) {
     throw new Error("Contexto inválido.");
   }
 
-  const { tipo, dados: contexto } = ctx;
+  const tipo = ctx.tipo;
+  const contexto = ctx;
 
   const atualizacoes = {
     localidadeAtivaId: novaLocalidade.id,
@@ -23,7 +24,7 @@ function aplicarLocalidadeAtiva_(ctx, novaLocalidade) {
   if (tipo === 'ADMIN') {
 
     const contextoAtualizado = atualizarContextoAdmin_(atualizacoes);
-    atualizarLegendasPlanilhaAdmin_(contexto);
+    atualizarLegendasPlanilhaAdmin_(contextoAtualizado);
     return contextoAtualizado;
 
   } else if (tipo === 'CLIENTE') {

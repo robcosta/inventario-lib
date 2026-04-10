@@ -17,17 +17,17 @@ const CORES_DESTAQUE = {
 
 const CORES_DESTAQUE_LISTA = Object.values(CORES_DESTAQUE);
 const LIMITE_MAX_LOCALIDADES_CONTEXTO = 8;
+const TOTAL_CORES_FIXAS_DESTAQUE = 8;
 
 /**
  * ============================================================
- * Gera (e sincroniza) mapa de cores por contexto
+ * Gera (e sincroniza) mapa de cores por contexto (regra fixa)
  * ============================================================
  * Regras:
- * - Cor é imutável por pasta (folderId -> cor)
- * - Cor de pasta excluída volta para o pool e pode ser reaproveitada
- * - Nunca repete cor entre pastas vivas no mesmo contexto
- * - Paleta é expansível (além das 8 cores-base), mas o contexto segue
- *   limitado a 8 pastas vivas.
+ * - Exatamente 8 cores oficiais e exatamente 8 pastas máximas por contexto.
+ * - Cor é imutável por pasta (folderId -> cor) enquanto a pasta existir.
+ * - Cor de pasta excluída volta para o pool e pode ser reaproveitada.
+ * - Nunca repete cor entre pastas vivas no mesmo contexto.
  */
 function obterMapaCoresPorContexto_(contextoOuPastas, pastasVivasOpcional) {
   let contexto = null;
@@ -42,7 +42,39 @@ function obterMapaCoresPorContexto_(contextoOuPastas, pastasVivasOpcional) {
   return estado.mapa;
 }
 
+function validarConfiguracaoCoresFixas_() {
+  const totalCores = CORES_DESTAQUE_LISTA.length;
+  if (totalCores !== TOTAL_CORES_FIXAS_DESTAQUE) {
+    throw new Error(
+      'Configuração inválida: CORES_DESTAQUE deve ter exatamente ' +
+      TOTAL_CORES_FIXAS_DESTAQUE + ' cores.'
+    );
+  }
+
+  if (LIMITE_MAX_LOCALIDADES_CONTEXTO !== TOTAL_CORES_FIXAS_DESTAQUE) {
+    throw new Error(
+      'Configuração inválida: LIMITE_MAX_LOCALIDADES_CONTEXTO deve ser ' +
+      TOTAL_CORES_FIXAS_DESTAQUE + '.'
+    );
+  }
+}
+
+function corEhDaPaletaFixa_(cor) {
+  const normalizada = normalizarCorHexLocalidades_(cor);
+  if (!normalizada) return false;
+
+  const set = {};
+  CORES_DESTAQUE_LISTA.forEach(item => {
+    const c = normalizarCorHexLocalidades_(item);
+    if (c) set[c] = true;
+  });
+
+  return !!set[normalizada];
+}
+
 function sincronizarMapaCoresPastasNoContexto_(contexto, pastasVivas) {
+  validarConfiguracaoCoresFixas_();
+
   const lista = Array.isArray(pastasVivas) ? pastasVivas.slice() : [];
 
   if (lista.length > LIMITE_MAX_LOCALIDADES_CONTEXTO) {
@@ -51,59 +83,42 @@ function sincronizarMapaCoresPastasNoContexto_(contexto, pastasVivas) {
 
   const estadoAnterior = obterEstadoCoresDoContexto_(contexto);
   const mapaAnterior = estadoAnterior.mapa;
-  const banidasAnteriores = estadoAnterior.banidas;
-
-  const banidasSet = criarSetCores_(banidasAnteriores);
   const usadasSet = {};
-  const vivosSet = {};
   const mapaNovo = {};
 
   const ordenadas = [...lista]
     .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || '')));
 
-  ordenadas.forEach(p => {
-    if (!p || !p.id) return;
-    vivosSet[String(p.id)] = true;
-  });
-
-  // 1) Pastas removidas: cor volta para o pool (não é banida).
-  //    Mantemos apenas banidas que já existiam explicitamente.
-
-  // 2) Preserva cor existente das pastas vivas (imutabilidade).
+  // 1) Preserva cor existente das pastas vivas (imutabilidade).
   ordenadas.forEach(pasta => {
     const folderId = String(pasta.id || '');
     if (!folderId) return;
 
     const corAnterior = normalizarCorHexLocalidades_(mapaAnterior[folderId]);
     if (!corAnterior) return;
+    if (!corEhDaPaletaFixa_(corAnterior)) return;
     if (usadasSet[corAnterior]) return; // legado com duplicidade: normaliza abaixo
 
     mapaNovo[folderId] = corAnterior;
     usadasSet[corAnterior] = true;
   });
 
-  // 3) Nenhuma cor ativa pode permanecer banida.
-  Object.keys(usadasSet).forEach(cor => {
-    delete banidasSet[cor];
-  });
-
-  // 4) Atribui novas cores para pastas sem cor, respeitando banidas.
-  let indiceGerador = 0;
+  // 2) Atribui novas cores para pastas sem cor.
   ordenadas.forEach(pasta => {
     const folderId = String(pasta.id || '');
     if (!folderId) return;
     if (mapaNovo[folderId]) return;
 
-    const corNova = gerarCorDisponivel_(usadasSet, banidasSet, indiceGerador);
+    const corNova = gerarCorDisponivel_(usadasSet);
     mapaNovo[folderId] = corNova;
     usadasSet[corNova] = true;
-    indiceGerador++;
   });
 
-  const banidasNovas = Object.keys(banidasSet).sort();
+  // 3) Não existe banimento permanente no contrato fixo.
+  const banidasNovas = [];
   const alterado =
     serializarMapaCores_(mapaAnterior) !== serializarMapaCores_(mapaNovo) ||
-    serializarListaCores_(banidasAnteriores) !== serializarListaCores_(banidasNovas);
+    serializarListaCores_(estadoAnterior.banidas) !== serializarListaCores_(banidasNovas);
 
   if (alterado) {
     persistirEstadoCoresNoContexto_(contexto, mapaNovo, banidasNovas);
@@ -129,7 +144,8 @@ function obterEstadoCoresDoContexto_(contexto) {
     mapa[id] = cor;
   });
 
-  const banidas = normalizarListaCoresBanidas_(contexto && contexto.coresBanidasPastas);
+  // Contrato fixo: sem banimento de cor.
+  const banidas = [];
 
   return { mapa: mapa, banidas: banidas };
 }
@@ -182,73 +198,17 @@ function contextoAdminComCamposMinimos_(contexto) {
   );
 }
 
-function gerarCorDisponivel_(usadasSet, banidasSet, indiceInicial) {
-  let indice = Number(indiceInicial || 0);
-  let tentativas = 0;
+function gerarCorDisponivel_(usadasSet) {
+  validarConfiguracaoCoresFixas_();
 
-  while (tentativas < 5000) {
-    const candidata = normalizarCorHexLocalidades_(obterCorExpansivelPorIndice_(indice));
-    indice++;
-    tentativas++;
+  for (let i = 0; i < CORES_DESTAQUE_LISTA.length; i++) {
+    const candidata = normalizarCorHexLocalidades_(CORES_DESTAQUE_LISTA[i]);
     if (!candidata) continue;
     if (usadasSet[candidata]) continue;
-    if (banidasSet[candidata]) continue;
     return candidata;
   }
 
-  throw new Error('Não foi possível gerar uma cor disponível para a localidade.');
-}
-
-function obterCorExpansivelPorIndice_(indice) {
-  const idx = Math.max(0, Number(indice || 0));
-
-  if (idx < CORES_DESTAQUE_LISTA.length) {
-    return CORES_DESTAQUE_LISTA[idx];
-  }
-
-  // Paleta expansível baseada em golden-angle + variação de saturação/luz.
-  const base = idx - CORES_DESTAQUE_LISTA.length;
-  const hue = (base * 137.508) % 360;
-  const sat = 62 + (base % 3) * 8;   // 62, 70, 78
-  const light = 42 + (base % 4) * 7; // 42, 49, 56, 63
-
-  return hslParaHexLocalidades_(hue, sat, light);
-}
-
-function hslParaHexLocalidades_(h, s, l) {
-  const hue = ((Number(h) % 360) + 360) % 360;
-  const sat = Math.max(0, Math.min(100, Number(s)));
-  const lig = Math.max(0, Math.min(100, Number(l)));
-
-  const c = (1 - Math.abs((2 * lig / 100) - 1)) * (sat / 100);
-  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
-  const m = (lig / 100) - (c / 2);
-
-  let r1 = 0;
-  let g1 = 0;
-  let b1 = 0;
-
-  if (hue < 60) {
-    r1 = c; g1 = x; b1 = 0;
-  } else if (hue < 120) {
-    r1 = x; g1 = c; b1 = 0;
-  } else if (hue < 180) {
-    r1 = 0; g1 = c; b1 = x;
-  } else if (hue < 240) {
-    r1 = 0; g1 = x; b1 = c;
-  } else if (hue < 300) {
-    r1 = x; g1 = 0; b1 = c;
-  } else {
-    r1 = c; g1 = 0; b1 = x;
-  }
-
-  const r = Math.round((r1 + m) * 255);
-  const g = Math.round((g1 + m) * 255);
-  const b = Math.round((b1 + m) * 255);
-
-  return '#' + [r, g, b]
-    .map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0'))
-    .join('');
+  throw new Error('Não há cor disponível para nova localidade. Limite de 8 pastas atingido.');
 }
 
 function normalizarCorHexLocalidades_(cor) {
